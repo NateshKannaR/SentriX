@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   Plane,
   FileText,
+  Truck,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -175,6 +176,19 @@ export const IncidentsPage: React.FC = () => {
             }`}
           >
             🔥 {t('dash.critical', 'Critical')}
+          </button>
+          <button
+            onClick={() => {
+              soundFx.playClick();
+              setStatusFilter('Assigned');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
+              statusFilter === 'Assigned'
+                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40'
+                : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
+            }`}
+          >
+            🚛 {t('status.assigned', 'Assigned')}
           </button>
           <button
             onClick={() => {
@@ -376,7 +390,12 @@ export const IncidentsPage: React.FC = () => {
                   >
                     {/* Header Row */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {inc.priorityRank && (
+                          <span className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                            #{inc.priorityRank}
+                          </span>
+                        )}
                         <span className="font-mono text-xs font-bold text-cyan-400">
                           {inc.incidentCode}
                         </span>
@@ -399,6 +418,19 @@ export const IncidentsPage: React.FC = () => {
                         {inc.description}
                       </p>
                     </div>
+
+                    {/* Assigned Team Telemetry */}
+                    {inc.assignedTeamName && (
+                      <div className="flex items-center gap-1.5 text-[11px] font-mono text-indigo-300 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/20">
+                        <Truck className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                        <span className="truncate">
+                          Assigned: <strong>{inc.assignedTeamName}</strong> ({inc.assignedTeamCategory})
+                        </span>
+                        {inc.assignedEtaMinutes !== undefined && (
+                          <span className="text-amber-400 ml-auto shrink-0">ETA ~{inc.assignedEtaMinutes}m</span>
+                        )}
+                      </div>
+                    )}
 
                     {/* Meta info */}
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 pt-1">
@@ -424,6 +456,7 @@ export const IncidentsPage: React.FC = () => {
                         className="text-[11px] font-semibold bg-[#060B14] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
                       >
                         <option value="Reported">{t('status.reported', 'Reported')}</option>
+                        <option value="Assigned">Assigned</option>
                         <option value="Pending">{t('status.pending', 'Pending')}</option>
                         <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
                         <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
@@ -520,12 +553,25 @@ export const IncidentsPage: React.FC = () => {
                         {/* Code */}
                         <td className="py-4 px-4 whitespace-nowrap">
                           <div className="flex flex-col">
-                            <span className="font-mono font-bold text-white text-xs">
-                              {inc.incidentCode}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {inc.priorityRank && (
+                                <span className="font-mono text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                                  #{inc.priorityRank}
+                                </span>
+                              )}
+                              <span className="font-mono font-bold text-white text-xs">
+                                {inc.incidentCode}
+                              </span>
+                            </div>
                             <span className="font-mono text-[10px] text-cyan-400">
                               Priority: {inc.priorityScore}/100
                             </span>
+                            {inc.assignedTeamName && (
+                              <span className="font-mono text-[10px] text-indigo-400 flex items-center gap-1 mt-0.5">
+                                <Truck className="w-3 h-3 text-indigo-400" />
+                                <span className="truncate max-w-[120px]">{inc.assignedTeamName}</span>
+                              </span>
+                            )}
                           </div>
                         </td>
 
@@ -599,6 +645,7 @@ export const IncidentsPage: React.FC = () => {
                             className="text-[11px] font-semibold bg-[#060B14] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
                           >
                             <option value="Reported">{t('status.reported', 'Reported')}</option>
+                            <option value="Assigned">Assigned</option>
                             <option value="Pending">{t('status.pending', 'Pending')}</option>
                             <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
                             <option value="Resolved">{t('status.resolved', 'Resolved')}</option>

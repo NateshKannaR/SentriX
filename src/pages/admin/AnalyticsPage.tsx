@@ -30,6 +30,8 @@ import {
   Activity,
   Flame,
   CheckCircle2,
+  Truck,
+  Zap,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -74,6 +76,15 @@ export const AnalyticsPage: React.FC = () => {
     };
   });
 
+  const categoryPieData = metrics.byCategory.map((cat, idx) => {
+    const colors = ['#EF4444', '#F97316', '#06B6D4', '#3B82F6', '#8B5CF6', '#10B981'];
+    return {
+      name: cat.category.replace(' Emergency', ''),
+      value: cat.count,
+      color: colors[idx % colors.length],
+    };
+  });
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -89,7 +100,7 @@ export const AnalyticsPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Empirical incident distribution, multi-casualty impact correlation, and AI response priority benchmarking.
+            Empirical incident distribution, response team readiness, and multi-agency operational benchmarking.
           </p>
         </div>
 
@@ -102,54 +113,73 @@ export const AnalyticsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* KPI Quad */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg relative overflow-hidden group">
-          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            {t('dash.priorityScore', 'Avg Priority Score')}
+      {/* KPI Hexad (6 Round 2 Challenge Metrics) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        {/* Total Emergencies */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
+            Total Incidents
           </span>
-          <span className="font-mono text-2xl sm:text-3xl font-black text-cyan-400 mt-1 block">
-            {metrics.avgPriorityScore}
-            <span className="text-xs sm:text-sm text-slate-400 font-normal"> / 100</span>
+          <span className="font-mono text-2xl font-black text-white mt-1 block">
+            {metrics.total}
           </span>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" /> Weighted triage index
-          </p>
+          <p className="text-[10px] font-mono text-slate-400 mt-1">Metropolitan scope</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg relative overflow-hidden group">
-          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Total Casualties
+        {/* Critical Emergencies */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-red-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-red-400 font-bold block">
+            Critical Incidents
           </span>
-          <span className="font-mono text-2xl sm:text-3xl font-black text-red-400 mt-1 block">
-            {metrics.totalCasualties}
+          <span className="font-mono text-2xl font-black text-red-400 mt-1 block">
+            {metrics.critical}
           </span>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" /> Across 6 categories
-          </p>
+          <p className="text-[10px] font-mono text-red-400/80 mt-1">Immediate priority</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg relative overflow-hidden group">
-          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Resolution Rate
+        {/* Available Teams */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-emerald-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
+            Available Teams
           </span>
-          <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block">
-            {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}%
+          <span className="font-mono text-2xl font-black text-emerald-400 mt-1 block">
+            {metrics.availableTeams}
           </span>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" /> {metrics.resolved} of {metrics.total} cleared
-          </p>
+          <p className="text-[10px] font-mono text-emerald-400/80 mt-1">{metrics.fleetReadinessPercent}% Fleet Ready</p>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg relative overflow-hidden group">
-          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Critical Ratio
+        {/* Busy Teams */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-amber-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
+            Busy Teams
           </span>
-          <span className="font-mono text-2xl sm:text-3xl font-black text-amber-400 mt-1 block">
-            {metrics.total > 0 ? Math.round((metrics.critical / metrics.total) * 100) : 0}%
+          <span className="font-mono text-2xl font-black text-amber-400 mt-1 block">
+            {metrics.busyTeams}
           </span>
-          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
-            <ShieldAlert className="w-3 h-3 text-amber-400 shrink-0" /> {metrics.critical} critical emergencies
+          <p className="text-[10px] font-mono text-amber-400/80 mt-1">Field deployed</p>
+        </div>
+
+        {/* Assigned Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-indigo-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-400 font-bold block">
+            Assigned Incidents
+          </span>
+          <span className="font-mono text-2xl font-black text-indigo-400 mt-1 block">
+            {metrics.assigned}
+          </span>
+          <p className="text-[10px] font-mono text-indigo-300 mt-1">Units en route</p>
+        </div>
+
+        {/* Resolved Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-emerald-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
+            Resolved Incidents
+          </span>
+          <span className="font-mono text-2xl font-black text-emerald-400 mt-1 block">
+            {metrics.resolved}
+          </span>
+          <p className="text-[10px] font-mono text-emerald-400 mt-1">
+            {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}% cleared
           </p>
         </div>
       </div>
@@ -190,23 +220,76 @@ export const AnalyticsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Priority Score Distribution */}
+        {/* Incident Distribution by Category (Donut Chart) */}
         <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
-                Priority Score Velocity Spectrum
+                Incident Distribution by Category
               </h3>
-              <p className="text-xs text-slate-400">Incident threat level progression (0 - 100 Index)</p>
+              <p className="text-xs text-slate-400">Proportional classification across all reported events</p>
             </div>
-            <TrendingUp className="w-5 h-5 text-cyan-400" />
+            <PieChart className="w-5 h-5 text-cyan-400" />
+          </div>
+
+          <div className="h-64 w-full flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={categoryPieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={85}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {categoryPieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#070D18',
+                    borderColor: '#06B6D4',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '12px',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Category Pill Badges */}
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-white/5">
+            {categoryPieData.map(cat => (
+              <div key={cat.name} className="flex items-center gap-1.5 text-[11px] font-mono text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
+                <span>{cat.name}:</span>
+                <strong className="text-white">{cat.value}</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Incident Lifecycle Pipeline Status */}
+        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-white">
+                Incident Lifecycle Pipeline
+              </h3>
+              <p className="text-xs text-slate-400">Reported ➔ Assigned ➔ In Progress ➔ Resolved flow</p>
+            </div>
+            <Clock className="w-5 h-5 text-cyan-400" />
           </div>
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={metrics.timeline} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+              <BarChart data={metrics.byStatus} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
-                <XAxis dataKey="timeLabel" tick={{ fontSize: 10, fill: '#94A3B8' }} />
+                <XAxis dataKey="status" tick={{ fontSize: 11, fill: '#94A3B8' }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
                 <Tooltip
                   contentStyle={{
@@ -217,15 +300,12 @@ export const AnalyticsPage: React.FC = () => {
                     fontSize: '12px',
                   }}
                 />
-                <Line
-                  type="monotone"
-                  dataKey="avgPriority"
-                  stroke="#06B6D4"
-                  strokeWidth={3}
-                  dot={{ fill: '#06B6D4', r: 4 }}
-                  name="Avg Priority Score"
-                />
-              </LineChart>
+                <Bar dataKey="count" radius={[8, 8, 0, 0]} name="Incidents">
+                  {metrics.byStatus.map((entry, index) => (
+                    <Cell key={`status-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>

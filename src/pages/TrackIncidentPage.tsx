@@ -233,7 +233,7 @@ export const TrackIncidentPage: React.FC = () => {
                   {[
                     { label: t('track.stepReported', 'Incident Reported'), active: true, step: '01' },
                     { label: t('track.stepTriaged', 'AI Severity Triaged'), active: true, step: '02' },
-                    { label: t('track.stepDispatched', 'Unit Dispatched'), active: ['Pending', 'In Progress', 'Resolved'].includes(incident.status), step: '03' },
+                    { label: t('track.stepDispatched', 'Unit Assigned & Dispatched'), active: ['Assigned', 'Pending', 'In Progress', 'Resolved'].includes(incident.status), step: '03' },
                     { label: t('track.stepResolved', 'Incident Resolved'), active: incident.status === 'Resolved', step: '04' },
                   ].map((step, idx) => (
                     <div key={idx} className="space-y-2 p-2 rounded-xl bg-sentinel-darkSurface/40 sm:bg-transparent">
@@ -289,8 +289,18 @@ export const TrackIncidentPage: React.FC = () => {
                       {t('track.dispatchUnit', 'Dispatched Unit')}
                     </span>
                     <span className="text-white font-semibold block mt-0.5">
-                      {incident.assignedUnit || 'Dispatch in queue / Unit en route'}
+                      {incident.assignedTeamName || incident.assignedUnit || 'Dispatch in queue / Unit en route'}
                     </span>
+                    {incident.assignedTeamCategory && (
+                      <span className="text-[11px] text-sentinel-cyan font-mono mt-0.5 block">
+                        Category: {incident.assignedTeamCategory}
+                      </span>
+                    )}
+                    {incident.assignedEtaMinutes !== undefined && (
+                      <span className="text-[11px] text-amber-400 font-mono mt-0.5 block">
+                        ETA: ~{incident.assignedEtaMinutes} mins ({incident.assignedDistanceKm} km away)
+                      </span>
+                    )}
                     <span className="text-[11px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       GPS Beacon Live

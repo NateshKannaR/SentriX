@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import L from 'leaflet';
-import { Incident, EmergencyCategory, SeverityLevel } from '../../types';
+import { Incident, EmergencyCategory, SeverityLevel, ResponseTeam } from '../../types';
 import { SeverityBadge } from '../../components/common/SeverityBadge';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CategoryBadge } from '../../components/common/CategoryBadge';
 import { soundEffects } from '../../utils/soundEffects';
 import { getLiveLocation, calculateDistanceKm, LiveLocationResult } from '../../utils/geolocation';
 import { SAFE_MUSTER_ZONES, SafeMusterZone } from '../../data/safeZones';
+import { teamService } from '../../services/teamService';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   MapPin,
@@ -29,6 +30,8 @@ import {
   PhoneCall,
   Plane,
   FileText,
+  Truck,
+  Zap,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -73,6 +76,31 @@ const createCustomMarker = (severity: SeverityLevel) => {
   });
 };
 
+// Response Team marker icon generator
+const createTeamMarker = (team: ResponseTeam) => {
+  let symbol = '🚒';
+  let color = '#F43F5E';
+  if (team.category === 'Medical & Trauma') { symbol = '🚑'; color = '#06B6D4'; }
+  else if (team.category === 'Disaster & Urban SAR') { symbol = '🛡️'; color = '#F59E0B'; }
+  else if (team.category === 'Hazmat & Chemical') { symbol = '☣️'; color = '#A855F7'; }
+  else if (team.category === 'Flood & Marine Rescue') { symbol = '🚤'; color = '#3B82F6'; }
+  else if (team.category === 'Police & Evacuation') { symbol = '🚓'; color = '#10B981'; }
+
+  const isBusy = team.status === 'Busy' || team.status === 'En Route';
+  const html = `<div style="transform: translate(-18px, -18px); position: relative; width: 36px; height: 36px; border-radius: 12px; background: #060E1A; border: 2px solid ${color}; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 0 14px ${color}90; cursor: pointer;">
+    ${symbol}
+    ${isBusy ? `<span style="position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 9999px; background: #F59E0B; border: 2px solid #060E1A;"></span>` : ''}
+  </div>`;
+
+  return L.divIcon({
+    html,
+    className: 'team-tactical-marker',
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
+  });
+};
+
 // Safe zone marker icon generator
 const createSafeZoneMarker = (type: SafeMusterZone['type']) => {
   let color = '#10B981'; // emerald shelter
@@ -102,6 +130,8 @@ export const MapPage: React.FC = () => {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const safeZonesLayerRef = useRef<L.LayerGroup | null>(null);
+  const teamsLayerRef = useRef<L.LayerGroup | null>(null);
+  const routesLayerRef = useRef<L.LayerGroup | null>(null);
   const liveLocationMarkerRef = useRef<L.Marker | null>(null);
   const liveLocationCircleRef = useRef<L.Circle | null>(null);
 
@@ -116,6 +146,16 @@ export const MapPage: React.FC = () => {
   const [isLiveTracking, setIsLiveTracking] = useState(false);
   const [userLocation, setUserLocation] = useState<LiveLocationResult | null>(null);
   const [showSafeZones, setShowSafeZones] = useState(false);
+  const [showTeams, setShowTeams] = useState(true);
+  const [showRoutes, setShowRoutes] = useState(true);
+  const [teams, setTeams] = useState<ResponseTeam[]>(() => teamService.getTeams());
+
+  useEffect(() => {
+    const unsub = teamService.subscribe(() => {
+      setTeams(teamService.getTeams());
+    });
+    return unsub;
+  }, []);
 
   // Filtered incidents with coordinates
   const mappedIncidents = incidents.filter(i => {
@@ -176,6 +216,12 @@ export const MapPage: React.FC = () => {
         const markersLayer = L.layerGroup().addTo(map);
         markersLayerRef.current = markersLayer;
 
+        const teamsLayer = L.layerGroup().addTo(map);
+        teamsLayerRef.current = teamsLayer;
+
+        const routesLayer = L.layerGroup().addTo(map);
+        routesLayerRef.current = routesLayer;
+
         const safeZonesLayer = L.layerGroup().addTo(map);
         safeZonesLayerRef.current = safeZonesLayer;
 
@@ -218,6 +264,7 @@ export const MapPage: React.FC = () => {
           <div style="font-family: monospace; font-size: 11px; color: #CBD5E1;">
             Casualties: <strong>${inc.peopleAffected}</strong> | Priority: <strong>${inc.priorityScore}/100</strong>
           </div>
+          ${inc.assignedTeamName ? `<div style="font-size:11px;color:#38BDF8;font-weight:bold;margin-top:4px;">🚒 Assigned: ${inc.assignedTeamName} (${inc.assignedDistanceKm ?? '—'} km)</div>` : ''}
           <button id="btn-popup-${inc.id}" style="margin-top:8px;width:100%;background:#16C7E8;color:#071426;border-radius:10px;padding:6px;font-size:11px;font-weight:bold;cursor:pointer;border:none;box-shadow:0 0 10px rgba(22,199,232,0.4);">
             Inspect Incident Dossier →
           </button>
@@ -244,6 +291,82 @@ export const MapPage: React.FC = () => {
       }
     });
   }, [mappedIncidents, onOpenIncident]);
+
+  // Sync Response Teams & Route Polylines
+  useEffect(() => {
+    if (!mapInstanceRef.current || !teamsLayerRef.current || !routesLayerRef.current) return;
+
+    teamsLayerRef.current.clearLayers();
+    routesLayerRef.current.clearLayers();
+
+    if (showTeams) {
+      teams.forEach(t => {
+        if (t.latitude && t.longitude) {
+          const marker = L.marker([t.latitude, t.longitude], {
+            icon: createTeamMarker(t),
+          });
+
+          const popupContent = document.createElement('div');
+          popupContent.className = 'p-2 text-xs font-sans space-y-2 text-white';
+          popupContent.innerHTML = `
+            <div class="flex items-center justify-between gap-2 border-b border-white/10 pb-1">
+              <span style="font-family: monospace; font-weight: bold; color: #38BDF8;">${t.id}</span>
+              <span style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: ${t.status === 'Available' ? '#10B981' : '#F59E0B'};">● ${t.status}</span>
+            </div>
+            <div style="font-weight: bold; font-size: 13px; color: #FFFFFF;">${t.name}</div>
+            <div style="font-size: 11px; color: #94A3B8;">📍 ${t.locationName}</div>
+            <div style="font-family: monospace; font-size: 11px; color: #CBD5E1;">
+              Crew: <strong>${t.membersCount}</strong> | Radio: <strong>${t.contactRadio}</strong>
+            </div>
+            <div style="font-size: 11px; color: #64748B;">Rig: ${t.vehicleType}</div>
+            ${t.assignedIncidentCode ? `<div style="padding:4px 8px;border-radius:6px;background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.4);color:#FBBF24;font-family:monospace;font-size:10px;font-weight:bold;">⚡ Active Mission: ${t.assignedIncidentCode}</div>` : ''}
+          `;
+
+          marker.bindPopup(popupContent);
+          teamsLayerRef.current?.addLayer(marker);
+        }
+      });
+    }
+
+    if (showRoutes) {
+      teams.forEach(t => {
+        const targetIncId = t.assignedIncidentId || (selectedIncident && selectedIncident.assignedTeamId === t.id ? selectedIncident.id : null);
+        if (!targetIncId) return;
+
+        const targetInc = incidents.find(i => i.id === targetIncId);
+        if (targetInc && targetInc.latitude && targetInc.longitude && t.latitude && t.longitude) {
+          const latlngs: L.LatLngExpression[] = [
+            [t.latitude, t.longitude],
+            [targetInc.latitude, targetInc.longitude],
+          ];
+
+          const polyline = L.polyline(latlngs, {
+            color: '#06B6D4',
+            weight: 3.5,
+            dashArray: '8, 8',
+            opacity: 0.9,
+          });
+
+          polyline.addTo(routesLayerRef.current!);
+
+          const dist = calculateDistanceKm(t.latitude, t.longitude, targetInc.latitude, targetInc.longitude);
+          const eta = Math.max(2, Math.round((dist / 40) * 60));
+
+          const midLat = (t.latitude + targetInc.latitude) / 2;
+          const midLng = (t.longitude + targetInc.longitude) / 2;
+
+          const labelIcon = L.divIcon({
+            html: `<div style="transform: translate(-50%, -50%); background: #050D1A; border: 1px solid #06B6D4; border-radius: 8px; padding: 2px 7px; font-family: monospace; font-size: 10px; font-weight: bold; color: #38BDF8; white-space: nowrap; box-shadow: 0 0 10px rgba(6,182,212,0.5);">
+              ⚡ ${t.name} ➔ ${targetInc.incidentCode} (${dist}km • ~${eta}m ETA)
+            </div>`,
+            className: 'route-label-icon',
+          });
+
+          L.marker([midLat, midLng], { icon: labelIcon }).addTo(routesLayerRef.current!);
+        }
+      });
+    }
+  }, [teams, incidents, showTeams, showRoutes, selectedIncident]);
 
   // Sync Safe Muster Zones
   useEffect(() => {
@@ -374,12 +497,43 @@ export const MapPage: React.FC = () => {
         </div>
 
         {/* Live Location & Safe Zones Action Buttons */}
+        {/* HUD Layer & Telemetry Toggles */}
         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+          <button
+            onClick={() => {
+              setShowTeams(s => !s);
+              soundEffects.playClick();
+            }}
+            className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+              showTeams
+                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 ring-1 ring-rose-500/30'
+                : 'bg-white/5 hover:bg-white/10 text-slate-400 border border-white/15'
+            }`}
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>Teams ({teams.filter(t => t.status === 'Available').length}/{teams.length})</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setShowRoutes(s => !s);
+              soundEffects.playClick();
+            }}
+            className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+              showRoutes
+                ? 'bg-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/30'
+                : 'bg-white/5 hover:bg-white/10 text-slate-400 border border-white/15'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Routes ({teams.filter(t => t.status === 'Busy').length})</span>
+          </button>
+
           <button
             onClick={handleToggleLiveLocation}
             className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
               isLiveTracking
-                ? 'bg-sentinel-cyan text-sentinel-navy ring-2 ring-sentinel-cyan/50 glow-cyan'
+                ? 'bg-cyan-500 text-slate-950 ring-2 ring-cyan-500/50 font-black'
                 : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/15'
             }`}
           >

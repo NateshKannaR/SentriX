@@ -8,7 +8,35 @@ export type EmergencyCategory =
 
 export type SeverityLevel = 'Low' | 'Medium' | 'High' | 'Critical';
 
-export type IncidentStatus = 'Reported' | 'Pending' | 'In Progress' | 'Resolved';
+export type IncidentStatus = 'Reported' | 'Assigned' | 'Pending' | 'In Progress' | 'Resolved';
+
+export type ResponseTeamCategory =
+  | 'Fire & Rescue'
+  | 'Medical & Trauma'
+  | 'Disaster & Urban SAR'
+  | 'Police & Evacuation'
+  | 'Hazmat & Chemical'
+  | 'Flood & Marine Rescue';
+
+export type ResponseTeamStatus = 'Available' | 'Busy' | 'En Route' | 'Off Duty';
+
+export interface ResponseTeam {
+  id: string; // e.g. "TEAM-FIRE-01"
+  name: string; // e.g. "Alpha Fire Tender 1"
+  category: ResponseTeamCategory;
+  latitude: number;
+  longitude: number;
+  locationName: string;
+  status: ResponseTeamStatus;
+  assignedIncidentId?: string;
+  assignedIncidentCode?: string;
+  membersCount: number;
+  leaderName: string;
+  contactRadio: string;
+  vehicleType: string;
+  equipment: string[];
+  updatedAt: string;
+}
 
 export interface PriorityScoreFactor {
   label: string;
@@ -49,8 +77,14 @@ export interface Incident {
   severityOverridden: boolean;
   priorityScore: number; // 0 - 100
   priorityFactors: PriorityScoreFactor[];
+  priorityRank?: number; // Calculated dynamic rank #1, #2, #3...
   status: IncidentStatus;
   assignedUnit?: string;
+  assignedTeamId?: string;
+  assignedTeamName?: string;
+  assignedTeamCategory?: string;
+  assignedDistanceKm?: number;
+  assignedEtaMinutes?: number;
   imageUrl?: string;
   isDemo: boolean;
   createdAt: string;
@@ -68,6 +102,8 @@ export interface IncidentActivity {
     | 'SEVERITY_OVERRIDDEN'
     | 'STATUS_CHANGED'
     | 'UNIT_ASSIGNED'
+    | 'TEAM_DISPATCHED'
+    | 'TEAM_RELEASED'
     | 'NOTE_ADDED'
     | 'DUPLICATE_FLAGGED'
     | 'DUPLICATE_DISMISSED'
@@ -82,6 +118,7 @@ export interface IncidentActivity {
 export interface DashboardMetrics {
   total: number;
   critical: number;
+  assigned: number;
   pending: number;
   inProgress: number;
   resolved: number;
@@ -90,6 +127,10 @@ export interface DashboardMetrics {
   low: number;
   avgPriorityScore: number;
   totalCasualties: number;
+  availableTeams: number;
+  busyTeams: number;
+  totalTeams: number;
+  fleetReadinessPercent: number;
   byCategory: { category: EmergencyCategory; count: number; criticalCount: number }[];
   bySeverity: { severity: SeverityLevel; count: number; color: string }[];
   byStatus: { status: IncidentStatus; count: number; color: string }[];

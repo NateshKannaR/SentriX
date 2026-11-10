@@ -228,9 +228,15 @@ export const CitizenPortalPage: React.FC = () => {
 
                     <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-slate-400">
                       <span>Casualties: <strong className="text-white">{inc.peopleAffected}</strong></span>
-                      <span className="text-cyan-400 font-semibold flex items-center gap-1">
-                        Select to Update <ArrowRight className="w-3 h-3" />
-                      </span>
+                      {inc.assignedTeamName ? (
+                        <span className="text-indigo-400 font-semibold truncate max-w-[140px] flex items-center gap-1">
+                          ⚡ {inc.assignedTeamName}
+                        </span>
+                      ) : (
+                        <span className="text-cyan-400 font-semibold flex items-center gap-1">
+                          Select to Update <ArrowRight className="w-3 h-3" />
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
@@ -254,6 +260,14 @@ export const CitizenPortalPage: React.FC = () => {
                     <p className="text-xs text-slate-400 font-mono mt-0.5">
                       Code: <strong className="text-cyan-400">{selectedIncident.incidentCode}</strong> • Location: {selectedIncident.location}
                     </p>
+                    {selectedIncident.assignedTeamName && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-mono">
+                        <span>Dispatched: <strong>{selectedIncident.assignedTeamName}</strong></span>
+                        {selectedIncident.assignedEtaMinutes !== undefined && (
+                          <span className="text-amber-400">• ETA ~{selectedIncident.assignedEtaMinutes}m</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <Link
                     to={`/track?code=${selectedIncident.incidentCode}`}

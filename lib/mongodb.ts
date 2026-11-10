@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI || 'mongodb+srv://Natesh:Natesh@cluster0.wwp3oig.mongodb.net/?retryWrites=true&w=majority';
-const dbName = process.env.MONGODB_DB || 'sentinel360';
+const dbName = process.env.MONGODB_DB || 'sentrix';
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;

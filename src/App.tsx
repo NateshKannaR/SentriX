@@ -11,6 +11,7 @@ import { IncidentsPage } from './pages/admin/IncidentsPage';
 import { MapPage } from './pages/admin/MapPage';
 import { DuplicatesPage } from './pages/admin/DuplicatesPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
+import { TeamsPage } from './pages/admin/TeamsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
 import { FloatingEmergencyWhatsApp } from './components/common/FloatingEmergencyWhatsApp';
 
@@ -30,6 +31,7 @@ export const App: React.FC = () => {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="teams" element={<TeamsPage />} />
           <Route path="map" element={<MapPage />} />
           <Route path="duplicates" element={<DuplicatesPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />

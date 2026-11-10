@@ -196,97 +196,100 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* DASHBOARD STATISTICS CARDS (Clean Minimalist Cards) */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        {/* Total Incidents */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-cyan-500/40 transition-all">
+      {/* DASHBOARD STATISTICS CARDS - ROUND 2 CORE METRICS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        {/* 1. Total Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-cyan-500/40 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
-              {t('dash.totalReported', 'TOTAL REPORTED')}
+              Total Incidents
             </span>
-            <div className="w-7 h-7 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/30">
-              <Radio className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-lg bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/30">
+              <Radio className="w-3 h-3" />
             </div>
           </div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-white">
-            {metrics.total}
-          </div>
-          <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
-            <span className="truncate">{t('dash.dataDriven', '100% Data-Driven')}</span>
-          </div>
+          <div className="font-mono text-2xl font-black text-white">{metrics.total}</div>
+          <div className="text-[10px] font-mono text-slate-400 truncate">All active & past</div>
         </div>
 
-        {/* Critical Incidents */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-red-500/50 shadow-lg space-y-2 relative overflow-hidden group hover:border-red-500 transition-all">
+        {/* 2. Critical Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-red-500/50 shadow-lg space-y-2 relative overflow-hidden group hover:border-red-500 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-red-400 font-bold flex items-center gap-1">
-              <ShieldAlert className="w-3 h-3 text-red-400" /> {t('dash.critical', 'CRITICAL')}
+              Critical
             </span>
-            <div className="w-7 h-7 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/40 animate-pulse">
-              <ShieldAlert className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/40 animate-pulse">
+              <ShieldAlert className="w-3 h-3" />
             </div>
           </div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-red-400">
-            {metrics.critical}
-          </div>
-          <div className="text-[10px] font-mono text-red-400/80 truncate">
-            {t('dash.immediateDispatch', 'Immediate dispatch')}
-          </div>
+          <div className="font-mono text-2xl font-black text-red-400">{metrics.critical}</div>
+          <div className="text-[10px] font-mono text-red-400/80 truncate">Immediate dispatch</div>
         </div>
 
-        {/* Pending Incidents */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-amber-500/40 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold">
-              {t('dash.pending', 'PENDING')}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <Clock className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-amber-400">
-            {metrics.pending}
-          </div>
-          <div className="text-[10px] font-mono text-slate-400 truncate">
-            {t('dash.awaitingTriage', 'Awaiting triage')}
-          </div>
-        </div>
-
-        {/* In Progress */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-cyan-500/40 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold">
-              {t('dash.inProgress', 'IN PROGRESS')}
-            </span>
-            <div className="w-7 h-7 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-              <Activity className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-cyan-400">
-            {metrics.inProgress}
-          </div>
-          <div className="text-[10px] font-mono text-slate-400 truncate">
-            {t('dash.fieldDeployed', 'Field deployed')}
-          </div>
-        </div>
-
-        {/* Resolved */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-emerald-500/40 transition-all col-span-2 lg:col-span-1">
+        {/* 3. Available Response Teams */}
+        <Link
+          to="/admin/teams"
+          onClick={() => soundFx.playClick()}
+          className="p-4 rounded-2xl bg-[#0A101D] border border-emerald-500/40 shadow-lg space-y-2 relative overflow-hidden group hover:border-emerald-400 transition-all block"
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
-              {t('dash.resolved', 'RESOLVED')}
+              Available Teams
             </span>
-            <div className="w-7 h-7 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <Truck className="w-3 h-3" />
             </div>
           </div>
-          <div className="font-mono text-2xl sm:text-3xl font-black text-emerald-400">
-            {metrics.resolved}
-          </div>
+          <div className="font-mono text-2xl font-black text-emerald-400">{metrics.availableTeams}</div>
           <div className="text-[10px] font-mono text-emerald-400/80 truncate">
-            {t('dash.sceneCleared', 'Scene cleared')}
+            {metrics.fleetReadinessPercent}% Fleet Ready →
           </div>
+        </Link>
+
+        {/* 4. Busy Response Teams */}
+        <Link
+          to="/admin/teams"
+          onClick={() => soundFx.playClick()}
+          className="p-4 rounded-2xl bg-[#0A101D] border border-amber-500/40 shadow-lg space-y-2 relative overflow-hidden group hover:border-amber-400 transition-all block"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold">
+              Busy Teams
+            </span>
+            <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <Activity className="w-3 h-3 animate-pulse" />
+            </div>
+          </div>
+          <div className="font-mono text-2xl font-black text-amber-400">{metrics.busyTeams}</div>
+          <div className="text-[10px] font-mono text-amber-400/80 truncate">Deployed in field</div>
+        </Link>
+
+        {/* 5. Assigned Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-indigo-500/40 shadow-lg space-y-2 relative overflow-hidden group hover:border-indigo-400 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-400 font-bold">
+              Assigned
+            </span>
+            <div className="w-6 h-6 rounded-lg bg-indigo-500/15 text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+              <Clock className="w-3 h-3" />
+            </div>
+          </div>
+          <div className="font-mono text-2xl font-black text-indigo-400">{metrics.assigned}</div>
+          <div className="text-[10px] font-mono text-indigo-300/80 truncate">Unit dispatched</div>
+        </div>
+
+        {/* 6. Resolved Incidents */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg space-y-2 relative overflow-hidden group hover:border-emerald-500/40 transition-all">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
+              Resolved
+            </span>
+            <div className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <CheckCircle2 className="w-3 h-3" />
+            </div>
+          </div>
+          <div className="font-mono text-2xl font-black text-emerald-400">{metrics.resolved}</div>
+          <div className="text-[10px] font-mono text-emerald-400/80 truncate">Scene stabilized</div>
         </div>
       </div>
 
@@ -417,22 +420,22 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <Link
-            to="/admin/incidents?severity=Critical"
+            to="/admin/incidents"
             onClick={() => soundFx.playClick()}
-            className="text-xs font-bold text-red-400 hover:underline flex items-center gap-1"
+            className="text-xs font-bold text-cyan-400 hover:underline flex items-center gap-1 font-mono"
           >
-            <span>{t('dash.all', 'All')} {t('dash.critical', 'Critical')}</span>
+            <span>View All Ranked Incidents</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        {criticalQueue.length === 0 ? (
+        {incidents.filter(i => i.status !== 'Resolved').length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-slate-400">
-            ✅ All critical emergencies have been resolved or stabilized.
+            ✅ All emergencies have been resolved or stabilized.
           </div>
         ) : (
           <div className="divide-y divide-white/5">
-            {criticalQueue.map(inc => (
+            {incidents.filter(i => i.status !== 'Resolved').slice(0, 6).map((inc, index) => (
               <div
                 key={inc.id}
                 className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-white/[0.03] px-3 rounded-2xl transition-colors"
@@ -442,21 +445,30 @@ export const DashboardPage: React.FC = () => {
                     soundFx.playClick();
                     onOpenIncident(inc);
                   }}
-                  className="space-y-1 cursor-pointer flex-1"
+                  className="space-y-1.5 cursor-pointer flex-1"
                 >
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold text-cyan-400">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-black border border-cyan-500/40">
+                      RANK #{inc.priorityRank || index + 1}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-white">
                       {inc.incidentCode}
                     </span>
                     <CategoryBadge category={inc.category} size="sm" />
                     <SeverityBadge severity={inc.severity} size="sm" />
                     <StatusBadge status={inc.status} size="sm" />
+                    {inc.assignedTeamName && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-bold flex items-center gap-1">
+                        <Truck className="w-3 h-3" />
+                        {inc.assignedTeamName} ({inc.assignedDistanceKm ?? '—'} km)
+                      </span>
+                    )}
                   </div>
                   <h4 className="text-sm font-bold text-white line-clamp-1">
                     {inc.title}
                   </h4>
                   <p className="text-xs text-slate-400">
-                    📍 {inc.location} • 👥 {inc.peopleAffected} casualties reported
+                    📍 {inc.location} • 👥 {inc.peopleAffected} casualties • Score: <strong className="text-cyan-400 font-mono">{inc.priorityScore}/100</strong>
                   </p>
                 </div>
 
@@ -496,9 +508,9 @@ export const DashboardPage: React.FC = () => {
                       soundFx.playClick();
                       onOpenIncident(inc);
                     }}
-                    className="text-xs font-bold text-cyan-400 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-cyan-400 hover:underline flex items-center gap-1 font-mono"
                   >
-                    <span>{t('dash.inspectDossier', 'Inspect Dossier')}</span>
+                    <span>Inspect</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>

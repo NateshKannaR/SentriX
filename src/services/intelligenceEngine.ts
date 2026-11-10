@@ -136,36 +136,58 @@ export function analyzeIncidentIntelligence(input: IntelligenceInput): Intellige
     recommendedSeverity = 'Low';
   }
 
-  // Calculate 0 - 100 Priority Score
-  // Normalized formula balancing severity weight (40%), people impact (35%), and keyword threat (25%)
+  // Calculate 0 - 100 Priority Score based on the 4 mandatory factors:
+  // 1. Severity (40%)
+  // 2. People Affected (30%)
+  // 3. Time Since Reporting aging escalation (15%)
+  // 4. Emergency Category urgency (15%)
   const severityMultiplier =
     recommendedSeverity === 'Critical' ? 40 :
-    recommendedSeverity === 'High' ? 30 :
-    recommendedSeverity === 'Medium' ? 18 : 8;
+    recommendedSeverity === 'High' ? 28 :
+    recommendedSeverity === 'Medium' ? 16 : 8;
 
-  const peopleFactor = Math.min(35, Math.round((Math.min(count, 20) / 20) * 35));
-  const threatFactor = Math.min(25, Math.round((keywordScore / 40) * 25));
+  const peopleFactor = Math.min(30, Math.round((Math.min(count, 20) / 20) * 30));
 
-  const priorityScore = Math.min(100, Math.max(5, severityMultiplier + peopleFactor + threatFactor));
+  // Time elapsed aging factor (+1 per 10 mins, up to +15 pts)
+  const elapsedMinutes = input.createdAt
+    ? Math.max(0, Math.floor((Date.now() - new Date(input.createdAt).getTime()) / (1000 * 60)))
+    : 0;
+  const timeFactor = Math.min(15, Math.floor(elapsedMinutes / 10));
+
+  // Category urgency factor (up to 15 pts)
+  let catUrgency = 10;
+  if (input.category === 'Building Collapse' || input.category === 'Fire Emergency') catUrgency = 15;
+  else if (input.category === 'Medical Emergency') catUrgency = 14;
+  else if (input.category === 'Flood') catUrgency = 12;
+  else if (input.category === 'Road Accident') catUrgency = 10;
+  else catUrgency = 6;
+
+  const priorityScore = Math.min(100, Math.max(10, severityMultiplier + peopleFactor + timeFactor + catUrgency));
 
   const priorityFactors: PriorityScoreFactor[] = [
     {
-      label: 'Severity Base',
+      label: 'Severity Level',
       score: severityMultiplier,
       weight: '40%',
-      description: `Assessed as ${recommendedSeverity} priority level`,
+      description: `${recommendedSeverity} classification (${severityMultiplier}/40 pts)`,
     },
     {
       label: 'Casualty Impact',
       score: peopleFactor,
-      weight: '35%',
-      description: `${count} individual(s) potentially affected`,
+      weight: '30%',
+      description: `${count} individual(s) at direct risk (${peopleFactor}/30 pts)`,
     },
     {
-      label: 'Threat & Urgency Factor',
-      score: threatFactor,
-      weight: '25%',
-      description: `${detectedCritical.length + detectedHigh.length} risk keywords matched in incident dispatch brief`,
+      label: 'Category Urgency',
+      score: catUrgency,
+      weight: '15%',
+      description: `${input.category} baseline response urgency (${catUrgency}/15 pts)`,
+    },
+    {
+      label: 'Time Since Reporting',
+      score: timeFactor,
+      weight: '15%',
+      description: `${elapsedMinutes}m elapsed since report (+${timeFactor} escalation pts)`,
     },
   ];
 
@@ -177,8 +199,109 @@ export function analyzeIncidentIntelligence(input: IntelligenceInput): Intellige
   };
 }
 
+/**
+ * Recalculates dynamic priority score with live elapsed time for an existing incident
+ */
+export function calculateDynamicPriorityScore(incident: Incident): {
+  priorityScore: number;
+  priorityFactors: PriorityScoreFactor[];
+  elapsedMinutes: number;
+} {
+  const elapsedMinutes = incident.createdAt
+    ? Math.max(0, Math.floor((Date.now() - new Date(incident.createdAt).getTime()) / (1000 * 60)))
+    : 0;
+
+  // Severity Weight (40%)
+  const severityMultiplier =
+    incident.severity === 'Critical' ? 40 :
+    incident.severity === 'High' ? 28 :
+    incident.severity === 'Medium' ? 16 : 8;
+
+  // Casualty Factor (30%)
+  const count = Math.max(0, incident.peopleAffected || 0);
+  const peopleFactor = Math.min(30, Math.round((Math.min(count, 20) / 20) * 30));
+
+  // Category Urgency (15%)
+  let catUrgency = 10;
+  if (incident.category === 'Building Collapse' || incident.category === 'Fire Emergency') catUrgency = 15;
+  else if (incident.category === 'Medical Emergency') catUrgency = 14;
+  else if (incident.category === 'Flood') catUrgency = 12;
+  else if (incident.category === 'Road Accident') catUrgency = 10;
+  else catUrgency = 6;
+
+  // Aging Escalation Factor (15%): +1 pt per 10 mins unattended, capped at 15
+  const timeFactor = incident.status === 'Resolved' ? 0 : Math.min(15, Math.floor(elapsedMinutes / 10));
+
+  const priorityScore = Math.min(100, Math.max(10, severityMultiplier + peopleFactor + catUrgency + timeFactor));
+
+  const priorityFactors: PriorityScoreFactor[] = [
+    {
+      label: 'Severity Level',
+      score: severityMultiplier,
+      weight: '40%',
+      description: `${incident.severity} classification (${severityMultiplier}/40 pts)`,
+    },
+    {
+      label: 'Casualty Impact',
+      score: peopleFactor,
+      weight: '30%',
+      description: `${count} person(s) affected (${peopleFactor}/30 pts)`,
+    },
+    {
+      label: 'Category Urgency',
+      score: catUrgency,
+      weight: '15%',
+      description: `${incident.category} baseline urgency (${catUrgency}/15 pts)`,
+    },
+    {
+      label: 'Time Aging Escalation',
+      score: timeFactor,
+      weight: '15%',
+      description: incident.status === 'Resolved'
+        ? 'Resolved incident (escalation cleared)'
+        : `${elapsedMinutes}m elapsed since report (+${timeFactor}/15 aging escalation pts)`,
+    },
+  ];
+
+  return {
+    priorityScore,
+    priorityFactors,
+    elapsedMinutes,
+  };
+}
+
+/**
+ * Automatically ranks incidents based on 4 factors:
+ * Severity, People Affected, Time Since Reporting, and Category
+ */
+export function rankIncidents(incidents: Incident[]): Incident[] {
+  // Compute dynamic scores
+  const withDynamic = incidents.map(inc => {
+    const dynamic = calculateDynamicPriorityScore(inc);
+    return {
+      ...inc,
+      priorityScore: dynamic.priorityScore,
+      priorityFactors: dynamic.priorityFactors,
+    };
+  });
+
+  // Sort: Active before resolved, then higher priority score, then newer
+  const sorted = [...withDynamic].sort((a, b) => {
+    if (a.status === 'Resolved' && b.status !== 'Resolved') return 1;
+    if (a.status !== 'Resolved' && b.status === 'Resolved') return -1;
+    if (b.priorityScore !== a.priorityScore) return b.priorityScore - a.priorityScore;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+
+  // Assign 1-indexed priority rank (#1, #2, #3...)
+  return sorted.map((inc, index) => ({
+    ...inc,
+    priorityRank: index + 1,
+  }));
+}
+
 // Haversine distance in kilometers
-function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+export function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;

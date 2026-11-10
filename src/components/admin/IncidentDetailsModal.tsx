@@ -5,6 +5,7 @@ import { CategoryBadge } from '../common/CategoryBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import { PriorityGauge } from '../common/PriorityGauge';
 import { incidentService } from '../../services/incidentService';
+import { teamService, NearestTeamMatch } from '../../services/teamService';
 import { soundFx } from '../../utils/soundEffects';
 import {
   X,
@@ -24,6 +25,10 @@ import {
   MessageSquare,
   Activity,
   Crosshair,
+  Radio,
+  Navigation,
+  Zap,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface IncidentDetailsModalProps {
@@ -33,15 +38,6 @@ interface IncidentDetailsModalProps {
   onIncidentUpdated: () => void;
   onOpenDuplicate?: (incident: Incident) => void;
 }
-
-const UNIT_PRESETS = [
-  'ALS Ambulance 108',
-  'Fire Tender Battalion 4',
-  'NDRF Disaster Squad Alpha',
-  'Traffic Police Patrol 09',
-  'SDRF Inflatable Boat Team 2',
-  'Hazmat Response Unit 01',
-];
 
 export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
   isOpen,
@@ -62,12 +58,33 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activities, setActivities] = useState<IncidentActivity[]>([]);
 
+  const [nearestTeams, setNearestTeams] = useState<NearestTeamMatch[]>([]);
+
   useEffect(() => {
     setCurrentStatus(incident.status);
     setCurrentSeverity(incident.severity);
     setAssignedUnit(incident.assignedUnit || '');
     setActivities(incidentService.getActivities(incident.id));
+    if (incident) {
+      setNearestTeams(teamService.findNearestTeamsForIncident(incident));
+    }
   }, [incident]);
+
+  const handleAssignTeam = (match: NearestTeamMatch) => {
+    soundFx.playSuccess();
+    setAssignedUnit(match.team.name);
+    setCurrentStatus('Assigned');
+    incidentService.assignResponseTeam(
+      incident.id,
+      match.team,
+      match.distanceKm,
+      match.etaMinutes,
+      'Commander Aditi Rao'
+    );
+    setActivities(incidentService.getActivities(incident.id));
+    setNearestTeams(teamService.findNearestTeamsForIncident(incident));
+    onIncidentUpdated();
+  };
 
   const handleStatusChange = (newStatus: IncidentStatus) => {
     soundFx.playClick();
@@ -401,19 +418,24 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
 
           {/* Right Column: Dispatch Actions & Activity Timeline */}
           <div className="space-y-6">
-            {/* Quick Status Updater */}
+            {/* Incident Lifecycle Controller */}
             <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 space-y-3">
-              <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
-                Operational Status Controller
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {(['Reported', 'Pending', 'In Progress', 'Resolved'] as IncidentStatus[]).map(st => (
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
+                  Incident Lifecycle Status
+                </h3>
+                <span className="text-[9px] font-mono text-cyan-400 font-bold">
+                  STEP-BY-STEP WORKFLOW
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {(['Reported', 'Assigned', 'In Progress', 'Resolved'] as IncidentStatus[]).map((st) => (
                   <button
                     key={st}
                     onClick={() => handleStatusChange(st)}
-                    className={`py-2.5 px-3 rounded-xl text-xs font-mono font-black transition-all border ${
+                    className={`py-2 px-2 rounded-xl text-xs font-mono font-black transition-all border text-center ${
                       currentStatus === st
-                        ? 'bg-sentinel-cyan text-sentinel-navy border-transparent shadow-lg shadow-sentinel-cyan/30 glow-cyan'
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/30'
                         : 'bg-[#071426] text-slate-300 border-white/10 hover:border-white/20'
                     }`}
                   >
@@ -423,30 +445,110 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Assign Response Unit with Quick Presets */}
+            {/* Location-Based Response Team Dispatcher */}
             <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 space-y-3">
-              <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-                <Truck className="w-4 h-4 text-sentinel-cyan" />
-                Dispatch Response Unit
-              </h3>
-              <div className="flex flex-wrap gap-1.5">
-                {UNIT_PRESETS.map((unit, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleAssignUnit(unit)}
-                    className="text-[10px] font-mono px-2 py-1 rounded-lg bg-[#071426] hover:bg-white/10 text-slate-300 border border-white/10"
-                  >
-                    + {unit.split(' ')[0]} {unit.split(' ')[1]}
-                  </button>
-                ))}
+              <div className="flex items-center justify-between">
+                <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-cyan-400" />
+                  Location-Based Team Dispatch
+                </h3>
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold">
+                  HAVERSINE GPS
+                </span>
               </div>
-              <div className="pt-2">
+
+              {/* Active Assigned Team Telemetry */}
+              {incident.assignedTeamName && (
+                <div className="p-3.5 rounded-xl bg-gradient-to-r from-cyan-950/70 to-[#0A1322] border border-cyan-500/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1">
+                      <Zap className="w-3.5 h-3.5 text-cyan-400" />
+                      Assigned Responding Unit
+                    </span>
+                    <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300">
+                      EN ROUTE
+                    </span>
+                  </div>
+                  <div className="text-sm font-black text-white">{incident.assignedTeamName}</div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-slate-300">
+                    <span className="flex items-center gap-1">
+                      <Navigation className="w-3.5 h-3.5 text-cyan-400" />
+                      Distance: <strong className="text-white">{incident.assignedDistanceKm ?? '1.5'} km</strong>
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
+                      ETA: <strong className="text-amber-300">{incident.assignedEtaMinutes ?? '4'} mins</strong>
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Nearest Available Teams List */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-mono uppercase text-slate-400 block font-bold">
+                  Nearest Available Units (Auto-Calculated Distance):
+                </span>
+                {nearestTeams.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No GPS coordinates or all response teams currently deployed.</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {nearestTeams.slice(0, 3).map((match) => (
+                      <div
+                        key={match.team.id}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                          match.isBestFit
+                            ? 'bg-emerald-950/40 border-emerald-500/40'
+                            : 'bg-[#071426] border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="overflow-hidden">
+                          <div className="flex items-center gap-1.5">
+                            {match.isBestFit && (
+                              <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                                BEST FIT
+                              </span>
+                            )}
+                            <span className="text-xs font-bold text-white truncate">{match.team.name}</span>
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
+                            <span>{match.team.category}</span>
+                            <span>•</span>
+                            <span className="text-cyan-400 font-bold">{match.distanceKm} km</span>
+                            <span>•</span>
+                            <span className="text-amber-400 font-bold">~{match.etaMinutes}m ETA</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleAssignTeam(match)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold shrink-0 transition-transform active:scale-95 flex items-center gap-1 ${
+                            match.isBestFit
+                              ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
+                              : 'bg-white/10 hover:bg-white/20 text-white'
+                          }`}
+                        >
+                          <Zap className="w-3 h-3" />
+                          <span>Dispatch</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Custom Unit fallback */}
+              <div className="pt-1">
                 <input
                   type="text"
                   value={assignedUnit}
                   onChange={e => setAssignedUnit(e.target.value)}
-                  placeholder="Custom unit name..."
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && assignedUnit.trim()) {
+                      handleAssignUnit(assignedUnit.trim());
+                    }
+                  }}
+                  placeholder="Or enter custom callsign / badge ID..."
                   className="w-full text-xs rounded-xl border border-white/15 bg-[#071426] px-3 py-2 text-white"
                 />
               </div>

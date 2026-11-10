@@ -16,11 +16,13 @@ import {
   FileText,
   Hospital,
   X,
+  Truck,
 } from 'lucide-react';
 import { Incident } from '../../types';
 import { soundFx } from '../../utils/soundEffects';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { teamService } from '../../services/teamService';
 
 interface AdminSidebarProps {
   incidents: Incident[];
@@ -47,8 +49,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const { t } = useLanguage();
   const { session } = useAuth();
+  const [teams, setTeams] = React.useState(() => teamService.getTeams());
+
+  React.useEffect(() => {
+    const unsub = teamService.subscribe(() => setTeams(teamService.getTeams()));
+    return unsub;
+  }, []);
+
   const criticalCount = incidents.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
   const duplicateCount = incidents.filter(i => Boolean(i.duplicateWarning) && i.status !== 'Resolved').length;
+  const availableTeamsCount = teams.filter(t => t.status === 'Available').length;
 
   const navItems = [
     {
@@ -62,6 +72,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       icon: ListFilter,
       badge: incidents.length,
       criticalBadge: criticalCount > 0 ? criticalCount : undefined,
+    },
+    {
+      to: '/admin/teams',
+      label: 'Response Teams',
+      icon: Truck,
+      badge: `${availableTeamsCount}/${teams.length}`,
     },
     {
       to: '/admin/map',

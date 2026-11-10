@@ -1,6 +1,6 @@
 import React from 'react';
 import { IncidentStatus } from '../../types';
-import { Clock, Hourglass, Activity, CheckCircle } from 'lucide-react';
+import { Clock, Hourglass, Activity, CheckCircle, Truck } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: IncidentStatus;
@@ -15,6 +15,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' })
     case 'Reported':
       bgClass = 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
       Icon = Clock;
+      break;
+    case 'Assigned':
+      bgClass = 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30';
+      Icon = Truck;
       break;
     case 'Pending':
       bgClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';

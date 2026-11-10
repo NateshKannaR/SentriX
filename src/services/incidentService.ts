@@ -5,9 +5,11 @@ import {
   SeverityLevel,
   EmergencyCategory,
   DashboardMetrics,
+  ResponseTeam,
 } from '../types';
-import { analyzeIncidentIntelligence, detectDuplicateIncident } from './intelligenceEngine';
+import { analyzeIncidentIntelligence, detectDuplicateIncident, rankIncidents } from './intelligenceEngine';
 import { getInitialSeedIncidents, INITIAL_ACTIVITIES } from './seedData';
+import { teamService } from './teamService';
 
 const INCIDENTS_STORAGE_KEY = 'sentrix_incidents_v2';
 const ACTIVITIES_STORAGE_KEY = 'sentrix_activities_v2';
@@ -168,7 +170,7 @@ class IncidentService {
   }
 
   public getIncidents(): Incident[] {
-    return [...this.incidents];
+    return rankIncidents(this.incidents);
   }
 
   public getIncidentById(id: string): Incident | undefined {
@@ -325,14 +327,25 @@ class IncidentService {
     const oldStatus = this.incidents[idx].status;
     if (oldStatus === newStatus && !notes) return this.incidents[idx];
 
+    const current = this.incidents[idx];
     const updated: Incident = {
-      ...this.incidents[idx],
+      ...current,
       status: newStatus,
       updatedAt: new Date().toISOString(),
     };
 
+    // If resolving, automatically free up assigned response team
+    if (newStatus === 'Resolved' && current.assignedTeamId) {
+      teamService.setTeamStatus(current.assignedTeamId, 'Available');
+      this.addActivity(id, {
+        action: 'TEAM_RELEASED',
+        actor: actor || 'Incident Commander',
+        description: `Response Unit "${current.assignedTeamName || current.assignedUnit}" completed mission and returned to Available status.`,
+      });
+    }
+
     this.incidents[idx] = updated;
-    this.saveIncidents();
+    this.saveIncidents('STATUS_CHANGED', updated);
 
     this.addActivity(id, {
       action: 'STATUS_CHANGED',
@@ -347,6 +360,63 @@ class IncidentService {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: newStatus, actor, notes }),
+    }).catch(() => {});
+
+    return updated;
+  }
+
+  public assignResponseTeam(
+    incidentId: string,
+    team: ResponseTeam,
+    distanceKm: number,
+    etaMinutes: number,
+    actor = 'Incident Commander'
+  ): Incident | undefined {
+    const idx = this.incidents.findIndex(i => i.id === incidentId);
+    if (idx === -1) return undefined;
+
+    const current = this.incidents[idx];
+    const updated: Incident = {
+      ...current,
+      status: 'Assigned',
+      assignedUnit: team.name,
+      assignedTeamId: team.id,
+      assignedTeamName: team.name,
+      assignedTeamCategory: team.category,
+      assignedDistanceKm: distanceKm,
+      assignedEtaMinutes: etaMinutes,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.incidents[idx] = updated;
+    this.saveIncidents('TEAM_DISPATCHED', updated);
+
+    // Update Team availability to Busy
+    teamService.setTeamStatus(team.id, 'Busy', incidentId, current.incidentCode);
+
+    // Record activity
+    this.addActivity(incidentId, {
+      action: 'TEAM_DISPATCHED',
+      newValue: team.name,
+      actor,
+      description: `Rapid Response Unit "${team.name}" (${team.category}) dispatched to scene. Ground transit distance: ${distanceKm} km, ETA: ${etaMinutes} mins. Radio: ${team.contactRadio}.`,
+    });
+
+    // Push to backend
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: incidentId,
+        status: 'Assigned',
+        assignedTeamId: team.id,
+        assignedTeamName: team.name,
+        assignedTeamCategory: team.category,
+        assignedDistanceKm: distanceKm,
+        assignedEtaMinutes: etaMinutes,
+        assignedUnit: team.name,
+        actor,
+      }),
     }).catch(() => {});
 
     return updated;
@@ -397,7 +467,7 @@ class IncidentService {
     const updated: Incident = {
       ...this.incidents[idx],
       assignedUnit: unitName,
-      status: this.incidents[idx].status === 'Reported' ? 'In Progress' : this.incidents[idx].status,
+      status: this.incidents[idx].status === 'Reported' ? 'Assigned' : this.incidents[idx].status,
       updatedAt: new Date().toISOString(),
     };
 
@@ -414,7 +484,7 @@ class IncidentService {
     fetch('/api/incidents', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, assignedUnit: unitName, actor }),
+      body: JSON.stringify({ id, assignedUnit: unitName, status: updated.status, actor }),
     }).catch(() => {});
 
     return updated;
@@ -683,6 +753,8 @@ class IncidentService {
     let high = 0;
     let medium = 0;
     let low = 0;
+    let reported = 0;
+    let assigned = 0;
     let pending = 0;
     let inProgress = 0;
     let resolved = 0;
@@ -704,7 +776,9 @@ class IncidentService {
       else if (inc.severity === 'Medium') medium++;
       else if (inc.severity === 'Low') low++;
 
-      if (inc.status === 'Pending') pending++;
+      if (inc.status === 'Reported') reported++;
+      else if (inc.status === 'Assigned') assigned++;
+      else if (inc.status === 'Pending') pending++;
       else if (inc.status === 'In Progress') inProgress++;
       else if (inc.status === 'Resolved') resolved++;
 
@@ -718,6 +792,12 @@ class IncidentService {
         }
       }
     }
+
+    const allTeams = teamService.getTeams();
+    const availableTeams = allTeams.filter(t => t.status === 'Available').length;
+    const busyTeams = allTeams.filter(t => t.status === 'Busy' || t.status === 'En Route').length;
+    const totalTeams = allTeams.length;
+    const fleetReadinessPercent = totalTeams > 0 ? Math.round((availableTeams / totalTeams) * 100) : 100;
 
     const avgPriorityScore = total > 0 ? Math.round(totalScore / total) : 0;
 
@@ -735,7 +815,8 @@ class IncidentService {
     ];
 
     const byStatus: { status: IncidentStatus; count: number; color: string }[] = [
-      { status: 'Reported', count: total - (pending + inProgress + resolved), color: '#3B82F6' },
+      { status: 'Reported', count: reported, color: '#3B82F6' },
+      { status: 'Assigned', count: assigned, color: '#6366F1' },
       { status: 'Pending', count: pending, color: '#F5A623' },
       { status: 'In Progress', count: inProgress, color: '#16C7E8' },
       { status: 'Resolved', count: resolved, color: '#19B878' },
@@ -759,6 +840,7 @@ class IncidentService {
     return {
       total,
       critical,
+      assigned,
       pending,
       inProgress,
       resolved,
@@ -767,6 +849,10 @@ class IncidentService {
       low,
       avgPriorityScore,
       totalCasualties,
+      availableTeams,
+      busyTeams,
+      totalTeams,
+      fleetReadinessPercent,
       byCategory,
       bySeverity,
       byStatus,

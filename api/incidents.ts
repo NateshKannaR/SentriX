@@ -149,12 +149,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'PUT') {
-      const { id, status, severity, assignedUnit, duplicateOf, dismissDuplicate, actor, notes } = req.body;
+      const {
+        id,
+        status,
+        severity,
+        assignedUnit,
+        assignedTeamId,
+        assignedTeamName,
+        assignedTeamCategory,
+        assignedDistanceKm,
+        assignedEtaMinutes,
+        duplicateOf,
+        dismissDuplicate,
+        actor,
+        notes,
+      } = req.body;
       if (!id) return res.status(400).json({ error: 'Incident ID is required' });
 
       const existing = await incidentsCol.findOne({ id } as any);
       if (!existing) return res.status(404).json({ error: 'Incident not found' });
 
+      const teamsCol = db.collection('teams');
       const updates: Partial<Incident> = { updatedAt: new Date().toISOString() };
       const now = new Date().toISOString();
 
@@ -170,6 +185,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           description: notes || `Operational status transitioned from ${existing.status} to ${status}.`,
           timestamp: now,
         } as any);
+
+        // If resolving, automatically free up assigned response team
+        if (status === 'Resolved' && existing.assignedTeamId) {
+          await teamsCol.updateOne(
+            { id: existing.assignedTeamId } as any,
+            { $set: { status: 'Available', assignedIncidentId: null, assignedIncidentCode: null, updatedAt: now } }
+          );
+        }
+      }
+
+      if (assignedTeamId) {
+        updates.assignedTeamId = assignedTeamId;
+        updates.assignedTeamName = assignedTeamName;
+        updates.assignedTeamCategory = assignedTeamCategory;
+        updates.assignedDistanceKm = assignedDistanceKm;
+        updates.assignedEtaMinutes = assignedEtaMinutes;
+        updates.assignedUnit = assignedTeamName || assignedUnit;
+        updates.status = 'Assigned';
+
+        // Mark response team as Busy
+        await teamsCol.updateOne(
+          { id: assignedTeamId } as any,
+          {
+            $set: {
+              status: 'Busy',
+              assignedIncidentId: id,
+              assignedIncidentCode: existing.incidentCode,
+              updatedAt: now,
+            },
+          }
+        );
+
+        await activitiesCol.insertOne({
+          id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          incidentId: id,
+          action: 'TEAM_DISPATCHED',
+          newValue: assignedTeamName,
+          actor: actor || 'Incident Commander',
+          description: `Dispatched ${assignedTeamName} (${assignedTeamCategory || 'Response Unit'}). Distance: ${assignedDistanceKm || 0} km, ETA: ${assignedEtaMinutes || 0} mins.`,
+          timestamp: now,
+        } as any);
+      } else if (assignedUnit && assignedUnit !== existing.assignedUnit) {
+        updates.assignedUnit = assignedUnit;
+        if (existing.status === 'Reported') updates.status = 'In Progress';
+        await activitiesCol.insertOne({
+          id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+          incidentId: id,
+          action: 'UNIT_ASSIGNED',
+          newValue: assignedUnit,
+          actor: actor || 'Dispatch Operator',
+          description: `Rapid Response Unit "${assignedUnit}" assigned to incident scene.`,
+          timestamp: now,
+        } as any);
       }
 
       if (severity && severity !== existing.severity) {
@@ -183,20 +251,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           newValue: severity,
           actor: actor || 'Command Center Chief',
           description: notes || `Commander manually adjusted severity classification to ${severity}.`,
-          timestamp: now,
-        } as any);
-      }
-
-      if (assignedUnit && assignedUnit !== existing.assignedUnit) {
-        updates.assignedUnit = assignedUnit;
-        if (existing.status === 'Reported') updates.status = 'In Progress';
-        await activitiesCol.insertOne({
-          id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          incidentId: id,
-          action: 'UNIT_ASSIGNED',
-          newValue: assignedUnit,
-          actor: actor || 'Dispatch Operator',
-          description: `Rapid Response Unit "${assignedUnit}" assigned to incident scene.`,
           timestamp: now,
         } as any);
       }
