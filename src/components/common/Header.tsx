@@ -168,7 +168,7 @@ export const Header: React.FC = () => {
                 >
                   <Globe className="w-3.5 h-3.5 text-sentinel-cyan" />
                   <span className="font-bold">{currentLanguageOption.flag}</span>
-                  <span className="hidden md:inline">{currentLanguageOption.code.toUpperCase()}</span>
+                  <span className="hidden md:inline">{currentLanguageOption.name}</span>
                 </button>
 
                 {isLangDropdownOpen && (

@@ -348,6 +348,22 @@ class IncidentService {
     return updated;
   }
 
+  public updateIncident(id: string, updates: Partial<Incident>): Incident | undefined {
+    if (updates.status) {
+      return this.updateIncidentStatus(id, updates.status);
+    }
+    const idx = this.incidents.findIndex(i => i.id === id);
+    if (idx === -1) return undefined;
+    const updated: Incident = {
+      ...this.incidents[idx],
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.incidents[idx] = updated;
+    this.saveIncidents();
+    return updated;
+  }
+
   public dismissDuplicateWarning(id: string): Incident | undefined {
     const idx = this.incidents.findIndex(i => i.id === id);
     if (idx === -1) return undefined;

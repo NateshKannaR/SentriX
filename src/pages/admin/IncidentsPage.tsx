@@ -7,6 +7,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { CategoryBadge } from '../../components/common/CategoryBadge';
 import { PriorityGauge } from '../../components/common/PriorityGauge';
 import { soundFx } from '../../utils/soundEffects';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   Search,
   Filter,
@@ -23,6 +24,8 @@ import {
   SlidersHorizontal,
   Flame,
   ShieldAlert,
+  Plane,
+  FileText,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -31,10 +34,20 @@ interface AdminContextType {
   onOpenDuplicate: (incident: Incident) => void;
   onSimulate: () => void;
   onReset: () => void;
+  onOpenDrone?: (inc?: Incident) => void;
+  onOpenPlaybook?: (inc?: Incident) => void;
+  onOpenHospitals?: () => void;
 }
 
 export const IncidentsPage: React.FC = () => {
-  const { incidents, onOpenIncident, onOpenDuplicate } = useOutletContext<AdminContextType>();
+  const { t } = useLanguage();
+  const {
+    incidents,
+    onOpenIncident,
+    onOpenDuplicate,
+    onOpenDrone,
+    onOpenPlaybook,
+  } = useOutletContext<AdminContextType>();
   const [searchParams] = useSearchParams();
 
   const initialCategory = searchParams.get('category') || 'ALL';
@@ -96,24 +109,27 @@ export const IncidentsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `sentrix_incidents_${Date.now()}.csv`);
+    link.setAttribute('download', `sentrix_intel_report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const handleInlineStatusChange = (id: string, newStatus: IncidentStatus, e: React.MouseEvent) => {
+  const handleInlineStatusChange = (
+    id: string,
+    newStatus: IncidentStatus,
+    e: React.MouseEvent
+  ) => {
     e.stopPropagation();
     soundFx.playClick();
-    incidentService.updateIncidentStatus(id, newStatus, 'Commander Aditi Rao');
+    incidentService.updateIncident(id, { status: newStatus });
   };
 
   const confirmDelete = () => {
-    if (incidentToDelete) {
-      soundFx.playAlert();
-      incidentService.deleteIncident(incidentToDelete.id);
-      setIncidentToDelete(null);
-    }
+    if (!incidentToDelete) return;
+    soundFx.playAlert();
+    incidentService.deleteIncident(incidentToDelete.id);
+    setIncidentToDelete(null);
   };
 
   return (
@@ -121,29 +137,29 @@ export const IncidentsPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Live Incident Management Console
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            {t('admin.nav.incidents', 'Live Incidents')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Prioritize, inspect, update status, and coordinate real-time disaster reports.
+            Prioritize, inspect, update status, and deploy tactical reconnaissance.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCSV}
-            className="px-4 py-2.5 rounded-xl bg-[#0B1E38] border border-white/10 hover:border-[#16C7E8] text-white text-xs font-bold flex items-center gap-2 shadow-lg transition-all hover:glow-cyan"
+            className="px-3.5 py-2 rounded-xl bg-[#0A101D] border border-white/10 hover:border-cyan-400 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
           >
-            <Download className="w-4 h-4 text-sentinel-cyan" />
+            <Download className="w-4 h-4 text-cyan-400" />
             <span>Export Intel CSV</span>
           </button>
         </div>
       </div>
 
       {/* Filter and Control Toolbar */}
-      <div className="bg-[#0B1E38]/90 p-5 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+      <div className="bg-[#0A101D] p-5 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
         {/* Quick Filter Pill Buttons */}
-        <div className="flex items-center gap-2 pb-3 border-b border-white/10 overflow-x-auto no-scrollbar py-0.5">
+        <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08] overflow-x-auto no-scrollbar py-0.5">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mr-1 shrink-0">
             Quick Views:
           </span>
@@ -154,11 +170,11 @@ export const IncidentsPage: React.FC = () => {
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               severityFilter === 'Critical'
-                ? 'bg-red-500/20 text-red-400 border border-red-500/40 glow-red'
+                ? 'bg-red-500/20 text-red-400 border border-red-500/40'
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
             }`}
           >
-            🔥 Critical Tier Only
+            🔥 {t('dash.critical', 'Critical')}
           </button>
           <button
             onClick={() => {
@@ -167,11 +183,11 @@ export const IncidentsPage: React.FC = () => {
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'In Progress'
-                ? 'bg-cyan-500/20 text-sentinel-cyan border border-cyan-500/40 glow-cyan'
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40'
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
             }`}
           >
-            ⚡ Under Active Dispatch
+            ⚡ {t('dash.inProgress', 'In Progress')}
           </button>
           <button
             onClick={() => {
@@ -184,7 +200,7 @@ export const IncidentsPage: React.FC = () => {
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
             }`}
           >
-            🕒 Newly Reported
+            🕒 {t('status.reported', 'Reported')}
           </button>
           {(categoryFilter !== 'ALL' || severityFilter !== 'ALL' || statusFilter !== 'ALL' || searchQuery) && (
             <button
@@ -211,8 +227,8 @@ export const IncidentsPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search code, title, street, keyword..."
-              className="w-full pl-10 pr-3 py-2.5 text-xs rounded-xl border border-white/15 bg-[#071426] text-white focus:outline-none focus:border-sentinel-cyan placeholder-slate-500"
+              placeholder={t('admin.header.search', 'Search code, title, street...')}
+              className="w-full pl-10 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#060B14] text-white focus:outline-none focus:border-cyan-400 placeholder-slate-400"
             />
           </div>
 
@@ -221,15 +237,15 @@ export const IncidentsPage: React.FC = () => {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
-              className="w-full text-xs rounded-xl border border-white/15 bg-[#071426] text-white px-3 py-2.5 focus:outline-none focus:border-sentinel-cyan font-semibold"
+              className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Categories</option>
-              <option value="Fire Emergency">Fire Emergency</option>
-              <option value="Road Accident">Road Accident</option>
-              <option value="Medical Emergency">Medical Emergency</option>
-              <option value="Flood">Flood</option>
-              <option value="Building Collapse">Building Collapse</option>
-              <option value="Other Emergencies">Other Emergencies</option>
+              <option value="Fire Emergency">{t('cat.fire', 'Fire Emergency')}</option>
+              <option value="Road Accident">{t('cat.road', 'Road Accident')}</option>
+              <option value="Medical Emergency">{t('cat.medical', 'Medical Emergency')}</option>
+              <option value="Flood">{t('cat.flood', 'Flood')}</option>
+              <option value="Building Collapse">{t('cat.collapse', 'Building Collapse')}</option>
+              <option value="Other Emergencies">{t('cat.other', 'Other Emergencies')}</option>
             </select>
           </div>
 
@@ -238,13 +254,13 @@ export const IncidentsPage: React.FC = () => {
             <select
               value={severityFilter}
               onChange={e => setSeverityFilter(e.target.value)}
-              className="w-full text-xs rounded-xl border border-white/15 bg-[#071426] text-white px-3 py-2.5 focus:outline-none focus:border-sentinel-cyan font-semibold"
+              className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Severities</option>
-              <option value="Critical">Critical</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
+              <option value="Critical">{t('sev.critical', 'Critical')}</option>
+              <option value="High">{t('sev.high', 'High')}</option>
+              <option value="Medium">{t('sev.medium', 'Medium')}</option>
+              <option value="Low">{t('sev.low', 'Low')}</option>
             </select>
           </div>
 
@@ -253,40 +269,26 @@ export const IncidentsPage: React.FC = () => {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="w-full text-xs rounded-xl border border-white/15 bg-[#071426] text-white px-3 py-2.5 focus:outline-none focus:border-sentinel-cyan font-semibold"
+              className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Statuses</option>
-              <option value="Reported">Reported</option>
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
+              <option value="Reported">{t('status.reported', 'Reported')}</option>
+              <option value="Pending">{t('status.pending', 'Pending')}</option>
+              <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
+              <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
             </select>
           </div>
         </div>
 
         {/* Sort and Counter Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/10 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-white/[0.08] text-xs">
           <div className="flex items-center gap-2 text-slate-400">
             <span>Showing <strong className="text-white">{filteredIncidents.length}</strong> of {incidents.length} incidents</span>
-            {(categoryFilter !== 'ALL' || severityFilter !== 'ALL' || statusFilter !== 'ALL' || searchQuery) && (
-              <button
-                onClick={() => {
-                  soundFx.playClick();
-                  setCategoryFilter('ALL');
-                  setSeverityFilter('ALL');
-                  setStatusFilter('ALL');
-                  setSearchQuery('');
-                }}
-                className="text-sentinel-cyan hover:underline font-bold"
-              >
-                Reset Filters
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-slate-400 font-mono text-[11px]">SORT BY:</span>
-            <div className="flex items-center gap-1 bg-[#071426] p-1 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1 bg-[#060B14] p-1 rounded-xl border border-white/10">
               <button
                 onClick={() => {
                   soundFx.playClick();
@@ -294,11 +296,11 @@ export const IncidentsPage: React.FC = () => {
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'priority'
-                    ? 'bg-sentinel-cyan text-sentinel-navy shadow-sm'
+                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                Priority
+                {t('dash.priorityScore', 'Priority')}
               </button>
               <button
                 onClick={() => {
@@ -307,7 +309,7 @@ export const IncidentsPage: React.FC = () => {
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'time'
-                    ? 'bg-sentinel-cyan text-sentinel-navy shadow-sm'
+                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -320,7 +322,7 @@ export const IncidentsPage: React.FC = () => {
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'casualties'
-                    ? 'bg-sentinel-cyan text-sentinel-navy shadow-sm'
+                    ? 'bg-cyan-500 text-slate-950 shadow-sm'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -332,7 +334,7 @@ export const IncidentsPage: React.FC = () => {
                 soundFx.playClick();
                 setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'));
               }}
-              className="p-2 rounded-xl bg-[#071426] border border-white/10 text-slate-300 hover:text-white"
+              className="p-2 rounded-xl bg-[#060B14] border border-white/10 text-slate-300 hover:text-white"
               title="Toggle Ascending/Descending"
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
@@ -342,9 +344,9 @@ export const IncidentsPage: React.FC = () => {
       </div>
 
       {/* Incident Management Table */}
-      <div className="bg-[#0B1E38]/90 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+      <div className="bg-[#0A101D] rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden">
         {filteredIncidents.length === 0 ? (
-          <div className="p-10 sm:p-14 text-center space-y-2">
+          <div className="p-10 text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-white/5 text-slate-400 flex items-center justify-center mx-auto border border-white/10">
               <Filter className="w-6 h-6" />
             </div>
@@ -375,7 +377,7 @@ export const IncidentsPage: React.FC = () => {
                     {/* Header Row */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-sentinel-cyan">
+                        <span className="font-mono text-xs font-bold text-cyan-400">
                           {inc.incidentCode}
                         </span>
                         <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-slate-300 font-bold">
@@ -401,7 +403,7 @@ export const IncidentsPage: React.FC = () => {
                     {/* Meta info */}
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 pt-1">
                       <div className="flex items-center gap-1 text-[11px] text-slate-300">
-                        <MapPin className="w-3.5 h-3.5 text-sentinel-cyan shrink-0" />
+                        <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         <span className="truncate max-w-[200px]">{inc.location}</span>
                       </div>
                       <div className="flex items-center gap-2 text-[11px] font-mono">
@@ -419,15 +421,39 @@ export const IncidentsPage: React.FC = () => {
                         onChange={e =>
                           handleInlineStatusChange(inc.id, e.target.value as IncidentStatus, e as any)
                         }
-                        className="text-[11px] font-semibold bg-[#071426] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-sentinel-cyan"
+                        className="text-[11px] font-semibold bg-[#060B14] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
                       >
-                        <option value="Reported">Reported</option>
-                        <option value="Pending">Pending</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
+                        <option value="Reported">{t('status.reported', 'Reported')}</option>
+                        <option value="Pending">{t('status.pending', 'Pending')}</option>
+                        <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
+                        <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
                       </select>
 
                       <div className="flex items-center gap-2">
+                        {onOpenDrone && (
+                          <button
+                            onClick={() => {
+                              soundFx.playClick();
+                              onOpenDrone(inc);
+                            }}
+                            className="p-1.5 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"
+                            title="Launch Recon Drone UAV"
+                          >
+                            <Plane className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        {onOpenPlaybook && (
+                          <button
+                            onClick={() => {
+                              soundFx.playClick();
+                              onOpenPlaybook(inc);
+                            }}
+                            className="p-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            title="Generate Tactical Playbook"
+                          >
+                            <FileText className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                         {inc.duplicateWarning && (
                           <button
                             type="button"
@@ -445,20 +471,10 @@ export const IncidentsPage: React.FC = () => {
                             soundFx.playClick();
                             onOpenIncident(inc);
                           }}
-                          className="px-3 py-1.5 rounded-xl bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 text-xs font-bold flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-xl bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 text-xs font-bold flex items-center gap-1"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>View</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            soundFx.playAlert();
-                            setIncidentToDelete(inc);
-                          }}
-                          className="p-1.5 rounded-xl text-slate-400 hover:text-red-400 bg-white/5 border border-white/10"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{t('dash.inspectDossier', 'View')}</span>
                         </button>
                       </div>
                     </div>
@@ -471,7 +487,7 @@ export const IncidentsPage: React.FC = () => {
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#071426] border-b border-white/10 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                  <tr className="bg-[#060B14] border-b border-white/[0.08] text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                     <th className="py-4 px-4">Incident ID</th>
                     <th className="py-4 px-4 min-w-[240px]">Situation Headline & Summary</th>
                     <th className="py-4 px-4">Category</th>
@@ -493,7 +509,7 @@ export const IncidentsPage: React.FC = () => {
                           soundFx.playClick();
                           onOpenIncident(inc);
                         }}
-                        className={`hover:bg-white/5 cursor-pointer transition-colors ${
+                        className={`hover:bg-white/[0.03] cursor-pointer transition-colors ${
                           isCritical
                             ? 'bg-red-500/10 border-l-4 border-l-red-500'
                             : inc.duplicateWarning
@@ -507,7 +523,7 @@ export const IncidentsPage: React.FC = () => {
                             <span className="font-mono font-bold text-white text-xs">
                               {inc.incidentCode}
                             </span>
-                            <span className="font-mono text-[10px] text-sentinel-cyan">
+                            <span className="font-mono text-[10px] text-cyan-400">
                               Priority: {inc.priorityScore}/100
                             </span>
                           </div>
@@ -548,7 +564,7 @@ export const IncidentsPage: React.FC = () => {
                         {/* Location */}
                         <td className="py-4 px-4">
                           <div className="flex items-start gap-1 text-slate-300">
-                            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
                             <span className="line-clamp-2 text-[11px]">{inc.location}</span>
                           </div>
                         </td>
@@ -580,25 +596,53 @@ export const IncidentsPage: React.FC = () => {
                             onChange={e =>
                               handleInlineStatusChange(inc.id, e.target.value as IncidentStatus, e as any)
                             }
-                            className="text-[11px] font-semibold bg-[#071426] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-sentinel-cyan"
+                            className="text-[11px] font-semibold bg-[#060B14] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-cyan-400"
                           >
-                            <option value="Reported">Reported</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Resolved">Resolved</option>
+                            <option value="Reported">{t('status.reported', 'Reported')}</option>
+                            <option value="Pending">{t('status.pending', 'Pending')}</option>
+                            <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
+                            <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
                           </select>
                         </td>
 
                         {/* Actions */}
                         <td className="py-4 px-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {onOpenDrone && (
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  soundFx.playClick();
+                                  onOpenDrone(inc);
+                                }}
+                                className="p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-white/10 transition-colors"
+                                title="Deploy Recon Drone"
+                              >
+                                <Plane className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {onOpenPlaybook && (
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  soundFx.playClick();
+                                  onOpenPlaybook(inc);
+                                }}
+                                className="p-2 rounded-xl text-slate-400 hover:text-emerald-400 hover:bg-white/10 transition-colors"
+                                title="AI Tactical Playbook"
+                              >
+                                <FileText className="w-4 h-4" />
+                              </button>
+                            )}
+
                             <button
                               onClick={e => {
                                 e.stopPropagation();
                                 soundFx.playClick();
                                 onOpenIncident(inc);
                               }}
-                              className="p-2 rounded-xl text-slate-400 hover:text-sentinel-cyan hover:bg-white/10 transition-colors"
+                              className="p-2 rounded-xl text-slate-400 hover:text-cyan-400 hover:bg-white/10 transition-colors"
                               title="Inspect Details"
                             >
                               <Eye className="w-4 h-4" />
@@ -629,14 +673,14 @@ export const IncidentsPage: React.FC = () => {
       {/* Delete Confirmation Modal */}
       {incidentToDelete && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-          <div className="bg-[#0B1E38] p-6 rounded-3xl max-w-sm w-full border border-red-500/50 text-center space-y-4 shadow-2xl glow-red">
+          <div className="bg-[#0A101D] p-6 rounded-3xl max-w-sm w-full border border-red-500/50 text-center space-y-4 shadow-2xl">
             <div className="w-12 h-12 rounded-2xl bg-red-500/15 text-red-400 flex items-center justify-center mx-auto border border-red-500/30">
               <Trash2 className="w-6 h-6" />
             </div>
             <div>
               <h3 className="font-bold text-base text-white">Delete Incident Report?</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Are you sure you want to delete {incidentToDelete.incidentCode}? This will immediately adjust dashboard metrics and remove it from the system.
+                Are you sure you want to delete {incidentToDelete.incidentCode}? This will immediately adjust dashboard metrics.
               </p>
             </div>
             <div className="flex items-center gap-3 pt-2">

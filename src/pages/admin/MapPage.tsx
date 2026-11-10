@@ -8,6 +8,7 @@ import { CategoryBadge } from '../../components/common/CategoryBadge';
 import { soundEffects } from '../../utils/soundEffects';
 import { getLiveLocation, calculateDistanceKm, LiveLocationResult } from '../../utils/geolocation';
 import { SAFE_MUSTER_ZONES, SafeMusterZone } from '../../data/safeZones';
+import { useLanguage } from '../../context/LanguageContext';
 import {
   MapPin,
   Filter,
@@ -26,6 +27,8 @@ import {
   HeartPulse,
   Flame,
   PhoneCall,
+  Plane,
+  FileText,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -34,6 +37,9 @@ interface AdminContextType {
   onOpenDuplicate: (incident: Incident) => void;
   onSimulate: () => void;
   onReset: () => void;
+  onOpenDrone?: (inc?: Incident) => void;
+  onOpenPlaybook?: (inc?: Incident) => void;
+  onOpenHospitals?: () => void;
 }
 
 // Glowing neon marker icon generator
@@ -89,7 +95,8 @@ const createSafeZoneMarker = (type: SafeMusterZone['type']) => {
 };
 
 export const MapPage: React.FC = () => {
-  const { incidents, onOpenIncident } = useOutletContext<AdminContextType>();
+  const { t } = useLanguage();
+  const { incidents, onOpenIncident, onOpenDrone, onOpenPlaybook } = useOutletContext<AdminContextType>();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
