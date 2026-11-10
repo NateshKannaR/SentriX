@@ -9,8 +9,8 @@ import {
 import { analyzeIncidentIntelligence, detectDuplicateIncident } from './intelligenceEngine';
 import { getInitialSeedIncidents, INITIAL_ACTIVITIES } from './seedData';
 
-const INCIDENTS_STORAGE_KEY = 'sentinel_360_incidents_v2';
-const ACTIVITIES_STORAGE_KEY = 'sentinel_360_activities_v2';
+const INCIDENTS_STORAGE_KEY = 'sentrix_incidents_v2';
+const ACTIVITIES_STORAGE_KEY = 'sentrix_activities_v2';
 
 class IncidentService {
   private incidents: Incident[] = [];
@@ -25,8 +25,8 @@ class IncidentService {
 
   private loadFromStorage(): void {
     try {
-      const storedIncidents = localStorage.getItem(INCIDENTS_STORAGE_KEY);
-      const storedActivities = localStorage.getItem(ACTIVITIES_STORAGE_KEY);
+      const storedIncidents = localStorage.getItem(INCIDENTS_STORAGE_KEY) || localStorage.getItem('sentinel_360_incidents_v2');
+      const storedActivities = localStorage.getItem(ACTIVITIES_STORAGE_KEY) || localStorage.getItem('sentinel_360_activities_v2');
 
       if (storedIncidents && storedIncidents !== '[]') {
         this.incidents = JSON.parse(storedIncidents);
@@ -218,7 +218,7 @@ class IncidentService {
     // Log intelligence assessment
     this.addActivity(id, {
       action: 'SEVERITY_ASSIGNED',
-      actor: 'Sentinel AI Intelligence Engine',
+      actor: 'SentriX AI Intelligence Engine',
       newValue: intelligence.recommendedSeverity,
       description: `Priority Score ${intelligence.priorityScore}/100. Reasoning: ${intelligence.severityReasoning.slice(0, 2).join('; ')}`,
     });
@@ -226,7 +226,7 @@ class IncidentService {
     if (duplicateCheck) {
       this.addActivity(id, {
         action: 'DUPLICATE_FLAGGED',
-        actor: 'Duplicate Sentinel Engine',
+        actor: 'Duplicate SentriX Engine',
         description: `Potential duplicate flagged with ${duplicateCheck.suspectCode} (${duplicateCheck.similarityScore}% match confidence)`,
       });
     }
@@ -507,9 +507,9 @@ class IncidentService {
       longitude: pick.lng,
       peopleAffected: pick.casualties,
       contactInformation: {
-        name: 'Sentinel Demo Dispatch Simulator',
+        name: 'SentriX Demo Dispatch Simulator',
         phone: '+91 99999 00000',
-        email: 'simulation@sentinel360.internal',
+        email: 'simulation@sentrix.internal',
       },
       isDemo: true,
     });

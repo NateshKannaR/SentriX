@@ -78,10 +78,10 @@ export const Header: React.FC = () => {
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-2xl tracking-wider text-white">SENTINEL</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-2xl tracking-wider text-white">Sentri</span>
                 <span className="bg-gradient-to-r from-sentinel-cyan via-teal-300 to-blue-400 bg-clip-text text-transparent font-black text-2xl tracking-tight">
-                  360
+                  X
                 </span>
                 <span className="hidden sm:inline-block text-[9px] uppercase font-mono px-2 py-0.5 rounded-full bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 tracking-widest font-bold">
                   MIL-SPEC

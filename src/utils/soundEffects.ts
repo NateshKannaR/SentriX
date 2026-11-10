@@ -1,4 +1,4 @@
-// Tactical Web Audio API synthesizer for Sentinel 360 Command Center
+// Tactical Web Audio API synthesizer for SentriX Command Center
 class SoundManager {
   private ctx: AudioContext | null = null;
   private enabled = true;
@@ -6,7 +6,7 @@ class SoundManager {
   constructor() {
     // Check if user previously muted
     try {
-      const stored = localStorage.getItem('sentinel_audio_enabled');
+      const stored = localStorage.getItem('sentrix_audio_enabled') || localStorage.getItem('sentinel_audio_enabled');
       if (stored !== null) {
         this.enabled = stored === 'true';
       }
@@ -30,7 +30,7 @@ class SoundManager {
   public toggle(): boolean {
     this.enabled = !this.enabled;
     try {
-      localStorage.setItem('sentinel_audio_enabled', String(this.enabled));
+      localStorage.setItem('sentrix_audio_enabled', String(this.enabled));
     } catch {
       // ignore
     }

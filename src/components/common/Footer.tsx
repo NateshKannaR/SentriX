@@ -13,7 +13,9 @@ export const Footer: React.FC = () => {
               <div className="w-9 h-9 rounded-lg bg-sentinel-red flex items-center justify-center text-white shadow-md shadow-sentinel-red/20">
                 <ShieldAlert className="w-5 h-5" />
               </div>
-              <span className="font-extrabold text-xl tracking-wider text-white">SENTINEL 360</span>
+              <span className="font-extrabold text-xl tracking-wider text-white">
+                Sentri<span className="text-sentinel-cyan">X</span>
+              </span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
               Next-generation Emergency Response & Disaster Management Platform developed for
@@ -72,7 +74,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
-          <p>© 2026 SENTINEL 360 Emergency Infrastructure. Built for Code Clash 2026 Round 1.</p>
+          <p>© 2026 SentriX Emergency Infrastructure. Built for Code Clash 2026 Round 1.</p>
           <div className="flex items-center gap-4 text-slate-400">
             <span className="flex items-center gap-1">
               <Globe className="w-3.5 h-3.5 text-sentinel-cyan" /> OpenStreetMap & Leaflet Geospatial

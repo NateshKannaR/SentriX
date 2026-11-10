@@ -257,7 +257,7 @@ export const ReportPage: React.FC = () => {
                   Emergency Report Transmitted
                 </h1>
                 <p className="text-sm text-slate-300 max-w-md mx-auto mt-2">
-                  Your incident brief has been accepted by the Sentinel 360 Command Center. Field units are actively being notified.
+                  Your incident brief has been accepted by the SentriX Command Center. Field units are actively being notified.
                 </p>
               </div>
 

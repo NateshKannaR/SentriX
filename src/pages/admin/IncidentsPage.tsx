@@ -96,7 +96,7 @@ export const IncidentsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `sentinel360_incidents_${Date.now()}.csv`);
+    link.setAttribute('download', `sentrix_incidents_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

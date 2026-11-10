@@ -9,15 +9,15 @@ interface AuthContextType {
   toggleTheme: () => void;
 }
 
-const AUTH_STORAGE_KEY = 'sentinel_360_auth_session';
-const THEME_STORAGE_KEY = 'sentinel_360_theme';
+const AUTH_STORAGE_KEY = 'sentrix_auth_session';
+const THEME_STORAGE_KEY = 'sentrix_theme';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<UserSession>(() => {
     try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+      const stored = localStorage.getItem(AUTH_STORAGE_KEY) || localStorage.getItem('sentinel_360_auth_session');
       if (stored) return JSON.parse(stored);
     } catch {
       // ignore
@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAuthenticated: true,
       user: {
         id: 'usr-chief-01',
-        email: 'commander.rao@sentinel360.gov',
+        email: 'commander.rao@sentrix.gov',
         name: 'Chief Aditi Rao',
         role: 'Commander',
         badge: 'DISPATCH-CMD-01',
@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     try {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      const stored = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem('sentinel_360_theme');
       if (stored === 'dark' || stored === 'light') return stored;
     } catch {
       // ignore
@@ -58,12 +58,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const login = (email = 'commander.rao@sentinel360.gov', _password = '') => {
+  const login = (email = 'commander.rao@sentrix.gov', _password = '') => {
     const newSession: UserSession = {
       isAuthenticated: true,
       user: {
         id: 'usr-chief-01',
-        email: email || 'commander.rao@sentinel360.gov',
+        email: email || 'commander.rao@sentrix.gov',
         name: email.includes('admin') ? 'Senior Administrator' : 'Chief Aditi Rao',
         role: 'Commander',
         badge: 'DISPATCH-CMD-01',

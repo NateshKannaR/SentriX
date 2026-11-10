@@ -68,7 +68,7 @@ export const DuplicatesPage: React.FC = () => {
             </span>
           </p>
           <p className="text-slate-400 leading-relaxed">
-            Sentinel 360 inspects reports across 4 dimensions: Category exact match, Haversine spatial radius (&lt;1.5km), Jaccard text token overlap, and temporal clustering (&lt;8h). Reports are never dropped silently. Authorized command operators inspect side-by-side evidence before confirming or rejecting duplicates.
+            SentriX inspects reports across 4 dimensions: Category exact match, Haversine spatial radius (&lt;1.5km), Jaccard text token overlap, and temporal clustering (&lt;8h). Reports are never dropped silently. Authorized command operators inspect side-by-side evidence before confirming or rejecting duplicates.
           </p>
         </div>
       </div>

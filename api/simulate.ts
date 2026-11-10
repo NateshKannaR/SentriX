@@ -124,9 +124,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       longitude: pick.lng,
       peopleAffected: pick.casualties,
       contactInformation: {
-        name: 'Sentinel Demo Dispatch Simulator',
+        name: 'SentriX Demo Dispatch Simulator',
         phone: '+91 99999 00000',
-        email: 'simulation@sentinel360.internal',
+        email: 'simulation@sentrix.internal',
       },
       severity: intelligence.recommendedSeverity,
       recommendedSeverity: intelligence.recommendedSeverity,

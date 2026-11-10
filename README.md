@@ -1,4 +1,4 @@
-# SENTINEL 360 — Intelligent Emergency Response & Disaster Management System
+# SentriX — Intelligent Emergency Response & Disaster Management System
 
 > **Tagline**: *"One Platform. Every Emergency. Faster Response."*  
 > **Challenge**: **CODE CLASH 2026** — Round 1: Emergency Incident Reporting & Monitoring
@@ -9,7 +9,7 @@
 
 During emergency disasters such as road accidents, fires, floods, and structural collapses, coordinating rapid emergency response is hindered by fragmented citizen reports, lack of centralized intelligence, duplicate dispatches, and delayed casualty assessment.
 
-**SENTINEL 360** centralizes citizen emergency reports, dynamically classifies incident severity using explainable decision support, suppresses duplicate reports, and equips emergency administrators with a centralized Command Center.
+**SentriX** centralizes citizen emergency reports, dynamically classifies incident severity using explainable decision support, suppresses duplicate reports, and equips emergency administrators with a centralized Command Center.
 
 ---
 
@@ -32,7 +32,7 @@ This application is fully pre-configured for one-click **Vercel Deployment** wit
 
 ## 🎯 Round 1 Mandatory Requirements — Feature Compliance Matrix
 
-| Challenge Brief Requirement | Implementation in SENTINEL 360 | Status |
+| Challenge Brief Requirement | Implementation in SentriX | Status |
 | :--- | :--- | :---: |
 | **1. Emergency Incident Reporting** | Fast, responsive reporting form with Title, Category, Location, People Affected, Description, and Optional Contact details. | **Complete & Verified** |
 | **2. Six Emergency Categories** | Fire Emergency, Road Accident, Medical Emergency, Flood, Building Collapse, Other Emergencies with dedicated visual iconography. | **Complete & Verified** |

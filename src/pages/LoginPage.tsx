@@ -19,7 +19,7 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('commander.rao@sentinel360.gov');
+  const [email, setEmail] = useState('commander.rao@sentrix.gov');
   const [password, setPassword] = useState('sentinel2026');
   const [error, setError] = useState('');
 
@@ -37,7 +37,7 @@ export const LoginPage: React.FC = () => {
 
   const handleDemoBypass = () => {
     soundEffects.playBeep();
-    login('commander.rao@sentinel360.gov', 'sentinel2026');
+    login('commander.rao@sentrix.gov', 'sentinel2026');
     navigate('/admin/dashboard');
   };
 
@@ -71,7 +71,7 @@ export const LoginPage: React.FC = () => {
           </div>
 
           <h1 className="text-2xl font-black tracking-tight text-white">
-            SENTINEL <span className="text-transparent bg-clip-text bg-gradient-to-r from-sentinel-cyan to-teal-300">360</span>
+            Sentri<span className="text-transparent bg-clip-text bg-gradient-to-r from-sentinel-cyan to-teal-300">X</span>
           </h1>
           <p className="text-xs text-slate-400 font-mono uppercase tracking-wider">
             Command Center Terminal Clearance
@@ -124,7 +124,7 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="commander.rao@sentinel360.gov"
+                placeholder="commander.rao@sentrix.gov"
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-sentinel-darkSurface border border-sentinel-darkBorder focus:border-sentinel-cyan focus:ring-1 focus:ring-sentinel-cyan/40 focus:outline-none text-xs text-white placeholder-slate-500 font-mono"
               />
             </div>

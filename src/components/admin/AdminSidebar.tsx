@@ -83,9 +83,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <ShieldAlert className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-base tracking-wider text-white">SENTINEL</span>
-              <span className="font-black text-base text-sentinel-cyan">360</span>
+            <div className="flex items-center gap-1">
+              <span className="font-black text-base tracking-wider text-white">Sentri</span>
+              <span className="font-black text-base text-sentinel-cyan">X</span>
             </div>
             <span className="text-[9px] font-mono tracking-widest text-slate-400 block uppercase font-bold">
               WAR ROOM CONSOLE

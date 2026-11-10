@@ -54,7 +54,7 @@ export const AnalyticsPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `sentinel360_analytics_report_${Date.now()}.csv`);
+    link.setAttribute('download', `sentrix_analytics_report_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

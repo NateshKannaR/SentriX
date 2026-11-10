@@ -1,5 +1,5 @@
 -- ====================================================================
--- SENTINEL 360 — Intelligent Emergency Response & Disaster Management System
+-- SentriX — Intelligent Emergency Response & Disaster Management System
 -- Supabase PostgreSQL Schema & Security Policies
 -- ====================================================================
 

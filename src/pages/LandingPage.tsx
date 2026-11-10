@@ -146,7 +146,7 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-normal">
-                <strong className="text-white font-bold">SENTINEL 360</strong> transforms chaotic field reports
+                <strong className="text-white font-bold">SentriX</strong> transforms chaotic field reports
                 into actionable, prioritized dispatch intelligence. Features explainable AI severity scoring,
                 real-time geospatial mapping, automated duplicate suppression, and unified commander operations.
               </p>
