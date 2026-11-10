@@ -405,6 +405,10 @@ class IncidentService {
     return updated;
   }
 
+  public confirmDuplicate(targetId: string, originalId: string): Incident | undefined {
+    return this.markAsDuplicate(targetId, originalId);
+  }
+
   public deleteIncident(id: string): boolean {
     const prevLen = this.incidents.length;
     this.incidents = this.incidents.filter(i => i.id !== id);

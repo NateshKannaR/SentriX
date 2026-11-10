@@ -5,7 +5,9 @@ import { Incident, EmergencyCategory, SeverityLevel } from '../../types';
 import { SeverityBadge } from '../../components/common/SeverityBadge';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CategoryBadge } from '../../components/common/CategoryBadge';
-import { soundFx } from '../../utils/soundEffects';
+import { soundEffects } from '../../utils/soundEffects';
+import { getLiveLocation, calculateDistanceKm, LiveLocationResult } from '../../utils/geolocation';
+import { SAFE_MUSTER_ZONES, SafeMusterZone } from '../../data/safeZones';
 import {
   MapPin,
   Filter,
@@ -20,6 +22,10 @@ import {
   Radio,
   ChevronDown,
   ChevronUp,
+  Shield,
+  HeartPulse,
+  Flame,
+  PhoneCall,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -33,16 +39,12 @@ interface AdminContextType {
 // Glowing neon marker icon generator
 const createCustomMarker = (severity: SeverityLevel) => {
   let color = '#19B878';
-  let glow = 'rgba(25, 184, 120, 0.6)';
   if (severity === 'Critical') {
     color = '#F04452';
-    glow = 'rgba(240, 68, 82, 0.8)';
   } else if (severity === 'High') {
     color = '#FF7A00';
-    glow = 'rgba(255, 122, 0, 0.7)';
   } else if (severity === 'Medium') {
     color = '#F5A623';
-    glow = 'rgba(245, 166, 35, 0.6)';
   }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
@@ -65,12 +67,36 @@ const createCustomMarker = (severity: SeverityLevel) => {
   });
 };
 
+// Safe zone marker icon generator
+const createSafeZoneMarker = (type: SafeMusterZone['type']) => {
+  let color = '#10B981'; // emerald shelter
+  let symbol = '🛡️';
+  if (type === 'Hospital') {
+    color = '#38BDF8';
+    symbol = '🏥';
+  } else if (type === 'FireStation') {
+    color = '#F59E0B';
+    symbol = '🚒';
+  }
+
+  return L.divIcon({
+    html: `<div style="transform: translate(-16px, -16px); background: #071426; border: 2px solid ${color}; width: 32px; height: 32px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 0 12px ${color}80; cursor: pointer;">${symbol}</div>`,
+    className: 'safe-zone-marker',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -18],
+  });
+};
+
 export const MapPage: React.FC = () => {
   const { incidents, onOpenIncident } = useOutletContext<AdminContextType>();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const safeZonesLayerRef = useRef<L.LayerGroup | null>(null);
+  const liveLocationMarkerRef = useRef<L.Marker | null>(null);
+  const liveLocationCircleRef = useRef<L.Circle | null>(null);
 
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL');
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
@@ -79,6 +105,11 @@ export const MapPage: React.FC = () => {
   const [isHudExpanded, setIsHudExpanded] = useState(false);
   const [isListExpanded, setIsListExpanded] = useState(false);
 
+  // Live Command Location & Safe Zones State
+  const [isLiveTracking, setIsLiveTracking] = useState(false);
+  const [userLocation, setUserLocation] = useState<LiveLocationResult | null>(null);
+  const [showSafeZones, setShowSafeZones] = useState(false);
+
   // Filtered incidents with coordinates
   const mappedIncidents = incidents.filter(i => {
     if (!i.latitude || !i.longitude) return false;
@@ -86,6 +117,21 @@ export const MapPage: React.FC = () => {
     if (severityFilter !== 'ALL' && i.severity !== severityFilter) return false;
     return true;
   });
+
+  // Closest incident distance calculation
+  const closestEmergency = userLocation
+    ? mappedIncidents
+        .map(inc => ({
+          inc,
+          dist: calculateDistanceKm(
+            userLocation.latitude,
+            userLocation.longitude,
+            inc.latitude!,
+            inc.longitude!
+          ),
+        }))
+        .sort((a, b) => a.dist - b.dist)[0]
+    : null;
 
   // Initialize Dark Tactical Leaflet Map
   useEffect(() => {
@@ -102,7 +148,7 @@ export const MapPage: React.FC = () => {
         // Add custom zoom control in bottom right
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // CartoDB Dark Matter tiles for military/command center look
+        // CartoDB Dark Matter tiles
         const darkTileLayer = L.tileLayer(
           'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
           {
@@ -113,7 +159,6 @@ export const MapPage: React.FC = () => {
         );
 
         darkTileLayer.on('tileerror', () => {
-          // Fallback to standard OSM if dark tiles fail
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
           }).addTo(map);
@@ -123,6 +168,10 @@ export const MapPage: React.FC = () => {
 
         const markersLayer = L.layerGroup().addTo(map);
         markersLayerRef.current = markersLayer;
+
+        const safeZonesLayer = L.layerGroup().addTo(map);
+        safeZonesLayerRef.current = safeZonesLayer;
+
         mapInstanceRef.current = map;
       } catch (e) {
         console.warn('Leaflet map initialization error', e);
@@ -138,7 +187,7 @@ export const MapPage: React.FC = () => {
     };
   }, []);
 
-  // Sync Markers
+  // Sync Incident Markers
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
 
@@ -170,11 +219,11 @@ export const MapPage: React.FC = () => {
         marker.bindPopup(popupContent);
 
         marker.on('popupopen', () => {
-          soundFx.playBeep(600, 0.05);
+          soundEffects.playBeep();
           const btn = document.getElementById(`btn-popup-${inc.id}`);
           if (btn) {
             btn.onclick = () => {
-              soundFx.playClick();
+              soundEffects.playClick();
               onOpenIncident(inc);
             };
           }
@@ -189,8 +238,93 @@ export const MapPage: React.FC = () => {
     });
   }, [mappedIncidents, onOpenIncident]);
 
+  // Sync Safe Muster Zones
+  useEffect(() => {
+    if (!mapInstanceRef.current || !safeZonesLayerRef.current) return;
+
+    safeZonesLayerRef.current.clearLayers();
+
+    if (showSafeZones) {
+      SAFE_MUSTER_ZONES.forEach(sz => {
+        const marker = L.marker([sz.latitude, sz.longitude], {
+          icon: createSafeZoneMarker(sz.type),
+        });
+
+        const popup = document.createElement('div');
+        popup.className = 'p-2.5 text-xs text-white space-y-2';
+        popup.innerHTML = `
+          <div class="border-b border-white/10 pb-1 flex items-center justify-between">
+            <span style="font-family: monospace; font-weight: bold; color: #10B981;">${sz.type.toUpperCase()}</span>
+            <span style="font-size: 10px; color: #6EE7B7; background: rgba(16,185,129,0.2); padding: 2px 6px; border-radius: 6px;">${sz.status}</span>
+          </div>
+          <div style="font-weight: bold; font-size: 12px; color: #FFFFFF;">${sz.name}</div>
+          <div style="font-size: 11px; color: #94A3B8;">📍 ${sz.address}</div>
+          <div style="font-family: monospace; font-size: 11px; color: #E2E8F0;">
+            Capacity: <strong>${sz.capacity}</strong> | Current: <strong>${sz.currentOccupancy}</strong>
+          </div>
+          <a href="tel:${sz.contactPhone}" style="display:inline-block;margin-top:6px;color:#16C7E8;font-weight:bold;font-size:11px;text-decoration:none;">
+            📞 Call Emergency Desk (${sz.contactPhone})
+          </a>
+        `;
+
+        marker.bindPopup(popup);
+        safeZonesLayerRef.current?.addLayer(marker);
+      });
+    }
+  }, [showSafeZones]);
+
+  // Toggle Live Command Position Tracking
+  const handleToggleLiveLocation = async () => {
+    if (isLiveTracking) {
+      setIsLiveTracking(false);
+      if (liveLocationMarkerRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(liveLocationMarkerRef.current);
+        liveLocationMarkerRef.current = null;
+      }
+      if (liveLocationCircleRef.current && mapInstanceRef.current) {
+        mapInstanceRef.current.removeLayer(liveLocationCircleRef.current);
+        liveLocationCircleRef.current = null;
+      }
+      soundEffects.playClick();
+      return;
+    }
+
+    soundEffects.playBeep();
+    setIsLiveTracking(true);
+    const loc = await getLiveLocation();
+    setUserLocation(loc);
+
+    if (mapInstanceRef.current) {
+      // Create live pulsating radar marker
+      const radarIcon = L.divIcon({
+        html: `<div style="position:relative; width:24px; height:24px;">
+          <div style="position:absolute; inset:0; border-radius:9999px; background:rgba(22,199,232,0.4); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="position:relative; width:24px; height:24px; border-radius:9999px; background:#16C7E8; border:3px solid #071426; box-shadow:0 0 15px #16C7E8;"></div>
+        </div>`,
+        className: 'command-live-marker',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      });
+
+      const marker = L.marker([loc.latitude, loc.longitude], { icon: radarIcon }).addTo(mapInstanceRef.current);
+      const circle = L.circle([loc.latitude, loc.longitude], {
+        radius: loc.accuracy || 100,
+        color: '#16C7E8',
+        fillColor: '#16C7E8',
+        fillOpacity: 0.1,
+        weight: 1,
+      }).addTo(mapInstanceRef.current);
+
+      liveLocationMarkerRef.current = marker;
+      liveLocationCircleRef.current = circle;
+
+      mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 14, { duration: 1.2 });
+      soundEffects.playAlert();
+    }
+  };
+
   const panToIncident = (inc: Incident) => {
-    soundFx.playClick();
+    soundEffects.playClick();
     setSelectedIncident(inc);
     if (mapInstanceRef.current && inc.latitude && inc.longitude) {
       mapInstanceRef.current.flyTo([inc.latitude, inc.longitude], 15, {
@@ -201,11 +335,11 @@ export const MapPage: React.FC = () => {
 
   return (
     <div className="h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] flex flex-col lg:flex-row relative overflow-hidden bg-[#071426]">
-      {/* Tactical Floating HUD Controls (Collapsible on mobile) */}
+      {/* Tactical Floating HUD Controls */}
       <div className="absolute top-2 sm:top-4 left-2 right-2 sm:right-auto sm:left-4 sm:w-88 z-[1000] bg-[#0B1E38]/95 backdrop-blur-2xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#16C7E8]/30 shadow-2xl space-y-3 sm:space-y-4 glow-cyan transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sentinel-cyan/20 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sentinel-cyan/20 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30 shrink-0">
               <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin-slow" />
             </div>
             <div>
@@ -232,7 +366,59 @@ export const MapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Filter dropdowns (Always visible on sm+, expandable on mobile) */}
+        {/* Live Location & Safe Zones Action Buttons */}
+        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+          <button
+            onClick={handleToggleLiveLocation}
+            className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+              isLiveTracking
+                ? 'bg-sentinel-cyan text-sentinel-navy ring-2 ring-sentinel-cyan/50 glow-cyan'
+                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/15'
+            }`}
+          >
+            <Navigation className={`w-3.5 h-3.5 ${isLiveTracking ? 'animate-spin' : ''}`} />
+            <span>{isLiveTracking ? 'GPS Active' : 'Live Command'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setShowSafeZones(s => !s);
+              soundEffects.playClick();
+            }}
+            className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
+              showSafeZones
+                ? 'bg-emerald-500 text-white ring-2 ring-emerald-500/50'
+                : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/15'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>{showSafeZones ? 'Shelters ON' : 'Safe Zones'}</span>
+          </button>
+        </div>
+
+        {/* Live Telemetry Distance Card (Appears when GPS tracking is active) */}
+        {isLiveTracking && userLocation && (
+          <div className="p-3 rounded-2xl bg-[#050E1A] border border-sentinel-cyan/30 text-[11px] font-mono space-y-1.5 animate-fadeIn">
+            <div className="flex items-center justify-between text-sentinel-cyan font-bold">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Live GPS Lock
+              </span>
+              <span>±{userLocation.accuracy}m</span>
+            </div>
+            <div className="text-slate-400">
+              Sector: {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+            </div>
+            {closestEmergency && (
+              <div className="pt-1 border-t border-white/10 text-amber-300 font-bold flex items-center justify-between">
+                <span>Nearest Critical:</span>
+                <span>{closestEmergency.dist} km ({closestEmergency.inc.incidentCode})</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Filter dropdowns (Expandable on mobile, always visible on sm+) */}
         <div className={`${isHudExpanded ? 'block' : 'hidden sm:block'} space-y-3 pt-1 border-t border-white/10`}>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
@@ -299,7 +485,7 @@ export const MapPage: React.FC = () => {
         )}
       </div>
 
-      {/* Side Tactical Incident Inspector Drawer (Responsive height on mobile) */}
+      {/* Side Tactical Incident Inspector Drawer */}
       <div
         className={`w-full lg:w-96 bg-[#0B1E38]/95 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col z-10 shadow-2xl backdrop-blur-2xl transition-all duration-300 ${
           isListExpanded ? 'h-72' : 'h-36 sm:h-52'
@@ -326,6 +512,10 @@ export const MapPage: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
           {mappedIncidents.map(inc => {
             const isSelected = selectedIncident?.id === inc.id;
+            const distFromMe = userLocation && inc.latitude && inc.longitude
+              ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, inc.latitude, inc.longitude)
+              : null;
+
             return (
               <div
                 key={inc.id}
@@ -349,14 +539,15 @@ export const MapPage: React.FC = () => {
                   📍 {inc.location}
                 </p>
 
-                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-slate-400">
-                    👥 {inc.peopleAffected} Casualties
+                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                  <span>
+                    👥 {inc.peopleAffected} Victims
+                    {distFromMe !== null && <strong className="text-sentinel-cyan ml-1.5">({distFromMe}km away)</strong>}
                   </span>
                   <button
                     onClick={e => {
                       e.stopPropagation();
-                      soundFx.playClick();
+                      soundEffects.playClick();
                       onOpenIncident(inc);
                     }}
                     className="text-[11px] font-bold text-sentinel-cyan hover:underline flex items-center gap-1"

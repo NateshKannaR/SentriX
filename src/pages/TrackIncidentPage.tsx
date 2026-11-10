@@ -8,6 +8,8 @@ import { SeverityBadge } from '../components/common/SeverityBadge';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { CategoryBadge } from '../components/common/CategoryBadge';
 import { soundEffects } from '../utils/soundEffects';
+import { getLiveLocation, calculateDistanceKm, LiveLocationResult } from '../utils/geolocation';
+import { useLanguage } from '../context/LanguageContext';
 import {
   Search,
   ShieldAlert,
@@ -23,9 +25,11 @@ import {
   Compass,
   Sparkles,
   ExternalLink,
+  Navigation,
 } from 'lucide-react';
 
 export const TrackIncidentPage: React.FC = () => {
+  const { t } = useLanguage();
   const [searchParams] = useSearchParams();
   const initialCode = searchParams.get('code') || '';
 
@@ -33,6 +37,7 @@ export const TrackIncidentPage: React.FC = () => {
   const [incident, setIncident] = useState<Incident | null>(null);
   const [activities, setActivities] = useState<IncidentActivity[]>([]);
   const [searched, setSearched] = useState(false);
+  const [userLocation, setUserLocation] = useState<LiveLocationResult | null>(null);
 
   const performSearch = (targetCode: string) => {
     if (!targetCode.trim()) return;
@@ -51,12 +56,19 @@ export const TrackIncidentPage: React.FC = () => {
     if (initialCode) {
       performSearch(initialCode);
     }
+    // Acquire user location for distance calculation
+    getLiveLocation().then(loc => setUserLocation(loc));
   }, [initialCode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     performSearch(code);
   };
+
+  // Distance from user to incident
+  const distanceKm = userLocation && incident?.latitude && incident?.longitude
+    ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, incident.latitude, incident.longitude)
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-sentinel-navy text-white font-sans relative selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
@@ -67,19 +79,19 @@ export const TrackIncidentPage: React.FC = () => {
 
       <Header />
 
-      <main className="flex-1 py-12 relative z-10">
+      <main className="flex-1 py-10 sm:py-12 relative z-10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           {/* Top Banner */}
-          <div className="text-center space-y-3 mb-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sentinel-cyan/10 border border-sentinel-cyan/30 text-sentinel-cyan text-xs font-mono font-bold tracking-wider uppercase">
+          <div className="text-center space-y-3 mb-8 sm:mb-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sentinel-cyan/10 border border-sentinel-cyan/30 text-sentinel-cyan text-xs font-mono font-bold tracking-wider uppercase">
               <Radio className="w-3.5 h-3.5 animate-pulse" />
-              Citizen Telemetry Portal • Live Beacon
+              {t('track.badge', 'CIVILIAN TELEMETRY RADAR')}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Track Emergency <span className="text-transparent bg-clip-text bg-gradient-to-r from-sentinel-cyan via-teal-300 to-white">Response Status</span>
+            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+              {t('track.title', 'Track Real-Time Emergency Status')}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-              Real-time synchronization with municipal dispatch command. Trace unit deployment, triage verification, and live responder logs.
+              {t('track.subtitle', 'Enter your unique 8-character Incident Code to inspect real-time dispatch progress, assigned responder units, and GPS telemetry.')}
             </p>
           </div>
 
@@ -92,7 +104,7 @@ export const TrackIncidentPage: React.FC = () => {
                   type="text"
                   value={code}
                   onChange={e => setCode(e.target.value)}
-                  placeholder="Enter Incident Code (e.g. STX-2026-1001)"
+                  placeholder={t('track.placeholder', 'Enter Incident Code (e.g. STX-2026-1001)')}
                   className="w-full pl-12 pr-4 py-3 bg-transparent text-white font-mono text-sm uppercase placeholder:normal-case placeholder:font-sans placeholder:text-slate-500 focus:outline-none"
                 />
               </div>
@@ -101,14 +113,14 @@ export const TrackIncidentPage: React.FC = () => {
                 onClick={() => soundEffects.playClick()}
                 className="px-7 py-3 rounded-xl bg-gradient-to-r from-sentinel-cyan to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-sentinel-navy font-bold text-sm shadow-lg shadow-sentinel-cyan/20 transition-all flex items-center justify-center gap-2 shrink-0 active:scale-95"
               >
-                <span>Track Telemetry</span>
+                <span>{t('track.btn', 'Search Radar')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
 
             {/* Quick Demo Code helper */}
             <div className="mt-3 text-xs text-slate-400 flex flex-wrap items-center justify-center gap-2">
-              <span className="font-mono text-[11px] text-slate-500 uppercase">Test Injected Codes:</span>
+              <span className="font-mono text-[11px] text-slate-500 uppercase">{t('track.quickDemo', 'Or try a live emergency scenario:')}</span>
               {['STX-2026-1001', 'STX-2026-1002', 'STX-2026-1003'].map(sample => (
                 <button
                   key={sample}
@@ -125,9 +137,9 @@ export const TrackIncidentPage: React.FC = () => {
             </div>
           </form>
 
-          {/* Search Results Display */}
+          {/* Incident Not Found */}
           {searched && !incident && (
-            <div className="glass-panel p-10 rounded-3xl border border-red-500/30 text-center space-y-4 shadow-xl">
+            <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-red-500/30 text-center space-y-4 shadow-xl">
               <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
                 <AlertCircle className="w-7 h-7" />
               </div>
@@ -149,8 +161,9 @@ export const TrackIncidentPage: React.FC = () => {
             </div>
           )}
 
+          {/* Active Incident Dossier */}
           {incident && (
-            <div className="glass-panel rounded-3xl border border-sentinel-darkBorder shadow-2xl overflow-hidden space-y-6 p-6 sm:p-8 animate-fadeIn">
+            <div className="glass-panel rounded-3xl border border-sentinel-darkBorder shadow-2xl overflow-hidden space-y-6 p-5 sm:p-8 animate-fadeIn">
               {/* Dossier Top Bar */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-sentinel-darkBorder/60">
                 <div>
@@ -161,7 +174,7 @@ export const TrackIncidentPage: React.FC = () => {
                     <StatusBadge status={incident.status} size="sm" />
                     <SeverityBadge severity={incident.severity} size="sm" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-white mt-3 tracking-tight">
+                  <h2 className="text-lg sm:text-2xl font-black text-white mt-3 tracking-tight">
                     {incident.title}
                   </h2>
                 </div>
@@ -176,7 +189,7 @@ export const TrackIncidentPage: React.FC = () => {
               </div>
 
               {/* Status Progress Stepper */}
-              <div className="p-5 rounded-2xl bg-sentinel-darkSurface/60 border border-sentinel-darkBorder/80 space-y-3">
+              <div className="p-4 sm:p-5 rounded-2xl bg-sentinel-darkSurface/60 border border-sentinel-darkBorder/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5">
                     <Crosshair className="w-3.5 h-3.5 text-sentinel-cyan" />
@@ -190,10 +203,10 @@ export const TrackIncidentPage: React.FC = () => {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center pt-2">
                   {[
-                    { label: 'Intake Registered', active: true, step: '01' },
-                    { label: 'AI Triaged', active: true, step: '02' },
-                    { label: 'Unit Dispatched', active: ['Pending', 'In Progress', 'Resolved'].includes(incident.status), step: '03' },
-                    { label: 'Incident Resolved', active: incident.status === 'Resolved', step: '04' },
+                    { label: t('track.stepReported', 'Incident Reported'), active: true, step: '01' },
+                    { label: t('track.stepTriaged', 'AI Severity Triaged'), active: true, step: '02' },
+                    { label: t('track.stepDispatched', 'Unit Dispatched'), active: ['Pending', 'In Progress', 'Resolved'].includes(incident.status), step: '03' },
+                    { label: t('track.stepResolved', 'Incident Resolved'), active: incident.status === 'Resolved', step: '04' },
                   ].map((step, idx) => (
                     <div key={idx} className="space-y-2 p-2 rounded-xl bg-sentinel-darkSurface/40 sm:bg-transparent">
                       <div className="relative">
@@ -220,7 +233,7 @@ export const TrackIncidentPage: React.FC = () => {
               </div>
 
               {/* Key Telemetry Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs">
                 <div className="p-4 rounded-2xl bg-sentinel-darkSurface/50 border border-sentinel-darkBorder/60 flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-sentinel-cyan/10 text-sentinel-cyan shrink-0">
                     <MapPin className="w-4 h-4" />
@@ -228,9 +241,13 @@ export const TrackIncidentPage: React.FC = () => {
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">Location Coordinates</span>
                     <span className="text-white font-semibold block mt-0.5">{incident.location}</span>
-                    {incident.landmark && <span className="text-slate-400 text-[11px] block mt-0.5">Ref: {incident.landmark}</span>}
+                    {distanceKm !== null && (
+                      <span className="text-emerald-400 font-mono text-[11px] block mt-1">
+                        🛰️ {distanceKm} km from your live position
+                      </span>
+                    )}
                     <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                      [{(incident.latitude ?? 13.0827).toFixed(4)}, {(incident.longitude ?? 80.2707).toFixed(4)}]
+                      [{(incident.latitude ?? 12.9716).toFixed(4)}, {(incident.longitude ?? 77.5946).toFixed(4)}]
                     </span>
                   </div>
                 </div>
@@ -240,7 +257,9 @@ export const TrackIncidentPage: React.FC = () => {
                     <Truck className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">Assigned First Responder</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">
+                      {t('track.dispatchUnit', 'Dispatched Unit')}
+                    </span>
                     <span className="text-white font-semibold block mt-0.5">
                       {incident.assignedUnit || 'Dispatch in queue / Unit en route'}
                     </span>
@@ -286,7 +305,7 @@ export const TrackIncidentPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2.5">
-                  {activities.map((act, index) => (
+                  {activities.map((act) => (
                     <div
                       key={act.id}
                       className="p-3.5 rounded-xl border border-sentinel-darkBorder/60 bg-sentinel-darkSurface/50 flex items-start justify-between text-xs gap-3 hover:border-sentinel-cyan/40 transition-colors"

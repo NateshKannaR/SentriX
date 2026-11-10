@@ -8,7 +8,10 @@ import { analyzeIncidentIntelligence } from '../services/intelligenceEngine';
 import { EmergencyCategory, Incident } from '../types';
 import { SeverityBadge } from '../components/common/SeverityBadge';
 import { PriorityGauge } from '../components/common/PriorityGauge';
-import { soundFx } from '../utils/soundEffects';
+import { soundEffects } from '../utils/soundEffects';
+import { getLiveLocation, LiveLocationResult } from '../utils/geolocation';
+import { speechRecognition, nlpClassifyEmergency } from '../utils/speechAI';
+import { useLanguage } from '../context/LanguageContext';
 import {
   Flame,
   Car,
@@ -31,6 +34,10 @@ import {
   Radio,
   Download,
   Share2,
+  Mic,
+  MicOff,
+  Navigation,
+  Crosshair,
 } from 'lucide-react';
 
 const CATEGORIES: { label: EmergencyCategory; icon: typeof Flame; desc: string; color: string }[] = [
@@ -51,6 +58,7 @@ const LOCATION_PRESETS = [
 ];
 
 export const ReportPage: React.FC = () => {
+  const { currentLanguageOption, t } = useLanguage();
   const [searchParams] = useSearchParams();
   const initialCategory = (searchParams.get('category') as EmergencyCategory) || 'Fire Emergency';
 
@@ -71,6 +79,11 @@ export const ReportPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedIncident, setSubmittedIncident] = useState<Incident | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  // Live Location & Speech State
+  const [isGpsLocating, setIsGpsLocating] = useState(false);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [isDictating, setIsDictating] = useState(false);
 
   // Mini Leaflet Map Picker
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +119,7 @@ export const ReportPage: React.FC = () => {
         marker.setLatLng(e.latlng);
         setLatitude(e.latlng.lat);
         setLongitude(e.latlng.lng);
-        soundFx.playBeep(500, 0.04);
+        soundEffects.playBeep();
       });
 
       markerRef.current = marker;
@@ -123,7 +136,7 @@ export const ReportPage: React.FC = () => {
     };
   }, []);
 
-  // Update marker position when preset is clicked
+  // Update marker position when preset is clicked or GPS is acquired
   useEffect(() => {
     if (markerRef.current && mapInstanceRef.current && latitude && longitude) {
       markerRef.current.setLatLng([latitude, longitude]);
@@ -143,11 +156,74 @@ export const ReportPage: React.FC = () => {
   }, [category, peopleAffected, title, description, location]);
 
   const handleSelectPreset = (preset: typeof LOCATION_PRESETS[0]) => {
-    soundFx.playClick();
+    soundEffects.playClick();
     setLocation(preset.name);
     setLandmark(preset.landmark);
     setLatitude(preset.lat);
     setLongitude(preset.lng);
+  };
+
+  // Live Location Auto-Detection
+  const handleDetectLiveLocation = async () => {
+    soundEffects.playBeep();
+    setIsGpsLocating(true);
+    try {
+      const loc = await getLiveLocation();
+      setLatitude(loc.latitude);
+      setLongitude(loc.longitude);
+      setGpsAccuracy(loc.accuracy);
+      if (loc.address) {
+        setLocation(loc.address);
+      }
+      if (mapInstanceRef.current && markerRef.current) {
+        markerRef.current.setLatLng([loc.latitude, loc.longitude]);
+        mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 15);
+      }
+      soundEffects.playAlert();
+    } catch {
+      // Handled in getLiveLocation
+    } finally {
+      setIsGpsLocating(false);
+    }
+  };
+
+  // Voice Dictation Toggle
+  const handleToggleVoiceDictation = () => {
+    if (isDictating) {
+      speechRecognition.stop();
+      setIsDictating(false);
+      soundEffects.playClick();
+    } else {
+      soundEffects.playBeep();
+      const started = speechRecognition.start(
+        (transcript, isFinal) => {
+          setDescription(transcript);
+          // Run NLP classifier
+          const nlp = nlpClassifyEmergency(transcript);
+          if (nlp.detectedCategory) {
+            setCategory(nlp.detectedCategory);
+          }
+          if (nlp.extractedCasualties && peopleAffected === 0) {
+            setPeopleAffected(nlp.extractedCasualties);
+          }
+          if (!title) {
+            setTitle(transcript.slice(0, 55));
+          }
+          if (isFinal) {
+            setIsDictating(false);
+            soundEffects.playAlert();
+          }
+        },
+        err => {
+          console.warn('Dictation error:', err);
+          setIsDictating(false);
+        },
+        currentLanguageOption.speechLocale
+      );
+      if (started) {
+        setIsDictating(true);
+      }
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -156,7 +232,7 @@ export const ReportPage: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
-        soundFx.playClick();
+        soundEffects.playClick();
       };
       reader.readAsDataURL(file);
     }
@@ -180,10 +256,6 @@ export const ReportPage: React.FC = () => {
       newErrors.location = 'Incident location or address is required for dispatch units';
     }
 
-    if (peopleAffected < 0) {
-      newErrors.peopleAffected = 'People affected cannot be negative';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -191,12 +263,12 @@ export const ReportPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
-      soundFx.playAlert();
+      soundEffects.playAlert();
       return;
     }
 
     setIsSubmitting(true);
-    soundFx.playAlert();
+    soundEffects.playAlert();
 
     setTimeout(() => {
       const newInc = incidentService.createIncident({
@@ -222,7 +294,7 @@ export const ReportPage: React.FC = () => {
 
       setIsSubmitting(false);
       setSubmittedIncident(newInc);
-      soundFx.playCriticalSiren();
+      soundEffects.playSiren();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }, 600);
   };
@@ -231,7 +303,7 @@ export const ReportPage: React.FC = () => {
     if (submittedIncident) {
       navigator.clipboard.writeText(submittedIncident.incidentCode);
       setCopiedCode(true);
-      soundFx.playClick();
+      soundEffects.playClick();
       setTimeout(() => setCopiedCode(false), 2500);
     }
   };
@@ -240,7 +312,7 @@ export const ReportPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#071426] text-slate-100 font-sans selection:bg-[#16C7E8]/30">
       <Header />
 
-      <main className="flex-1 py-10 sm:py-14 hud-grid">
+      <main className="flex-1 py-8 sm:py-12 hud-grid">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Post-Submission Success Screen with Emergency Ticket Receipt */}
           {submittedIncident ? (
@@ -254,10 +326,10 @@ export const ReportPage: React.FC = () => {
                   OFFICIALLY LOGGED IN EMERGENCY GRID
                 </span>
                 <h1 className="text-xl sm:text-3xl font-black text-white mt-2">
-                  Emergency Report Transmitted
+                  {t('report.successTitle', 'Emergency Report Transmitted')}
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto mt-2">
-                  Your incident brief has been accepted by the SentriX Command Center. Field units are actively being notified.
+                  {t('report.successDesc', 'Your incident brief has been accepted by the SentriX Command Center. Field units are actively being notified.')}
                 </p>
               </div>
 
@@ -265,7 +337,7 @@ export const ReportPage: React.FC = () => {
               <div className="max-w-md mx-auto p-4 sm:p-5 rounded-2xl bg-[#071426] text-white border border-[#16C7E8]/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="text-center sm:text-left">
                   <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block">
-                    Your Incident Tracking Code
+                    {t('report.trackingCode', 'Your Incident Tracking Code')}
                   </span>
                   <span className="font-mono text-xl sm:text-2xl font-black text-sentinel-cyan">
                     {submittedIncident.incidentCode}
@@ -276,53 +348,54 @@ export const ReportPage: React.FC = () => {
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all border border-white/20 active:scale-95"
                 >
                   <Copy className="w-4 h-4 text-sentinel-cyan" />
-                  {copiedCode ? 'Copied!' : 'Copy Code'}
+                  {copiedCode ? t('report.copied', 'Copied!') : t('report.copyCode', 'Copy Code')}
                 </button>
               </div>
 
-              {/* AI Triage Receipt Breakdown */}
-              <div className="max-w-md mx-auto p-5 rounded-2xl bg-[#071426] border border-white/10 text-left space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-400">
-                    Smart Severity Assessment
-                  </span>
+              {/* Real-time Triage Summary */}
+              <div className="max-w-md mx-auto bg-sentinel-darkCard p-4 rounded-2xl border border-sentinel-darkBorder text-left space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Assigned Urgency:</span>
                   <SeverityBadge severity={submittedIncident.severity} size="sm" />
                 </div>
-                <PriorityGauge score={submittedIncident.priorityScore} size="sm" />
-                <div className="text-xs text-slate-300 space-y-1 pt-1 border-t border-white/10 font-mono">
-                  <span className="font-bold text-sentinel-cyan block">Decision Engine Factors:</span>
-                  <ul className="text-[11px] text-slate-400 space-y-0.5">
-                    {submittedIncident.severityReasoning.map((r, i) => (
-                      <li key={i}>• {r}</li>
-                    ))}
-                  </ul>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Calculated Priority Score:</span>
+                  <span className="font-mono font-bold text-sentinel-cyan">
+                    {submittedIncident.priorityScore} / 100
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400">Assigned Response Unit:</span>
+                  <span className="font-mono text-emerald-400 font-semibold">
+                    {submittedIncident.assignedUnit || 'Dispatching Nearest Unit...'}
+                  </span>
                 </div>
               </div>
 
-              {/* Citizen Actions */}
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Link
                   to={`/track?code=${submittedIncident.incidentCode}`}
-                  onClick={() => soundFx.playClick()}
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-gradient-to-r from-sentinel-cyan to-teal-400 text-sentinel-navy text-xs font-black shadow-lg shadow-sentinel-cyan/30 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-sentinel-cyan hover:bg-cyan-400 text-sentinel-navy font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20"
                 >
-                  <span>Track Live Incident Status</span>
-                  <ArrowRight className="w-4 h-4 text-sentinel-navy" />
+                  <span>{t('report.trackNow', 'Track Incident Status Live')}</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
 
                 <button
                   onClick={() => {
-                    soundFx.playClick();
+                    soundEffects.playClick();
                     setSubmittedIncident(null);
                     setTitle('');
                     setDescription('');
                     setLocation('');
+                    setLandmark('');
                     setPeopleAffected(0);
                     setImagePreview(null);
                   }}
                   className="w-full sm:w-auto px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/15"
                 >
-                  Submit Another Report
+                  {t('report.submitAnother', 'Submit Another Report')}
                 </button>
               </div>
             </div>
@@ -333,13 +406,13 @@ export const ReportPage: React.FC = () => {
               <div className="text-center space-y-2">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-mono font-bold uppercase tracking-wider">
                   <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                  EMERGENCY SOS INTAKE CONSOLE
+                  {t('report.badge', 'EMERGENCY SOS INTAKE CONSOLE')}
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-                  Report an Emergency Incident
+                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                  {t('report.title', 'Report an Emergency Incident')}
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
-                  Submit real-time situation parameters. The Smart Severity Engine analyzes casualties, keywords, and geography in sub-seconds.
+                  {t('report.subtitle', 'Submit real-time situation parameters. The Smart Severity Engine analyzes casualties, keywords, and geography in sub-seconds.')}
                 </p>
               </div>
 
@@ -348,7 +421,7 @@ export const ReportPage: React.FC = () => {
                 <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
-                      Step 1: Emergency Category <span className="text-red-400">*</span>
+                      {t('report.step1', 'Step 1: Emergency Category')} <span className="text-red-400">*</span>
                     </label>
                     <span className="text-[10px] text-slate-400 font-mono">6 Verticals</span>
                   </div>
@@ -362,7 +435,7 @@ export const ReportPage: React.FC = () => {
                           key={cat.label}
                           type="button"
                           onClick={() => {
-                            soundFx.playClick();
+                            soundEffects.playClick();
                             setCategory(cat.label);
                           }}
                           className={`p-3 sm:p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2.5 sm:gap-3 min-h-[96px] ${
@@ -397,19 +470,35 @@ export const ReportPage: React.FC = () => {
 
                 {/* 2. Situation Report & Live Neural Scanner */}
                 <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                  <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
-                    Step 2: Incident Title & Detailed Field Description <span className="text-red-400">*</span>
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
+                      {t('report.step2', 'Step 2: Incident Title & Detailed Field Description')} <span className="text-red-400">*</span>
+                    </label>
+
+                    {/* Voice Dictation Button */}
+                    <button
+                      type="button"
+                      onClick={handleToggleVoiceDictation}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+                        isDictating
+                          ? 'bg-red-500 text-white animate-pulse glow-red'
+                          : 'bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/30'
+                      }`}
+                    >
+                      {isDictating ? <MicOff className="w-3.5 h-3.5 animate-spin" /> : <Mic className="w-3.5 h-3.5 text-sentinel-cyan" />}
+                      <span>{isDictating ? t('report.listening', 'Listening...') : t('report.voiceDictate', 'Voice Dictation')}</span>
+                    </button>
+                  </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Incident Headline / Summary
+                      {t('report.titleLabel', 'Incident Headline / Summary')}
                     </label>
                     <input
                       type="text"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="e.g. 3rd Floor Restaurant Fire with Trapped Diners"
+                      placeholder={t('report.titlePlaceholder', 'e.g. 3rd Floor Restaurant Fire with Trapped Diners')}
                       className={`w-full rounded-2xl border px-4 py-3 text-sm bg-[#071426] text-white placeholder-slate-500 focus:outline-none transition-all ${
                         errors.title
                           ? 'border-red-500 focus:ring-1 focus:ring-red-500'
@@ -421,13 +510,13 @@ export const ReportPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Detailed Field Situation (Mention trapped people, smoke, collapse, hazards)
+                      {t('report.descLabel', 'Detailed Field Situation (Mention trapped people, smoke, collapse, hazards)')}
                     </label>
                     <textarea
                       rows={4}
                       value={description}
                       onChange={e => setDescription(e.target.value)}
-                      placeholder="Describe what you see: visible flames, structural debris, water depth, conscious/unconscious casualties, hazardous gas smells..."
+                      placeholder={t('report.descPlaceholder', 'Describe what you see: visible flames, structural debris, water depth, conscious/unconscious casualties...')}
                       className={`w-full rounded-2xl border px-4 py-3 text-sm bg-[#071426] text-white placeholder-slate-500 focus:outline-none transition-all ${
                         errors.description
                           ? 'border-red-500 focus:ring-1 focus:ring-red-500'
@@ -442,11 +531,21 @@ export const ReportPage: React.FC = () => {
 
                 {/* 3. Location & Interactive Leaflet Pin-Drop Map */}
                 <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
-                      Step 3: Location & Interactive Map Pin <span className="text-red-400">*</span>
+                      {t('report.step3', 'Step 3: Location & Interactive Map Pin')} <span className="text-red-400">*</span>
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">Click on map to place pin</span>
+
+                    {/* Live Location Auto-Detection Button */}
+                    <button
+                      type="button"
+                      onClick={handleDetectLiveLocation}
+                      disabled={isGpsLocating}
+                      className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sentinel-cyan to-teal-400 text-sentinel-navy font-bold font-mono text-xs flex items-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-95 transition-all"
+                    >
+                      <Navigation className={`w-3.5 h-3.5 ${isGpsLocating ? 'animate-spin' : ''}`} />
+                      <span>{isGpsLocating ? t('report.locating', 'Acquiring GPS Lock...') : t('report.detectGps', 'Detect My Live Location')}</span>
+                    </button>
                   </div>
 
                   {/* Location Presets */}
@@ -466,7 +565,7 @@ export const ReportPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Address or Landmark Description
+                      {t('report.addressLabel', 'Address or Landmark Description')}
                     </label>
                     <div className="relative">
                       <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -474,7 +573,7 @@ export const ReportPage: React.FC = () => {
                         type="text"
                         value={location}
                         onChange={e => setLocation(e.target.value)}
-                        placeholder="e.g. Phoenix Mall Block B, MG Road Metro Corridor"
+                        placeholder={t('report.addressPlaceholder', 'e.g. Phoenix Mall Block B, MG Road Metro Corridor')}
                         className={`w-full rounded-2xl border pl-11 pr-4 py-3 text-sm bg-[#071426] text-white placeholder-slate-500 focus:outline-none transition-all ${
                           errors.location
                             ? 'border-red-500 focus:ring-1 focus:ring-red-500'
@@ -490,16 +589,24 @@ export const ReportPage: React.FC = () => {
                   {/* Leaflet Pin-Drop Mini Map Canvas */}
                   <div className="rounded-2xl overflow-hidden border border-white/15 h-56 relative shadow-inner">
                     <div ref={mapContainerRef} className="w-full h-full" />
-                    <div className="absolute top-2 left-2 z-[1000] bg-[#071426]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl border border-white/10 text-[10px] font-mono text-slate-300">
-                      📍 Click or drag marker to set coordinates
+                    <div className="absolute top-2 left-2 z-[1000] bg-[#071426]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl border border-white/10 text-[10px] font-mono text-slate-300 flex items-center gap-1.5">
+                      <Crosshair className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
+                      <span>📍 Click or drag marker to set coordinates</span>
                     </div>
                   </div>
 
-                  {/* Coordinates pill */}
+                  {/* Coordinates pill with Live Accuracy */}
                   {latitude && longitude && (
                     <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-mono text-slate-400 px-1">
-                      <span>Coordinates: {latitude.toFixed(4)}, {longitude.toFixed(4)}</span>
-                      <span className="text-sentinel-cyan font-bold">Geocoded</span>
+                      <span className="flex items-center gap-1 text-slate-300">
+                        <Crosshair className="w-3.5 h-3.5 text-sentinel-cyan" />
+                        Coordinates: {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                        {gpsAccuracy && <span className="text-emerald-400 text-[10px]"> (±{gpsAccuracy}m lock)</span>}
+                      </span>
+                      <span className="text-sentinel-cyan font-bold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan animate-pulse" />
+                        Geocoded
+                      </span>
                     </div>
                   )}
                 </div>
@@ -507,20 +614,20 @@ export const ReportPage: React.FC = () => {
                 {/* 4. Casualties & Live AI Triage Preview */}
                 <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
-                    Step 4: People Affected & Casualty Triage <span className="text-red-400">*</span>
+                    {t('report.step4', 'Step 4: People Affected & Casualty Triage')} <span className="text-red-400">*</span>
                   </label>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-center">
                     {/* Stepper */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-2">
-                        Estimated People Injured, Trapped, or at Risk
+                        {t('report.casualtiesLabel', 'Estimated People Injured, Trapped, or at Risk')}
                       </label>
                       <div className="flex items-center gap-2.5 sm:gap-3">
                         <button
                           type="button"
                           onClick={() => {
-                            soundFx.playClick();
+                            soundEffects.playClick();
                             setPeopleAffected(Math.max(0, peopleAffected - 1));
                           }}
                           className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95 shrink-0"
@@ -537,7 +644,7 @@ export const ReportPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => {
-                            soundFx.playClick();
+                            soundEffects.playClick();
                             setPeopleAffected(peopleAffected + 1);
                           }}
                           className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95 shrink-0"
@@ -570,7 +677,7 @@ export const ReportPage: React.FC = () => {
                 <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
-                      Step 5: Optional Contact Information & Scene Photo
+                      {t('report.step5', 'Step 5: Optional Contact Information & Scene Photo')}
                     </label>
                     <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 w-fit">
                       NON-MANDATORY
@@ -580,7 +687,7 @@ export const ReportPage: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Your Name (Optional)
+                        {t('report.nameLabel', 'Your Name (Optional)')}
                       </label>
                       <div className="relative">
                         <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -596,7 +703,7 @@ export const ReportPage: React.FC = () => {
 
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        Callback Phone (Optional)
+                        {t('report.phoneLabel', 'Callback Phone (Optional)')}
                       </label>
                       <div className="relative">
                         <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -657,17 +764,17 @@ export const ReportPage: React.FC = () => {
                     {isSubmitting ? (
                       <span className="flex items-center gap-2.5">
                         <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Transmitting to Emergency War Room...
+                        {t('report.submitting', 'Transmitting to Emergency War Room...')}
                       </span>
                     ) : (
                       <>
                         <ShieldAlert className="w-5 h-5" />
-                        <span>SUBMIT EMERGENCY REPORT NOW</span>
+                        <span>{t('report.submitBtn', 'SUBMIT EMERGENCY REPORT NOW')}</span>
                       </>
                     )}
                   </button>
                   <p className="text-center text-[11px] font-mono text-slate-500 mt-2">
-                    False emergency reporting is punishable under Disaster Management Act provisions.
+                    {t('report.disclaimer', 'False emergency reporting is punishable under Disaster Management Act provisions.')}
                   </p>
                 </div>
               </form>

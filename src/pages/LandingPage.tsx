@@ -30,15 +30,63 @@ import {
   Cpu,
   Layers,
   ChevronRight,
+  Mic,
+  MicOff,
+  Navigation,
+  Languages,
 } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { speechRecognition, nlpClassifyEmergency } from '../utils/speechAI';
 
 export const LandingPage: React.FC = () => {
+  const { t, currentLanguage } = useLanguage();
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => incidentService.getDashboardMetrics());
 
   // Interactive Live Playground on the Hero
   const [playgroundCategory, setPlaygroundCategory] = useState<EmergencyCategory>('Fire Emergency');
   const [playgroundText, setPlaygroundText] = useState('Multiple workers trapped on 3rd floor with heavy toxic smoke');
   const [playgroundCasualties, setPlaygroundCasualties] = useState(6);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [voiceSpeechError, setVoiceSpeechError] = useState<string | null>(null);
+
+  const handleTogglePlaygroundVoice = () => {
+    if (isVoiceListening) {
+      speechRecognition.stop();
+      setIsVoiceListening(false);
+      return;
+    }
+
+    if (!speechRecognition.isSupported()) {
+      setVoiceSpeechError('Voice dictation not supported in this browser. Try Chrome/Edge.');
+      return;
+    }
+
+    setVoiceSpeechError(null);
+    setIsVoiceListening(true);
+    soundFx.playRadioBeep();
+
+    speechRecognition.start(
+      (transcript: string, isFinal: boolean) => {
+        setPlaygroundText(transcript);
+        const classified = nlpClassifyEmergency(transcript);
+        if (classified.detectedCategory) {
+          setPlaygroundCategory(classified.detectedCategory);
+        }
+        if (classified.extractedCasualties !== undefined) {
+          setPlaygroundCasualties(classified.extractedCasualties);
+        }
+        if (isFinal) {
+          setIsVoiceListening(false);
+          soundFx.playSuccess();
+        }
+      },
+      (error: string) => {
+        setVoiceSpeechError(error);
+        setIsVoiceListening(false);
+      },
+      currentLanguage.speechLocale
+    );
+  };
 
   useEffect(() => {
     const unsub = incidentService.subscribe(() => {
@@ -248,15 +296,49 @@ export const LandingPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">
-                      3. Incident Keywords (Try typing &quot;trapped&quot;, &quot;explosion&quot;, &quot;toxic&quot;)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] uppercase font-mono font-bold text-slate-400">
+                        3. Incident Keywords & Context
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleTogglePlaygroundVoice}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all shadow-sm ${
+                          isVoiceListening
+                            ? 'bg-red-500 text-white animate-pulse shadow-red-500/50'
+                            : 'bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/30'
+                        }`}
+                        title="Dictate an emergency scenario using speech recognition"
+                      >
+                        {isVoiceListening ? (
+                          <>
+                            <MicOff className="w-3 h-3 animate-spin" />
+                            <span>Stop Voice Triage</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="w-3 h-3 text-sentinel-cyan" />
+                            <span>🎙️ Voice Dictate</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={playgroundText}
                       onChange={e => setPlaygroundText(e.target.value)}
+                      placeholder="e.g. Trapped under building debris with severe trauma..."
                       className="w-full bg-[#071426] border border-white/15 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sentinel-cyan placeholder-slate-500"
                     />
+                    {isVoiceListening && (
+                      <p className="mt-1 text-[10px] text-sentinel-cyan font-mono animate-pulse flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+                        Listening in {currentLanguage.name}... Speak scenario (e.g. &quot;Huge fire with 8 people trapped&quot;)
+                      </p>
+                    )}
+                    {voiceSpeechError && (
+                      <p className="mt-1 text-[10px] text-red-400 font-mono">{voiceSpeechError}</p>
+                    )}
                   </div>
                 </div>
 
@@ -399,6 +481,140 @@ export const LandingPage: React.FC = () => {
               </p>
               <div className="pt-2 text-[11px] font-mono text-emerald-400 flex items-center gap-1 font-bold">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Closed-Loop Resolution
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Emergency Superpowers Section */}
+      <section className="py-20 bg-[#071426] border-b border-white/10 relative overflow-hidden">
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-sentinel-cyan/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-sentinel-cyan/10 px-3.5 py-1 rounded-full border border-sentinel-cyan/30">
+              Emergency Superpowers
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+              Advanced Mission-Critical Capabilities
+            </h2>
+            <p className="text-sm text-slate-400">
+              Beyond basic reporting: SentriX equips citizens, dispatchers, and rescue teams with cutting-edge resilient technologies.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* 1. Live GPS Telemetry */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-sentinel-cyan/30 hover:border-sentinel-cyan transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-sentinel-cyan/15 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center">
+                <Navigation className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                Live GPS Telemetry
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                  ACTIVE
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                1-tap satellite GPS coordinate lock with automatic OpenStreetMap reverse geocoding and real-time distance calculations to nearest emergency units.
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-sentinel-cyan">
+                • Precision ±5m Geo-Locating • Distance Matrix
+              </div>
+            </div>
+
+            {/* 2. Voice AI Assistant */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/40 text-purple-400 flex items-center justify-center">
+                <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                AURA Tactical Voice AI
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/40 font-bold">
+                  SPEECH API
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Hands-free emergency reporting via cross-browser Web Speech API. Natural language processing parses categories and casualty numbers from spoken panic descriptions.
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-purple-400">
+                • Spoken Dictation • Interactive Commander Dialog
+              </div>
+            </div>
+
+            {/* 3. Multi-Language i18n */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/40 text-blue-400 flex items-center justify-center">
+                <Languages className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                Multilingual i18n
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 font-bold">
+                  5 LOCALES
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Instant UI and voice recognition switching across English, Hindi (हिन्दी), Tamil (தமிழ்), Telugu (తెలుగు), and Spanish (Español).
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-blue-400">
+                • Native Locales • Reactive Language Switcher
+              </div>
+            </div>
+
+            {/* 4. Zero-Data Offline SOS */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-red-500/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-400 flex items-center justify-center">
+                <Radio className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                Zero-Data Cellular SOS
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
+                  OFFLINE READY
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                When internet towers collapse, triggers pre-formatted SMS to 112, WhatsApp panic dispatches with GPS coordinates, and 1-tap speed dials (100, 101, 108, 1077).
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-red-400">
+                • Zero-Internet Telemetry • Speed Dial Matrix
+              </div>
+            </div>
+
+            {/* 5. Optical & Acoustic Strobe */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-amber-500/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center">
+                <Zap className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                Rescue Distress Strobe
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold">
+                  MORSE AUDIO
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                5.5Hz alternating high-intensity screen strobe paired with an 1800Hz Web Audio Morse code S-O-S pattern (··· --- ···) to signal rescue drones and dogs.
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-amber-400">
+                • Optical Screen Beacon • Web Audio Morse Code
+              </div>
+            </div>
+
+            {/* 6. Safe Muster Zones */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
+                <ShieldAlert className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </div>
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                Safe Zones & Hospitals
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                  EVACUATION
+                </span>
+              </h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Geo-registered shelters, Level-1 trauma centers, and disaster muster points with real-time bed capacity and live distance routing on Leaflet maps.
+              </p>
+              <div className="pt-2 text-[11px] font-mono text-emerald-400">
+                • Bed Capacity Telemetry • Live Distance Routing
               </div>
             </div>
           </div>

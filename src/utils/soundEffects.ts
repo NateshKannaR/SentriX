@@ -111,6 +111,14 @@ class SoundManager {
     }
   }
 
+  public playRadioBeep() {
+    this.playBeep(1200, 0.05, 'triangle');
+  }
+
+  public playSuccess() {
+    this.playBeep(960, 0.15, 'sine');
+  }
+
   public playBeep(freq = 440, duration = 0.08, type: OscillatorType = 'sine') {
     if (!this.enabled) return;
     try {
@@ -139,6 +147,7 @@ export const soundEffects = {
   playClick: () => soundFx.playClick(),
   playAlert: () => soundFx.playAlert(),
   playSiren: () => soundFx.playCriticalSiren(),
+  playCriticalSiren: () => soundFx.playCriticalSiren(),
   toggleMute: () => !soundFx.toggle(),
   isMuted: () => !soundFx.isEnabled(),
 };

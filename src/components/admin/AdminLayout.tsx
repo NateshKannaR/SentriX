@@ -4,10 +4,14 @@ import { AdminSidebar } from './AdminSidebar';
 import { EmergencyAlertDrawer } from './EmergencyAlertDrawer';
 import { IncidentDetailsModal } from './IncidentDetailsModal';
 import { DuplicateComparisonModal } from './DuplicateComparisonModal';
+import { VoiceAssistantModal } from '../common/VoiceAssistantModal';
+import { CivilDefenseBanner } from '../common/CivilDefenseBanner';
 import { incidentService } from '../../services/incidentService';
 import { Incident } from '../../types';
 import { useAuth } from '../../context/AuthContext';
-import { soundFx } from '../../utils/soundEffects';
+import { useLanguage } from '../../context/LanguageContext';
+import { soundEffects } from '../../utils/soundEffects';
+import { SupportedLanguage } from '../../utils/translations';
 import {
   Bell,
   Search,
@@ -24,10 +28,13 @@ import {
   Radio,
   Flame,
   Activity,
+  Mic,
+  Globe,
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
   const { session, logout, theme, toggleTheme } = useAuth();
+  const { language, setLanguage, currentLanguageOption, languages } = useLanguage();
   const navigate = useNavigate();
 
   const [incidents, setIncidents] = useState<Incident[]>(() => incidentService.getIncidents());
@@ -45,8 +52,11 @@ export const AdminLayout: React.FC = () => {
 
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [simulationToast, setSimulationToast] = useState<string | null>(null);
-  const [audioEnabled, setAudioEnabled] = useState(soundFx.isEnabled());
+  const [audioEnabled, setAudioEnabled] = useState(!soundEffects.isMuted());
   const [currentUtc, setCurrentUtc] = useState(new Date().toUTCString().slice(17, 25));
+
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
   // Live Clock Ticker
   useEffect(() => {
@@ -84,14 +94,14 @@ export const AdminLayout: React.FC = () => {
   }, [searchQuery, incidents]);
 
   const handleSimulate = () => {
-    soundFx.playCriticalSiren();
+    soundEffects.playCriticalSiren();
     const simulated = incidentService.simulateEmergency();
     setSimulationToast(`🚨 Simulated Emergency Injected: ${simulated.incidentCode} (${simulated.category})`);
     setTimeout(() => setSimulationToast(null), 5000);
   };
 
   const handleReset = () => {
-    soundFx.playClick();
+    soundEffects.playClick();
     if (window.confirm('Reset all demo incidents and logs to default seed dataset?')) {
       incidentService.resetDemoData();
       setSimulationToast('🔄 Platform restored to default seed state.');
@@ -99,40 +109,40 @@ export const AdminLayout: React.FC = () => {
     }
   };
 
-  const handleOpenIncident = (inc: Incident) => {
-    soundFx.playClick();
-    setSelectedIncident(inc);
+  const handleAudioToggle = () => {
+    const muted = soundEffects.toggleMute();
+    setAudioEnabled(!muted);
+    if (!muted) soundEffects.playBeep();
+  };
+
+  const handleOpenIncident = (incident: Incident) => {
+    setSelectedIncident(incident);
     setIsDetailsOpen(true);
     setIsSearchOpen(false);
     setSearchQuery('');
   };
 
-  const handleOpenDuplicate = (target: Incident) => {
-    soundFx.playAlert();
-    setDuplicateTarget(target);
-    const origId = target.duplicateWarning?.suspectId;
-    const orig = origId ? incidentService.getIncidentById(origId) : null;
-    setDuplicateOriginal(orig || null);
+  const handleOpenDuplicate = (incident: Incident) => {
+    setDuplicateTarget(incident);
+    if (incident.duplicateWarning) {
+      const orig = incidentService.getIncidentById(incident.duplicateWarning.suspectId);
+      setDuplicateOriginal(orig || null);
+    } else {
+      setDuplicateOriginal(null);
+    }
     setIsDuplicateModalOpen(true);
   };
 
   const handleConfirmDuplicate = (targetId: string, originalId: string) => {
-    soundFx.playClick();
-    incidentService.markAsDuplicate(targetId, originalId);
-    setSimulationToast('✅ Incident linked and closed as duplicate.');
-    setTimeout(() => setSimulationToast(null), 3000);
+    incidentService.confirmDuplicate(targetId, originalId);
+    setIncidents(incidentService.getIncidents());
+    soundEffects.playClick();
   };
 
   const handleDismissDuplicate = (targetId: string) => {
-    soundFx.playClick();
     incidentService.dismissDuplicateWarning(targetId);
-    setSimulationToast('ℹ️ Duplicate flag dismissed.');
-    setTimeout(() => setSimulationToast(null), 3000);
-  };
-
-  const handleAudioToggle = () => {
-    const newState = soundFx.toggle();
-    setAudioEnabled(newState);
+    setIncidents(incidentService.getIncidents());
+    soundEffects.playClick();
   };
 
   const criticalCount = incidents.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
@@ -177,6 +187,9 @@ export const AdminLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#071426]">
+        {/* Civil Defense Emergency Marquee Banner */}
+        <CivilDefenseBanner />
+
         {/* Top Tactical Command HUD Bar */}
         <header className="h-16 sm:h-18 bg-[#0B1E38]/95 border-b border-[#16C7E8]/20 flex items-center justify-between px-3 sm:px-6 shrink-0 z-20 backdrop-blur-xl shadow-xl">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -242,7 +255,54 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           {/* Right Header Tactical Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            {/* Tactical Language Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                className="px-2 sm:px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-200 flex items-center gap-1.5 transition-colors"
+                title="Switch Language"
+              >
+                <Globe className="w-3.5 h-3.5 text-sentinel-cyan" />
+                <span className="font-bold">{currentLanguageOption.flag}</span>
+                <span className="hidden md:inline">{currentLanguageOption.code.toUpperCase()}</span>
+              </button>
+
+              {isLangDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-[#0B1E38] border border-sentinel-darkBorder shadow-2xl py-1.5 z-50 animate-scaleUp">
+                  {languages.map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code as SupportedLanguage);
+                        setIsLangDropdownOpen(false);
+                        soundEffects.playClick();
+                      }}
+                      className={`w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-white/10 transition-colors ${
+                        language === lang.code ? 'text-sentinel-cyan font-bold bg-white/5' : 'text-slate-300'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{lang.flag}</span>
+                        <span>{lang.nativeName}</span>
+                      </span>
+                      {language === lang.code && <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Voice Assistant Trigger */}
+            <button
+              onClick={() => setIsVoiceAssistantOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 glow-cyan"
+              title="Launch AURA Voice Assistant"
+            >
+              <Mic className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
+              <span className="hidden sm:inline">Voice AI</span>
+            </button>
+
             {/* Audio Toggle */}
             <button
               onClick={handleAudioToggle}
@@ -259,23 +319,23 @@ export const AdminLayout: React.FC = () => {
             {/* Quick Simulate Trigger */}
             <button
               onClick={handleSimulate}
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sentinel-red hover:bg-red-600 text-white border border-red-400/30 text-xs font-extrabold transition-all shadow-md shadow-sentinel-red/30 glow-red active:scale-95"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sentinel-red hover:bg-red-600 text-white border border-red-400/30 text-xs font-extrabold transition-all shadow-md shadow-sentinel-red/30 glow-red active:scale-95"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>Simulate Incident</span>
+              <span className="hidden md:inline">Simulate Incident</span>
             </button>
 
             {/* Emergency Alert Bell Drawer */}
             <button
               onClick={() => {
-                soundFx.playClick();
+                soundEffects.playClick();
                 setIsAlertDrawerOpen(true);
               }}
               className="relative p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
               title="Emergency Alerts"
               aria-label="View emergency alerts"
             >
-              <Bell className="w-5 h-5" />
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
               {totalAlerts > 0 && (
                 <span className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-sentinel-red text-white text-[10px] font-mono font-black flex items-center justify-center px-1 shadow-md shadow-sentinel-red/50 animate-pulse">
                   {totalAlerts}
@@ -286,7 +346,7 @@ export const AdminLayout: React.FC = () => {
             {/* Theme Toggle */}
             <button
               onClick={() => {
-                soundFx.playClick();
+                soundEffects.playClick();
                 toggleTheme();
               }}
               className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors"
@@ -302,17 +362,17 @@ export const AdminLayout: React.FC = () => {
             <div className="h-6 w-px bg-white/10 hidden sm:block" />
 
             {/* Admin Profile */}
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sentinel-cyan/30 to-blue-600/30 border border-sentinel-cyan/50 text-sentinel-cyan flex items-center justify-center font-mono font-black text-xs shadow-[0_0_10px_rgba(22,199,232,0.2)]">
                 CMD
               </div>
-              <div className="hidden md:block text-left">
+              <div className="hidden xl:block text-left">
                 <span className="block text-xs font-bold text-white leading-tight">Chief Aditi Rao</span>
                 <span className="block text-[10px] font-mono text-sentinel-cyan leading-tight">DISPATCH-01</span>
               </div>
               <button
                 onClick={() => {
-                  soundFx.playClick();
+                  soundEffects.playClick();
                   logout();
                   navigate('/login');
                 }}
@@ -380,6 +440,14 @@ export const AdminLayout: React.FC = () => {
         originalIncident={duplicateOriginal}
         onConfirmDuplicate={handleConfirmDuplicate}
         onDismissWarning={handleDismissDuplicate}
+      />
+
+      {/* Voice Assistant Modal */}
+      <VoiceAssistantModal
+        isOpen={isVoiceAssistantOpen}
+        onClose={() => setIsVoiceAssistantOpen(false)}
+        onSimulate={handleSimulate}
+        navigate={navigate}
       />
     </div>
   );
