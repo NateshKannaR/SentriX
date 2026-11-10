@@ -62,7 +62,16 @@ export interface Incident {
 export interface IncidentActivity {
   id: string;
   incidentId: string;
-  action: 'REPORTED' | 'SEVERITY_ASSIGNED' | 'SEVERITY_OVERRIDDEN' | 'STATUS_CHANGED' | 'UNIT_ASSIGNED' | 'NOTE_ADDED' | 'DUPLICATE_FLAGGED' | 'DUPLICATE_DISMISSED';
+  action:
+    | 'REPORTED'
+    | 'SEVERITY_ASSIGNED'
+    | 'SEVERITY_OVERRIDDEN'
+    | 'STATUS_CHANGED'
+    | 'UNIT_ASSIGNED'
+    | 'NOTE_ADDED'
+    | 'DUPLICATE_FLAGGED'
+    | 'DUPLICATE_DISMISSED'
+    | 'CITIZEN_UPDATE';
   previousValue?: string;
   newValue?: string;
   description: string;
@@ -87,13 +96,17 @@ export interface DashboardMetrics {
   timeline: { timeLabel: string; count: number; critical: number }[];
 }
 
+export type UserRole = 'Commander' | 'Operator' | 'Dispatcher' | 'Citizen';
+
 export interface UserSession {
   isAuthenticated: boolean;
   user: {
     id: string;
     email: string;
     name: string;
-    role: 'Commander' | 'Operator' | 'Dispatcher';
+    role: UserRole;
     badge: string;
+    phone?: string;
+    bloodGroup?: string;
   } | null;
 }

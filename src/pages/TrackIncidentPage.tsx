@@ -26,6 +26,7 @@ import {
   Sparkles,
   ExternalLink,
   Navigation,
+  Send,
 } from 'lucide-react';
 
 export const TrackIncidentPage: React.FC = () => {
@@ -38,6 +39,33 @@ export const TrackIncidentPage: React.FC = () => {
   const [activities, setActivities] = useState<IncidentActivity[]>([]);
   const [searched, setSearched] = useState(false);
   const [userLocation, setUserLocation] = useState<LiveLocationResult | null>(null);
+  const [updateNote, setUpdateNote] = useState('');
+  const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState('');
+
+  const handlePostUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!incident || !updateNote.trim()) return;
+
+    setIsSubmittingUpdate(true);
+    soundEffects.playClick();
+
+    setTimeout(() => {
+      const updated = incidentService.addCitizenUpdate(incident.id, {
+        note: updateNote.trim(),
+        reporterName: 'Citizen On-Scene',
+      });
+      if (updated) {
+        setIncident(updated);
+        setActivities(incidentService.getActivities(updated.id));
+      }
+      soundEffects.playSuccess();
+      setIsSubmittingUpdate(false);
+      setUpdateSuccess('Update transmitted to Command Center in real time!');
+      setUpdateNote('');
+      setTimeout(() => setUpdateSuccess(''), 5000);
+    }, 400);
+  };
 
   const performSearch = (targetCode: string) => {
     if (!targetCode.trim()) return;
@@ -292,6 +320,51 @@ export const TrackIncidentPage: React.FC = () => {
                   Citizen Situation Narrative:
                 </span>
                 <p className="text-slate-200">{incident.description}</p>
+              </div>
+
+              {/* Citizen Live Situation Update Box */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-[#0B1E38] via-[#0D2444] to-[#071426] border border-sentinel-cyan/40 space-y-3 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-sentinel-cyan" />
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-white">
+                      Transmit Live Update to Command Center
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                    REAL-TIME SYNC
+                  </span>
+                </div>
+
+                {updateSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono flex items-center gap-2 animate-fadeIn">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{updateSuccess}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handlePostUpdate} className="space-y-3">
+                  <textarea
+                    rows={2}
+                    value={updateNote}
+                    onChange={(e) => setUpdateNote(e.target.value)}
+                    placeholder="Type on-scene update (e.g. 'Trapped victims moved to ground floor, fire spreading to roof')..."
+                    className="w-full p-3 rounded-xl bg-[#050C16] border border-white/10 text-white placeholder-slate-500 text-xs font-mono focus:border-sentinel-cyan focus:outline-none transition-colors"
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-[10px] text-slate-400 font-mono hidden sm:block">
+                      ⚡ Transmits directly into the Commander's live operations queue instantly.
+                    </p>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingUpdate || !updateNote.trim()}
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl bg-sentinel-cyan hover:bg-cyan-400 disabled:opacity-50 text-sentinel-navy font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-cyan-500/20 active:scale-95"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{isSubmittingUpdate ? 'Transmitting...' : 'Post Update to Commanders'}</span>
+                    </button>
+                  </div>
+                </form>
               </div>
 
               {/* Activity Timeline */}

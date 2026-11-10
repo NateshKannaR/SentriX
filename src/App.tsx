@@ -4,6 +4,7 @@ import { LandingPage } from './pages/LandingPage';
 import { ReportPage } from './pages/ReportPage';
 import { TrackIncidentPage } from './pages/TrackIncidentPage';
 import { LoginPage } from './pages/LoginPage';
+import { CitizenPortalPage } from './pages/CitizenPortalPage';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { DashboardPage } from './pages/admin/DashboardPage';
 import { IncidentsPage } from './pages/admin/IncidentsPage';
@@ -21,6 +22,7 @@ export const App: React.FC = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/report" element={<ReportPage />} />
         <Route path="/track" element={<TrackIncidentPage />} />
+        <Route path="/citizen" element={<CitizenPortalPage />} />
         <Route path="/login" element={<LoginPage />} />
 
         {/* Admin Command Center Routes */}

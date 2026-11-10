@@ -32,6 +32,7 @@ import {
   Plane,
   FileText,
   Hospital,
+  X,
 } from 'lucide-react';
 
 export const AdminLayout: React.FC = () => {
@@ -81,6 +82,30 @@ export const AdminLayout: React.FC = () => {
       setIncidents(incidentService.getIncidents());
     });
     return () => unsubscribe();
+  }, []);
+
+  const [liveBroadcastAlert, setLiveBroadcastAlert] = useState<{
+    code: string;
+    title: string;
+    type: string;
+    note?: string;
+    incident: Incident;
+  } | null>(null);
+
+  // Real-time live cross-tab subscription
+  useEffect(() => {
+    const unsubEvents = incidentService.subscribeToLiveEvents(event => {
+      soundEffects.playCriticalSiren();
+      setLiveBroadcastAlert({
+        code: event.incident?.incidentCode || 'EMERGENCY',
+        title: event.incident?.title || 'Live Emergency Incident',
+        type: event.type === 'CITIZEN_UPDATE' ? 'Citizen Live Update' : 'Incoming Live Incident',
+        note: event.note,
+        incident: event.incident,
+      });
+      setTimeout(() => setLiveBroadcastAlert(null), 9000);
+    });
+    return () => unsubEvents();
   }, []);
 
   // Handle global search
@@ -465,6 +490,56 @@ export const AdminLayout: React.FC = () => {
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {/* Real-time Incoming Live Alert Toast from Citizen Transmissions */}
+        {liveBroadcastAlert && (
+          <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-full p-4 rounded-3xl bg-gradient-to-r from-red-950 via-[#0A101D] to-[#0A101D] border-2 border-red-500 shadow-2xl animate-slideDown glow-red select-none">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-600 text-white flex items-center justify-center shrink-0 animate-pulse shadow-lg shadow-red-600/40">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-red-400 bg-red-500/20 px-2 py-0.5 rounded border border-red-500/30">
+                    {liveBroadcastAlert.type}
+                  </span>
+                  <span className="text-[10px] font-mono text-emerald-400 font-bold animate-pulse">● LIVE TRANSMISSION</span>
+                </div>
+                <h4 className="text-xs sm:text-sm font-black text-white mt-1">
+                  {liveBroadcastAlert.code}: {liveBroadcastAlert.title}
+                </h4>
+                {liveBroadcastAlert.note && (
+                  <p className="text-xs text-amber-300 font-mono mt-1 bg-black/40 p-2 rounded-xl border border-white/5">
+                    "{liveBroadcastAlert.note}"
+                  </p>
+                )}
+                <div className="mt-2.5 flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      handleOpenIncident(liveBroadcastAlert.incident);
+                      setLiveBroadcastAlert(null);
+                    }}
+                    className="px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs font-mono transition-colors shadow-md"
+                  >
+                    Inspect Incident
+                  </button>
+                  <button
+                    onClick={() => setLiveBroadcastAlert(null)}
+                    className="px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-slate-400 hover:text-white text-xs font-mono transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={() => setLiveBroadcastAlert(null)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 

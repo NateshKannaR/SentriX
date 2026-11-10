@@ -16,6 +16,7 @@ import {
   Globe,
   LifeBuoy,
   Eye,
+  User,
 } from 'lucide-react';
 import { soundEffects } from '../../utils/soundEffects';
 import { useLanguage } from '../../context/LanguageContext';
@@ -239,6 +240,17 @@ export const Header: React.FC = () => {
                 {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
               </button>
 
+              {/* Dual Portal Gateway: Citizen Portal & Command Center */}
+              <Link
+                to="/citizen"
+                onClick={() => soundEffects.playClick()}
+                className="px-3 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-all flex items-center gap-1.5"
+                title="Citizen Emergency Portal"
+              >
+                <User className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden lg:inline">Citizen Portal</span>
+              </Link>
+
               {/* Admin Command Center */}
               <Link
                 to="/admin/dashboard"
@@ -408,6 +420,17 @@ export const Header: React.FC = () => {
                 <LifeBuoy className="w-4 h-4" />
                 WhatsApp Emergency SOS (+91 7806869597)
               </button>
+              <Link
+                to="/citizen"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-3 rounded-2xl text-center font-extrabold bg-[#071322] hover:bg-[#0A1A2E] text-white border border-cyan-500/30 flex items-center justify-center gap-2 text-xs shadow-lg"
+              >
+                <User className="w-4 h-4 text-cyan-400" />
+                Citizen Emergency Portal
+              </Link>
               <Link
                 to="/admin/dashboard"
                 onClick={() => {

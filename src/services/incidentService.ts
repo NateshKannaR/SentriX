@@ -16,11 +16,64 @@ class IncidentService {
   private incidents: Incident[] = [];
   private activities: Record<string, IncidentActivity[]> = {};
   private listeners: (() => void)[] = [];
+  private liveEventSubscribers: ((event: { type: string; incident: Incident; note?: string }) => void)[] = [];
+  private syncChannel: BroadcastChannel | null = null;
   private isApiConnected = false;
 
   constructor() {
     this.loadFromStorage();
     this.syncWithBackend();
+    this.initRealtimeCrossTabSync();
+    this.startBackgroundApiPolling();
+  }
+
+  private initRealtimeCrossTabSync(): void {
+    if (typeof window === 'undefined') return;
+
+    // 1. Cross-tab BroadcastChannel for 0-latency live sync between citizen & admin tabs
+    if ('BroadcastChannel' in window) {
+      try {
+        this.syncChannel = new BroadcastChannel('sentrix_realtime_sync');
+        this.syncChannel.onmessage = (event) => {
+          if (event.data && event.data.type) {
+            this.loadFromStorage();
+            this.notifyListeners();
+            for (const sub of this.liveEventSubscribers) {
+              sub(event.data);
+            }
+          }
+        };
+      } catch (err) {
+        console.warn('BroadcastChannel sync unavailable:', err);
+      }
+    }
+
+    // 2. Storage event fallback for cross-window syncing
+    window.addEventListener('storage', (e) => {
+      if (e.key === INCIDENTS_STORAGE_KEY || e.key === ACTIVITIES_STORAGE_KEY) {
+        this.loadFromStorage();
+        this.notifyListeners();
+      }
+    });
+  }
+
+  private startBackgroundApiPolling(): void {
+    if (typeof window === 'undefined') return;
+    setInterval(async () => {
+      try {
+        const res = await fetch('/api/incidents');
+        if (res.ok) {
+          const remoteIncidents = await res.json();
+          if (Array.isArray(remoteIncidents) && remoteIncidents.length > 0) {
+            // Check if there are updates compared to local
+            if (remoteIncidents.length !== this.incidents.length || remoteIncidents[0]?.updatedAt !== this.incidents[0]?.updatedAt) {
+              this.incidents = remoteIncidents;
+              this.saveIncidents('REMOTE_SYNC', remoteIncidents[0]);
+            }
+          }
+        }
+      } catch (_) {}
+    }, 4000);
   }
 
   private loadFromStorage(): void {
@@ -55,7 +108,7 @@ class IncidentService {
         const remoteIncidents = await res.json();
         if (Array.isArray(remoteIncidents) && remoteIncidents.length > 0) {
           this.incidents = remoteIncidents;
-          this.saveIncidents();
+          this.saveIncidents('INITIAL_REMOTE_SYNC');
           this.isApiConnected = true;
         }
       }
@@ -65,13 +118,32 @@ class IncidentService {
     }
   }
 
-  private saveIncidents(): void {
+  private saveIncidents(broadcastType?: string, payloadIncident?: Incident, note?: string): void {
     try {
       localStorage.setItem(INCIDENTS_STORAGE_KEY, JSON.stringify(this.incidents));
     } catch (e) {
       console.error('Failed to persist incidents to localStorage', e);
     }
     this.notifyListeners();
+
+    // Broadcast instantaneously across all tabs (Citizen -> Admin)
+    if (this.syncChannel) {
+      try {
+        this.syncChannel.postMessage({
+          type: broadcastType || 'INCIDENTS_UPDATED',
+          incident: payloadIncident || this.incidents[0],
+          note,
+          timestamp: Date.now(),
+        });
+      } catch (_) {}
+    }
+  }
+
+  public subscribeToLiveEvents(subscriber: (event: { type: string; incident: Incident; note?: string }) => void): () => void {
+    this.liveEventSubscribers.push(subscriber);
+    return () => {
+      this.liveEventSubscribers = this.liveEventSubscribers.filter(s => s !== subscriber);
+    };
   }
 
   private saveActivities(): void {
@@ -206,7 +278,7 @@ class IncidentService {
     };
 
     this.incidents.unshift(newIncident);
-    this.saveIncidents();
+    this.saveIncidents('INCIDENT_CREATED', newIncident);
 
     // Log reporting activity
     this.addActivity(id, {
@@ -360,7 +432,41 @@ class IncidentService {
       updatedAt: new Date().toISOString(),
     };
     this.incidents[idx] = updated;
-    this.saveIncidents();
+    this.saveIncidents('INCIDENT_UPDATED', updated);
+    return updated;
+  }
+
+  public addCitizenUpdate(
+    id: string,
+    update: { note: string; reporterName?: string; peopleAffected?: number; imageUrl?: string }
+  ): Incident | undefined {
+    const idx = this.incidents.findIndex(i => i.id === id);
+    if (idx === -1) return undefined;
+
+    const current = this.incidents[idx];
+    const updated: Incident = {
+      ...current,
+      peopleAffected: update.peopleAffected !== undefined ? update.peopleAffected : current.peopleAffected,
+      imageUrl: update.imageUrl || current.imageUrl,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.incidents[idx] = updated;
+    this.saveIncidents('CITIZEN_UPDATE', updated, update.note);
+
+    this.addActivity(id, {
+      action: 'CITIZEN_UPDATE',
+      actor: update.reporterName || 'Citizen On-Scene',
+      description: update.note,
+    });
+
+    // Push to MongoDB API if active
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, peopleAffected: updated.peopleAffected, notes: update.note, citizenUpdate: true }),
+    }).catch(() => {});
+
     return updated;
   }
 

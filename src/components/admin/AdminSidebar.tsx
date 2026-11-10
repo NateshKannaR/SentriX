@@ -20,6 +20,7 @@ import {
 import { Incident } from '../../types';
 import { soundFx } from '../../utils/soundEffects';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface AdminSidebarProps {
   incidents: Incident[];
@@ -45,6 +46,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onOpenHospitals,
 }) => {
   const { t } = useLanguage();
+  const { session } = useAuth();
   const criticalCount = incidents.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
   const duplicateCount = incidents.filter(i => Boolean(i.duplicateWarning) && i.status !== 'Resolved').length;
 
@@ -280,28 +282,38 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </div>
       </div>
 
-      {/* Bottom Profile / Public Portal Link */}
+      {/* Bottom Profile / Dual-Portal Switcher Link */}
       <div className="p-3 border-t border-white/[0.08] bg-[#060B14] space-y-2">
         <Link
-          to="/"
+          to="/citizen"
           onClick={() => soundFx.playClick()}
           className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
         >
-          <span>{t('admin.sidebar.portal', 'Citizen Public Portal')}</span>
+          <span>👤 Citizen Public Portal</span>
           <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
         </Link>
-        <div className="px-3 py-2 flex items-center gap-2.5 bg-[#0A1120] rounded-xl border border-white/[0.06]">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-black text-xs shrink-0">
-            AR
-          </div>
-          <div className="overflow-hidden">
-            <div className="text-xs font-bold text-white truncate">
-              {t('admin.sidebar.commander', 'Chief Aditi Rao')}
+        <div className="px-3 py-2 flex items-center justify-between bg-[#0A1120] rounded-xl border border-white/[0.06]">
+          <div className="flex items-center gap-2.5 overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-black text-xs shrink-0">
+              {session.user?.name ? session.user.name.slice(0, 2).toUpperCase() : 'AR'}
             </div>
-            <div className="text-[10px] font-mono text-slate-400 truncate">
-              {t('admin.sidebar.commanderRole', 'Tactical Dispatch Commander')}
+            <div className="overflow-hidden">
+              <div className="text-xs font-bold text-white truncate">
+                {session.user?.name || 'Chief Aditi Rao'}
+              </div>
+              <div className="text-[10px] font-mono text-cyan-400 truncate">
+                {session.user?.badge || 'DISPATCH-CMD-01'}
+              </div>
             </div>
           </div>
+          <Link
+            to="/login"
+            onClick={() => soundFx.playClick()}
+            className="text-[10px] text-slate-400 hover:text-white font-mono hover:underline px-1.5 py-0.5 rounded bg-white/5"
+            title="Switch User / Logout"
+          >
+            Switch
+          </Link>
         </div>
       </div>
     </aside>
