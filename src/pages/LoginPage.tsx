@@ -49,7 +49,7 @@ export const LoginPage: React.FC = () => {
       <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-sentinel-red/15 rounded-full blur-3xl pointer-events-none" />
 
       {/* Cyber Frame Container */}
-      <div className="relative max-w-md w-full glass-panel border border-sentinel-darkBorder rounded-3xl p-8 shadow-2xl backdrop-blur-2xl space-y-6 animate-scaleUp">
+      <div className="relative max-w-md w-full glass-panel border border-sentinel-darkBorder rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl backdrop-blur-2xl space-y-5 sm:space-y-6 animate-scaleUp">
         {/* Top telemetry tag */}
         <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 border-b border-sentinel-darkBorder/60 pb-3">
           <span className="flex items-center gap-1.5 text-sentinel-cyan">

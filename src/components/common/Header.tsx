@@ -87,10 +87,11 @@ export const Header: React.FC = () => {
                   MIL-SPEC
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono tracking-tight flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Intelligent Emergency Operations Platform
-              </p>
+                <p className="text-[11px] text-slate-400 font-mono tracking-tight flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                  <span className="hidden sm:inline">Intelligent Emergency Operations Platform</span>
+                  <span className="inline sm:hidden text-[10px] text-slate-400">Emergency Operations</span>
+                </p>
             </div>
           </Link>
 
@@ -171,21 +172,26 @@ export const Header: React.FC = () => {
             </Link>
           </div>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile controls */}
           <div className="flex md:hidden items-center gap-2">
             <button
               onClick={handleAudioToggle}
-              className="p-2 rounded-lg text-slate-400 hover:text-white"
+              className={`p-2.5 rounded-xl border transition-all min-w-[40px] min-h-[40px] flex items-center justify-center ${
+                audioEnabled
+                  ? 'bg-sentinel-cyan/15 text-sentinel-cyan border-sentinel-cyan/40'
+                  : 'bg-white/5 text-slate-500 border-white/10'
+              }`}
+              aria-label="Toggle tactical audio"
             >
               {audioEnabled ? <Volume2 className="w-4 h-4 text-sentinel-cyan" /> : <VolumeX className="w-4 h-4" />}
             </button>
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl text-slate-300 hover:text-white bg-white/5 border border-white/10"
+              className="p-2.5 rounded-xl text-slate-300 hover:text-white bg-white/5 border border-white/10 min-w-[42px] min-h-[42px] flex items-center justify-center"
               aria-label="Toggle mobile menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-sentinel-cyan" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -193,44 +199,90 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-[#16C7E8]/20 bg-[#071426] px-4 pt-3 pb-6 space-y-2 animate-fadeIn">
-          <Link
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2.5 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10"
-          >
-            Overview
-          </Link>
-          <Link
-            to="/report"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2.5 rounded-xl text-sm font-bold text-sentinel-red hover:bg-white/10 flex items-center gap-2"
-          >
-            <Radio className="w-4 h-4 animate-pulse" />
-            Report SOS Emergency
-          </Link>
-          <Link
-            to="/track"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2.5 rounded-xl text-sm font-bold text-slate-200 hover:bg-white/10 flex items-center gap-2"
-          >
-            <Search className="w-4 h-4" />
-            Track Incident Code
-          </Link>
+        <div className="md:hidden border-t border-[#16C7E8]/20 bg-[#071426]/98 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-3 animate-fadeIn shadow-2xl">
+          {/* Mobile Telemetry Strip */}
+          <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#040C17] border border-white/10 text-[10px] font-mono text-slate-400">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              ONLINE
+            </span>
+            <span className="text-[#16C7E8] flex items-center gap-1 font-bold">
+              <Clock className="w-3 h-3" /> UTC {currentTime}Z
+            </span>
+            <span className="text-amber-400">DEFCON 2</span>
+          </div>
+
+          <div className="space-y-1">
+            <Link
+              to="/"
+              onClick={() => {
+                soundFx.playClick();
+                setMobileMenuOpen(false);
+              }}
+              className={`block px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
+                isActive('/')
+                  ? 'bg-[#16C7E8]/15 text-sentinel-cyan border border-[#16C7E8]/30'
+                  : 'text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              Overview
+            </Link>
+            <Link
+              to="/report"
+              onClick={() => {
+                soundFx.playAlert();
+                setMobileMenuOpen(false);
+              }}
+              className={`block px-4 py-3 rounded-2xl text-sm font-bold transition-all flex items-center justify-between ${
+                isActive('/report')
+                  ? 'bg-sentinel-red/15 text-sentinel-red border border-sentinel-red/30'
+                  : 'text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              <span className="flex items-center gap-2 text-sentinel-red">
+                <Radio className="w-4 h-4 animate-pulse" />
+                Report SOS Emergency
+              </span>
+              <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-sentinel-red/20 text-red-300 font-black">
+                URGENT
+              </span>
+            </Link>
+            <Link
+              to="/track"
+              onClick={() => {
+                soundFx.playClick();
+                setMobileMenuOpen(false);
+              }}
+              className={`block px-4 py-3 rounded-2xl text-sm font-bold transition-all flex items-center gap-2 ${
+                isActive('/track')
+                  ? 'bg-[#16C7E8]/15 text-sentinel-cyan border border-[#16C7E8]/30'
+                  : 'text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              <Search className="w-4 h-4 text-sentinel-cyan" />
+              Track Incident Code
+            </Link>
+          </div>
 
           <div className="pt-3 border-t border-white/10 space-y-2">
             <Link
               to="/report"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl text-center font-extrabold bg-sentinel-red text-white flex items-center justify-center gap-2 shadow-lg shadow-sentinel-red/30"
+              onClick={() => {
+                soundFx.playAlert();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full py-3.5 rounded-2xl text-center font-extrabold bg-gradient-to-r from-sentinel-red to-rose-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-sentinel-red/30 glow-red border border-red-400/40 text-sm"
             >
               <PhoneCall className="w-4 h-4" />
               SOS Immediate Report
             </Link>
             <Link
               to="/admin/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl text-center font-extrabold bg-[#0B1E38] text-white border border-[#16C7E8]/40 flex items-center justify-center gap-2"
+              onClick={() => {
+                soundFx.playClick();
+                setMobileMenuOpen(false);
+              }}
+              className="w-full py-3.5 rounded-2xl text-center font-extrabold bg-[#0B1E38] hover:bg-[#10284B] text-white border border-[#16C7E8]/40 flex items-center justify-center gap-2 text-sm shadow-lg"
             >
               <LayoutDashboard className="w-4 h-4 text-sentinel-cyan" />
               Admin Command Center

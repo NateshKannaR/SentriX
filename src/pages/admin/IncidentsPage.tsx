@@ -143,8 +143,8 @@ export const IncidentsPage: React.FC = () => {
       {/* Filter and Control Toolbar */}
       <div className="bg-[#0B1E38]/90 p-5 rounded-3xl border border-white/10 shadow-2xl space-y-4">
         {/* Quick Filter Pill Buttons */}
-        <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-white/10">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mr-1">
+        <div className="flex items-center gap-2 pb-3 border-b border-white/10 overflow-x-auto no-scrollbar py-0.5">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mr-1 shrink-0">
             Quick Views:
           </span>
           <button
@@ -152,7 +152,7 @@ export const IncidentsPage: React.FC = () => {
               soundFx.playClick();
               setSeverityFilter('Critical');
             }}
-            className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               severityFilter === 'Critical'
                 ? 'bg-red-500/20 text-red-400 border border-red-500/40 glow-red'
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
@@ -165,7 +165,7 @@ export const IncidentsPage: React.FC = () => {
               soundFx.playClick();
               setStatusFilter('In Progress');
             }}
-            className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'In Progress'
                 ? 'bg-cyan-500/20 text-sentinel-cyan border border-cyan-500/40 glow-cyan'
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
@@ -178,7 +178,7 @@ export const IncidentsPage: React.FC = () => {
               soundFx.playClick();
               setStatusFilter('Reported');
             }}
-            className={`px-3 py-1 rounded-xl text-xs font-mono font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'Reported'
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                 : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'
@@ -186,6 +186,20 @@ export const IncidentsPage: React.FC = () => {
           >
             🕒 Newly Reported
           </button>
+          {(categoryFilter !== 'ALL' || severityFilter !== 'ALL' || statusFilter !== 'ALL' || searchQuery) && (
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                setCategoryFilter('ALL');
+                setSeverityFilter('ALL');
+                setStatusFilter('ALL');
+                setSearchQuery('');
+              }}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-mono text-slate-400 hover:text-red-400 bg-white/5 border border-white/10 shrink-0 whitespace-nowrap"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
 
         {/* Inputs & Dropdowns */}
@@ -330,7 +344,7 @@ export const IncidentsPage: React.FC = () => {
       {/* Incident Management Table */}
       <div className="bg-[#0B1E38]/90 rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
         {filteredIncidents.length === 0 ? (
-          <div className="p-14 text-center space-y-2">
+          <div className="p-10 sm:p-14 text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-white/5 text-slate-400 flex items-center justify-center mx-auto border border-white/10">
               <Filter className="w-6 h-6" />
             </div>
@@ -338,160 +352,277 @@ export const IncidentsPage: React.FC = () => {
             <p className="text-xs text-slate-400">Try adjusting your filters or keyword query.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#071426] border-b border-white/10 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                  <th className="py-4 px-4">Incident ID</th>
-                  <th className="py-4 px-4 min-w-[240px]">Situation Headline & Summary</th>
-                  <th className="py-4 px-4">Category</th>
-                  <th className="py-4 px-4 min-w-[170px]">Location</th>
-                  <th className="py-4 px-4">Severity</th>
-                  <th className="py-4 px-4 text-center">People</th>
-                  <th className="py-4 px-4">Reported</th>
-                  <th className="py-4 px-4">Status</th>
-                  <th className="py-4 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5 text-xs">
-                {filteredIncidents.map(inc => {
-                  const isCritical = inc.severity === 'Critical' && inc.status !== 'Resolved';
-                  return (
-                    <tr
-                      key={inc.id}
-                      onClick={() => {
-                        soundFx.playClick();
-                        onOpenIncident(inc);
-                      }}
-                      className={`hover:bg-white/5 cursor-pointer transition-colors ${
-                        isCritical
-                          ? 'bg-red-500/10 border-l-4 border-l-red-500'
-                          : inc.duplicateWarning
-                          ? 'border-l-4 border-l-amber-500'
-                          : ''
-                      }`}
-                    >
-                      {/* Code */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="font-mono font-bold text-white text-xs">
-                            {inc.incidentCode}
-                          </span>
-                          <span className="font-mono text-[10px] text-sentinel-cyan">
-                            Priority: {inc.priorityScore}/100
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Title & Description preview */}
-                      <td className="py-4 px-4">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-white line-clamp-1">
-                              {inc.title}
-                            </span>
-                            {inc.duplicateWarning && (
-                              <button
-                                type="button"
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  soundFx.playAlert();
-                                  onOpenDuplicate(inc);
-                                }}
-                                className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center gap-1 shrink-0"
-                              >
-                                <Copy className="w-3 h-3" /> Duplicate
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-400 line-clamp-1">
-                            {inc.description}
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Category */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <CategoryBadge category={inc.category} size="sm" />
-                      </td>
-
-                      {/* Location */}
-                      <td className="py-4 px-4">
-                        <div className="flex items-start gap-1 text-slate-300">
-                          <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                          <span className="line-clamp-2 text-[11px]">{inc.location}</span>
-                        </div>
-                      </td>
-
-                      {/* Severity */}
-                      <td className="py-4 px-4 whitespace-nowrap">
+          <>
+            {/* Mobile Card View (block md:hidden) */}
+            <div className="md:hidden divide-y divide-white/10">
+              {filteredIncidents.map(inc => {
+                const isCritical = inc.severity === 'Critical' && inc.status !== 'Resolved';
+                return (
+                  <div
+                    key={inc.id}
+                    onClick={() => {
+                      soundFx.playClick();
+                      onOpenIncident(inc);
+                    }}
+                    className={`p-4 space-y-3 cursor-pointer transition-colors active:bg-white/5 ${
+                      isCritical
+                        ? 'bg-red-500/10 border-l-4 border-l-red-500'
+                        : inc.duplicateWarning
+                        ? 'border-l-4 border-l-amber-500'
+                        : ''
+                    }`}
+                  >
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-sentinel-cyan">
+                          {inc.incidentCode}
+                        </span>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-slate-300 font-bold">
+                          {inc.priorityScore}/100
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
                         <SeverityBadge severity={inc.severity} size="sm" />
-                      </td>
+                        <StatusBadge status={inc.status} size="sm" />
+                      </div>
+                    </div>
 
-                      {/* Casualties */}
-                      <td className="py-4 px-4 whitespace-nowrap text-center">
-                        <span className="font-mono font-black text-white text-sm">
-                          {inc.peopleAffected}
-                        </span>
-                      </td>
+                    {/* Title & Description */}
+                    <div>
+                      <h4 className="text-sm font-bold text-white leading-snug">
+                        {inc.title}
+                      </h4>
+                      <p className="text-xs text-slate-400 line-clamp-2 mt-1">
+                        {inc.description}
+                      </p>
+                    </div>
 
-                      {/* Reported Time */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span className="font-mono text-[11px] text-slate-400">
-                          {new Date(inc.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </td>
+                    {/* Meta info */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 pt-1">
+                      <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                        <MapPin className="w-3.5 h-3.5 text-sentinel-cyan shrink-0" />
+                        <span className="truncate max-w-[200px]">{inc.location}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] font-mono">
+                        <CategoryBadge category={inc.category} size="sm" />
+                        <span>👥 {inc.peopleAffected}</span>
+                        <span>•</span>
+                        <span>{new Date(inc.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
 
-                      {/* Status Dropdown */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <select
-                          value={inc.status}
-                          onClick={e => e.stopPropagation()}
-                          onChange={e =>
-                            handleInlineStatusChange(inc.id, e.target.value as IncidentStatus, e as any)
-                          }
-                          className="text-[11px] font-semibold bg-[#071426] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-sentinel-cyan"
-                        >
-                          <option value="Reported">Reported</option>
-                          <option value="Pending">Pending</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Resolved">Resolved</option>
-                        </select>
-                      </td>
+                    {/* Quick Action Footer */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/5" onClick={e => e.stopPropagation()}>
+                      <select
+                        value={inc.status}
+                        onChange={e =>
+                          handleInlineStatusChange(inc.id, e.target.value as IncidentStatus, e as any)
+                        }
+                        className="text-[11px] font-semibold bg-[#071426] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-sentinel-cyan"
+                      >
+                        <option value="Reported">Reported</option>
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
 
-                      {/* Actions */}
-                      <td className="py-4 px-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center gap-2">
+                        {inc.duplicateWarning && (
                           <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              soundFx.playClick();
-                              onOpenIncident(inc);
-                            }}
-                            className="p-2 rounded-xl text-slate-400 hover:text-sentinel-cyan hover:bg-white/10 transition-colors"
-                            title="Inspect Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
+                            type="button"
+                            onClick={() => {
                               soundFx.playAlert();
-                              setIncidentToDelete(inc);
+                              onOpenDuplicate(inc);
                             }}
-                            className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-white/10 transition-colors"
-                            title="Delete Incident"
+                            className="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center gap-1"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Copy className="w-3 h-3" /> Duplicate
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        )}
+                        <button
+                          onClick={() => {
+                            soundFx.playClick();
+                            onOpenIncident(inc);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 text-xs font-bold flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            soundFx.playAlert();
+                            setIncidentToDelete(inc);
+                          }}
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-red-400 bg-white/5 border border-white/10"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (hidden md:block) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#071426] border-b border-white/10 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                    <th className="py-4 px-4">Incident ID</th>
+                    <th className="py-4 px-4 min-w-[240px]">Situation Headline & Summary</th>
+                    <th className="py-4 px-4">Category</th>
+                    <th className="py-4 px-4 min-w-[170px]">Location</th>
+                    <th className="py-4 px-4">Severity</th>
+                    <th className="py-4 px-4 text-center">People</th>
+                    <th className="py-4 px-4">Reported</th>
+                    <th className="py-4 px-4">Status</th>
+                    <th className="py-4 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 text-xs">
+                  {filteredIncidents.map(inc => {
+                    const isCritical = inc.severity === 'Critical' && inc.status !== 'Resolved';
+                    return (
+                      <tr
+                        key={inc.id}
+                        onClick={() => {
+                          soundFx.playClick();
+                          onOpenIncident(inc);
+                        }}
+                        className={`hover:bg-white/5 cursor-pointer transition-colors ${
+                          isCritical
+                            ? 'bg-red-500/10 border-l-4 border-l-red-500'
+                            : inc.duplicateWarning
+                            ? 'border-l-4 border-l-amber-500'
+                            : ''
+                        }`}
+                      >
+                        {/* Code */}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <div className="flex flex-col">
+                            <span className="font-mono font-bold text-white text-xs">
+                              {inc.incidentCode}
+                            </span>
+                            <span className="font-mono text-[10px] text-sentinel-cyan">
+                              Priority: {inc.priorityScore}/100
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Title & Description preview */}
+                        <td className="py-4 px-4">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white line-clamp-1">
+                                {inc.title}
+                              </span>
+                              {inc.duplicateWarning && (
+                                <button
+                                  type="button"
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    soundFx.playAlert();
+                                    onOpenDuplicate(inc);
+                                  }}
+                                  className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold flex items-center gap-1 shrink-0"
+                                >
+                                  <Copy className="w-3 h-3" /> Duplicate
+                                </button>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400 line-clamp-1">
+                              {inc.description}
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <CategoryBadge category={inc.category} size="sm" />
+                        </td>
+
+                        {/* Location */}
+                        <td className="py-4 px-4">
+                          <div className="flex items-start gap-1 text-slate-300">
+                            <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                            <span className="line-clamp-2 text-[11px]">{inc.location}</span>
+                          </div>
+                        </td>
+
+                        {/* Severity */}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <SeverityBadge severity={inc.severity} size="sm" />
+                        </td>
+
+                        {/* Casualties */}
+                        <td className="py-4 px-4 whitespace-nowrap text-center">
+                          <span className="font-mono font-black text-white text-sm">
+                            {inc.peopleAffected}
+                          </span>
+                        </td>
+
+                        {/* Reported Time */}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <span className="font-mono text-[11px] text-slate-400">
+                            {new Date(inc.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </td>
+
+                        {/* Status Dropdown */}
+                        <td className="py-4 px-4 whitespace-nowrap">
+                          <select
+                            value={inc.status}
+                            onClick={e => e.stopPropagation()}
+                            onChange={e =>
+                              handleInlineStatusChange(inc.id, e.target.value as IncidentStatus, e as any)
+                            }
+                            className="text-[11px] font-semibold bg-[#071426] border border-white/20 rounded-xl px-2.5 py-1.5 text-white focus:outline-none focus:border-sentinel-cyan"
+                          >
+                            <option value="Reported">Reported</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Resolved">Resolved</option>
+                          </select>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-4 px-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                soundFx.playClick();
+                                onOpenIncident(inc);
+                              }}
+                              className="p-2 rounded-xl text-slate-400 hover:text-sentinel-cyan hover:bg-white/10 transition-colors"
+                              title="Inspect Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                soundFx.playAlert();
+                                setIncidentToDelete(inc);
+                              }}
+                              className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-white/10 transition-colors"
+                              title="Delete Incident"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

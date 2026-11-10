@@ -73,14 +73,14 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3">
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-3 text-center sm:text-left">
           <p>© 2026 SentriX Emergency Infrastructure. Built for Code Clash 2026 Round 1.</p>
-          <div className="flex items-center gap-4 text-slate-400">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-slate-400">
             <span className="flex items-center gap-1">
-              <Globe className="w-3.5 h-3.5 text-sentinel-cyan" /> OpenStreetMap & Leaflet Geospatial
+              <Globe className="w-3.5 h-3.5 text-sentinel-cyan shrink-0" /> OpenStreetMap & Leaflet Geospatial
             </span>
             <span className="flex items-center gap-1">
-              <Terminal className="w-3.5 h-3.5 text-sentinel-amber" /> Intelligent Rule Engine Active
+              <Terminal className="w-3.5 h-3.5 text-sentinel-amber shrink-0" /> Intelligent Rule Engine Active
             </span>
           </div>
         </div>

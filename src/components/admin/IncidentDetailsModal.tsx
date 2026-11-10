@@ -126,59 +126,59 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5">
-      <div className="bg-[#0B1E38] rounded-3xl max-w-5xl w-full border border-[#16C7E8]/30 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-scaleUp glow-cyan">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-5">
+      <div className="bg-[#0B1E38] rounded-2xl sm:rounded-3xl max-w-5xl w-full border border-[#16C7E8]/30 shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[92vh] flex flex-col animate-scaleUp glow-cyan">
         {/* Top Header */}
-        <div className="p-5 sm:p-6 bg-[#071426] text-white flex items-center justify-between border-b border-white/10 shrink-0">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-[#0B1E38] border border-[#16C7E8]/40 flex items-center justify-center shadow-lg">
-              <ShieldAlert className="w-6 h-6 text-sentinel-cyan" />
+        <div className="p-3.5 sm:p-6 bg-[#071426] text-white flex items-center justify-between border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#0B1E38] border border-[#16C7E8]/40 flex items-center justify-center shadow-lg shrink-0">
+              <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 text-sentinel-cyan" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-xs px-2.5 py-0.5 rounded-md bg-[#16C7E8]/15 text-sentinel-cyan border border-[#16C7E8]/30 font-black">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#16C7E8]/15 text-sentinel-cyan border border-[#16C7E8]/30 font-black">
                   {incident.incidentCode}
                 </span>
                 {incident.isDemo && (
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold">
-                    DEMO SIMULATION
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold hidden xs:inline-block">
+                    DEMO
                   </span>
                 )}
                 <StatusBadge status={currentStatus} size="sm" />
               </div>
-              <h2 className="text-lg sm:text-xl font-black text-white mt-1 line-clamp-1">
+              <h2 className="text-sm sm:text-xl font-black text-white mt-0.5 sm:mt-1 line-clamp-1 truncate">
                 {incident.title}
               </h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={() => {
                 soundFx.playAlert();
                 setShowDeleteConfirm(true);
               }}
-              className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-white/5 transition-colors"
               title="Delete Incident"
               aria-label="Delete incident"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
             <button
               onClick={() => {
                 soundFx.playClick();
                 onClose();
               }}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
               aria-label="Close dialog"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[#071426]/70">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-7 grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 bg-[#071426]/70">
           {/* Main Dossier Column (2 cols) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Duplicate Banner if flagged */}

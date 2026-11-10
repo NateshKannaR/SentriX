@@ -28,24 +28,24 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
   const warning = targetIncident.duplicateWarning;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
-      <div className="glass-panel bg-sentinel-darkSurface rounded-3xl max-w-4xl w-full border border-sentinel-darkBorder shadow-2xl overflow-hidden animate-scaleUp">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4 selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
+      <div className="glass-panel bg-sentinel-darkSurface rounded-2xl sm:rounded-3xl max-w-4xl w-full border border-sentinel-darkBorder shadow-2xl overflow-hidden animate-scaleUp max-h-[95vh] flex flex-col">
         {/* Header */}
-        <div className="p-5 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white flex items-center justify-between border-b border-amber-500/30">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
-              <Copy className="w-5 h-5 text-white" />
+        <div className="p-3.5 sm:p-5 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 text-white flex items-center justify-between border-b border-amber-500/30 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner shrink-0">
+              <Copy className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-black tracking-tight">Duplicate Incident Resolution Center</h3>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 className="text-sm sm:text-lg font-black tracking-tight truncate">Duplicate Resolution Center</h3>
                 {warning && (
-                  <span className="px-2.5 py-0.5 rounded-full bg-white/20 text-white text-xs font-mono font-bold shadow-xs">
-                    {warning.similarityScore}% Match Detected
+                  <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] sm:text-xs font-mono font-bold shadow-xs">
+                    {warning.similarityScore}% Match
                   </span>
                 )}
               </div>
-              <p className="text-xs text-amber-100">
+              <p className="text-[10px] sm:text-xs text-amber-100 hidden xs:block">
                 Decision Support: Compare suspect report against previously registered emergency before dispatching duplicate units.
               </p>
             </div>
@@ -55,7 +55,7 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
               soundEffects.playClick();
               onClose();
             }}
-            className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors shrink-0"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -64,13 +64,13 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
 
         {/* AI Analysis Reason Bar */}
         {warning && (
-          <div className="px-6 py-3 bg-amber-950/40 border-b border-amber-900/50 flex flex-wrap items-center gap-2 text-xs text-amber-300">
+          <div className="px-3.5 sm:px-6 py-2.5 sm:py-3 bg-amber-950/40 border-b border-amber-900/50 flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-amber-300 shrink-0">
             <span className="font-bold flex items-center gap-1 font-mono">
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               Engine Match Signals:
             </span>
             {warning.reasons.map((reason, idx) => (
-              <span key={idx} className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
+              <span key={idx} className="px-2 sm:px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
                 • {reason}
               </span>
             ))}
@@ -78,35 +78,35 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
         )}
 
         {/* Side-by-Side Comparison */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-sentinel-navy/60">
+        <div className="p-3.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-6 bg-sentinel-navy/60 overflow-y-auto flex-1">
           {/* Left: Original Previously Reported Incident */}
-          <div className="bg-sentinel-darkCard p-5 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
+          <div className="bg-sentinel-darkCard p-3.5 sm:p-5 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-3.5 sm:space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-sentinel-darkBorder/60">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
                 Prior / Primary Incident
               </span>
-              <span className="font-mono text-xs font-bold text-sentinel-cyan px-2 py-0.5 rounded bg-sentinel-cyan/10 border border-sentinel-cyan/20">
+              <span className="font-mono text-[11px] sm:text-xs font-bold text-sentinel-cyan px-2 py-0.5 rounded bg-sentinel-cyan/10 border border-sentinel-cyan/20">
                 {originalIncident ? originalIncident.incidentCode : warning?.suspectCode}
               </span>
             </div>
 
             {originalIncident ? (
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                   <CategoryBadge category={originalIncident.category} size="sm" />
                   <SeverityBadge severity={originalIncident.severity} size="sm" />
                   <StatusBadge status={originalIncident.status} size="sm" />
                 </div>
 
-                <h4 className="font-bold text-base text-white">
+                <h4 className="font-bold text-sm sm:text-base text-white">
                   {originalIncident.title}
                 </h4>
 
-                <p className="text-xs text-slate-300 leading-relaxed bg-sentinel-darkSurface/80 p-3.5 rounded-xl border border-sentinel-darkBorder">
+                <p className="text-xs text-slate-300 leading-relaxed bg-sentinel-darkSurface/80 p-3 sm:p-3.5 rounded-xl border border-sentinel-darkBorder">
                   {originalIncident.description}
                 </p>
 
-                <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
+                <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
                   <div className="flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span className="truncate">{originalIncident.location}</span>
@@ -115,7 +115,7 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
                     <Users className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span>{originalIncident.peopleAffected} Affected</span>
                   </div>
-                  <div className="flex items-center gap-1.5 col-span-2 font-mono text-[11px]">
+                  <div className="flex items-center gap-1.5 xs:col-span-2 font-mono text-[11px]">
                     <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                     <span>Logged: {new Date(originalIncident.createdAt).toLocaleTimeString()}</span>
                   </div>
@@ -127,7 +127,7 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
           </div>
 
           {/* Right: Suspect Duplicate Report */}
-          <div className="bg-sentinel-darkCard p-5 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-4">
+          <div className="bg-sentinel-darkCard p-3.5 sm:p-5 rounded-2xl border-2 border-amber-500/40 shadow-xl space-y-3.5 sm:space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-sentinel-darkBorder/60">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1 font-mono">
                 <AlertTriangle className="w-3.5 h-3.5" /> Suspect Duplicate Report
@@ -171,19 +171,19 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
         </div>
 
         {/* Action Decision Footer */}
-        <div className="p-5 bg-sentinel-darkSurface border-t border-sentinel-darkBorder flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-slate-400">
+        <div className="p-3.5 sm:p-5 bg-sentinel-darkSurface border-t border-sentinel-darkBorder flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0">
+          <p className="text-[11px] sm:text-xs text-slate-400">
             ⚠️ Marking as duplicate links this report to primary record and resolves it to avoid resource redundancy.
           </p>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2.5 w-full sm:w-auto shrink-0">
             <button
               onClick={() => {
                 soundEffects.playClick();
                 onDismissWarning(targetIncident.id);
                 onClose();
               }}
-              className="flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors text-center"
             >
               Dismiss (Keep Separate)
             </button>
@@ -195,9 +195,9 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
                 onConfirmDuplicate(targetIncident.id, origId);
                 onClose();
               }}
-              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition-all flex items-center justify-center gap-2 active:scale-95"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/30 transition-all flex items-center justify-center gap-2 active:scale-95 text-center"
             >
-              <CheckCircle className="w-4 h-4" />
+              <CheckCircle className="w-4 h-4 shrink-0" />
               Confirm as Duplicate
             </button>
           </div>

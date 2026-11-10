@@ -77,9 +77,9 @@ export const AnalyticsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Intelligence Analytics & Operations Telemetry
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
+              Intelligence Analytics & Telemetry
             </h1>
             <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-sentinel-cyan/10 text-sentinel-cyan border border-sentinel-cyan/30 font-bold flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
@@ -93,7 +93,7 @@ export const AnalyticsPage: React.FC = () => {
 
         <button
           onClick={handleExportCSV}
-          className="px-5 py-2.5 rounded-xl bg-sentinel-cyan hover:bg-cyan-300 text-sentinel-navy text-xs font-bold flex items-center gap-2 shadow-lg shadow-sentinel-cyan/20 transition-all active:scale-95 self-start sm:self-center"
+          className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sentinel-cyan hover:bg-cyan-300 text-sentinel-navy text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-sentinel-cyan/20 transition-all active:scale-95"
         >
           <Download className="w-4 h-4 text-sentinel-navy" />
           <span>Export Analytics CSV</span>
@@ -101,57 +101,57 @@ export const AnalyticsPage: React.FC = () => {
       </div>
 
       {/* KPI Quad */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="p-3.5 sm:p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Average Priority Score
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+            Avg Priority Score
           </span>
-          <span className="font-mono text-3xl font-black text-sentinel-cyan mt-1 block">
+          <span className="font-mono text-2xl sm:text-3xl font-black text-sentinel-cyan mt-1 block">
             {metrics.avgPriorityScore}
-            <span className="text-sm text-slate-400 font-normal"> / 100</span>
+            <span className="text-xs sm:text-sm text-slate-400 font-normal"> / 100</span>
           </span>
-          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan" /> Weighted triage index
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan shrink-0" /> Weighted triage index
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+        <div className="p-3.5 sm:p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Total Casualties Logged
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+            Total Casualties
           </span>
-          <span className="font-mono text-3xl font-black text-red-400 mt-1 block">
+          <span className="font-mono text-2xl sm:text-3xl font-black text-red-400 mt-1 block">
             {metrics.totalCasualties}
           </span>
-          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Across all 6 categories
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" /> Across 6 categories
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+        <div className="p-3.5 sm:p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
             Resolution Rate
           </span>
-          <span className="font-mono text-3xl font-black text-emerald-400 mt-1 block">
+          <span className="font-mono text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block">
             {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}%
           </span>
-          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> {metrics.resolved} of {metrics.total} cleared
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" /> {metrics.resolved} of {metrics.total} cleared
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+        <div className="p-3.5 sm:p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
-            Critical Incident Ratio
+          <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+            Critical Ratio
           </span>
-          <span className="font-mono text-3xl font-black text-amber-400 mt-1 block">
+          <span className="font-mono text-2xl sm:text-3xl font-black text-amber-400 mt-1 block">
             {metrics.total > 0 ? Math.round((metrics.critical / metrics.total) * 100) : 0}%
           </span>
-          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-            <Flame className="w-3 h-3 text-amber-400" /> Rapid dispatch protocol
+          <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1 flex items-center gap-1 truncate">
+            <Flame className="w-3 h-3 text-amber-400 shrink-0" /> Rapid dispatch
           </p>
         </div>
       </div>
@@ -159,7 +159,7 @@ export const AnalyticsPage: React.FC = () => {
       {/* Visualizations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Casualty Impact by Category */}
-        <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
+        <div className="glass-panel p-4 sm:p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">

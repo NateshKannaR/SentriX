@@ -13,6 +13,7 @@ import {
   ListFilter,
   Activity,
   Terminal,
+  X,
 } from 'lucide-react';
 import { Incident } from '../../types';
 import { soundFx } from '../../utils/soundEffects';
@@ -22,6 +23,8 @@ interface AdminSidebarProps {
   onSimulate: () => void;
   onReset: () => void;
   isSimulating?: boolean;
+  onNavigate?: () => void;
+  onClose?: () => void;
 }
 
 export const AdminSidebar: React.FC<AdminSidebarProps> = ({
@@ -29,6 +32,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onSimulate,
   onReset,
   isSimulating = false,
+  onNavigate,
+  onClose,
 }) => {
   const criticalCount = incidents.filter(i => i.severity === 'Critical' && i.status !== 'Resolved').length;
   const duplicateCount = incidents.filter(i => Boolean(i.duplicateWarning) && i.status !== 'Resolved').length;
@@ -70,13 +75,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     },
   ];
 
+  const handleLinkClick = () => {
+    soundFx.playClick();
+    onNavigate?.();
+  };
+
   return (
-    <aside className="w-68 bg-[#040C17] text-slate-300 flex flex-col h-full border-r border-[#16C7E8]/20 select-none shrink-0 shadow-2xl">
+    <aside className="w-72 sm:w-68 bg-[#040C17] text-slate-300 flex flex-col h-full border-r border-[#16C7E8]/20 select-none shrink-0 shadow-2xl">
       {/* Brand Header */}
-      <div className="p-5 border-b border-white/10 flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between">
         <Link
           to="/admin/dashboard"
-          onClick={() => soundFx.playClick()}
+          onClick={handleLinkClick}
           className="flex items-center gap-3"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sentinel-red to-rose-700 flex items-center justify-center text-white shadow-md shadow-sentinel-red/30 glow-red">
@@ -92,6 +102,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </span>
           </div>
         </Link>
+
+        {onClose && (
+          <button
+            onClick={() => {
+              soundFx.playClick();
+              onClose();
+            }}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 lg:hidden"
+            aria-label="Close sidebar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation Links */}
@@ -105,9 +128,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <NavLink
               key={item.to}
               to={item.to}
-              onClick={() => soundFx.playClick()}
+              onClick={handleLinkClick}
               className={({ isActive }) =>
-                `flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all ${
+                `flex items-center justify-between px-3.5 py-3 rounded-2xl text-xs font-bold transition-all min-h-[44px] ${
                   isActive
                     ? 'bg-gradient-to-r from-sentinel-cyan to-teal-400 text-[#071426] shadow-lg shadow-sentinel-cyan/25 glow-cyan'
                     : 'text-slate-300 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/5'

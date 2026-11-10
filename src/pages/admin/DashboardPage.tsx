@@ -88,9 +88,9 @@ export const DashboardPage: React.FC = () => {
               soundFx.playAlert();
               onOpenIncident(criticalQueue[0]);
             }}
-            className="px-4 py-2.5 rounded-xl bg-sentinel-red hover:bg-red-600 text-white text-xs font-black shrink-0 shadow-lg shadow-sentinel-red/35 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-sentinel-red hover:bg-red-600 text-white text-xs font-black shrink-0 shadow-lg shadow-sentinel-red/35 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95"
           >
-            <span>Review Top Priority #{criticalQueue[0].incidentCode}</span>
+            <span>Review #{criticalQueue[0].incidentCode}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -99,11 +99,11 @@ export const DashboardPage: React.FC = () => {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight">
               Command Center Overview
             </h1>
-            <span className="font-mono text-xs px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               LIVE TELEMETRY
             </span>
@@ -113,13 +113,13 @@ export const DashboardPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => {
               soundFx.playAlert();
               onSimulate();
             }}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sentinel-red to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-black text-xs flex items-center gap-2 shadow-lg shadow-sentinel-red/35 glow-red transition-all active:scale-95 border border-red-400/30"
+            className="flex-1 sm:flex-none px-3.5 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-sentinel-red to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-sentinel-red/35 glow-red transition-all active:scale-95 border border-red-400/30"
           >
             <Zap className="w-4 h-4" />
             <span>Simulate Crisis</span>
@@ -128,104 +128,104 @@ export const DashboardPage: React.FC = () => {
           <Link
             to="/admin/incidents"
             onClick={() => soundFx.playClick()}
-            className="px-4 py-2.5 rounded-xl bg-[#0B1E38] border border-white/10 hover:border-[#16C7E8] text-slate-200 font-bold text-xs flex items-center gap-2 transition-all hover:glow-cyan"
+            className="flex-1 sm:flex-none px-3.5 sm:px-4 py-2.5 rounded-xl bg-[#0B1E38] border border-white/10 hover:border-[#16C7E8] text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-all hover:glow-cyan"
           >
-            <span>All Incidents ({metrics.total})</span>
+            <span>All ({metrics.total})</span>
             <ArrowRight className="w-3.5 h-3.5 text-sentinel-cyan" />
           </Link>
         </div>
       </div>
 
       {/* DASHBOARD STATISTICS CARDS (Glowing Tactical Panels) */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Total Incidents */}
-        <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-3 relative overflow-hidden group hover:border-[#16C7E8]/50 transition-all">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-2 sm:space-y-3 relative overflow-hidden group hover:border-[#16C7E8]/50 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold">
               Total Reported
             </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/30">
-              <Radio className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center border border-blue-500/30">
+              <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="font-mono text-3xl font-black text-white">
+          <div className="font-mono text-2xl sm:text-3xl font-black text-white">
             {metrics.total}
           </div>
           <div className="text-[10px] font-mono text-slate-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>100% Data-Driven</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+            <span className="truncate">100% Data-Driven</span>
           </div>
         </div>
 
         {/* Critical Incidents */}
-        <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border-2 border-red-500/50 shadow-xl space-y-3 relative overflow-hidden group hover:border-red-500 glow-red transition-all">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-[#0B1E38]/80 border-2 border-red-500/50 shadow-xl space-y-2 sm:space-y-3 relative overflow-hidden group hover:border-red-500 glow-red transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-red-400 font-bold flex items-center gap-1">
-              <ShieldAlert className="w-3 h-3 text-red-400" /> Critical Tier
+              <ShieldAlert className="w-3 h-3 text-red-400" /> Critical
             </span>
-            <div className="w-8 h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/40 animate-pulse">
-              <ShieldAlert className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/40 animate-pulse">
+              <ShieldAlert className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="font-mono text-3xl font-black text-red-400">
+          <div className="font-mono text-2xl sm:text-3xl font-black text-red-400">
             {metrics.critical}
           </div>
-          <div className="text-[10px] font-mono text-red-400/80">
-            Immediate dispatch required
+          <div className="text-[10px] font-mono text-red-400/80 truncate">
+            Immediate dispatch
           </div>
         </div>
 
         {/* Pending Incidents */}
-        <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-3 relative overflow-hidden group hover:border-amber-500/50 transition-all">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-2 sm:space-y-3 relative overflow-hidden group hover:border-amber-500/50 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold">
               Pending
             </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
-              <Clock className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 text-amber-400 flex items-center justify-center border border-amber-500/30">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="font-mono text-3xl font-black text-amber-400">
+          <div className="font-mono text-2xl sm:text-3xl font-black text-amber-400">
             {metrics.pending}
           </div>
-          <div className="text-[10px] font-mono text-slate-400">
-            Awaiting triage assignment
+          <div className="text-[10px] font-mono text-slate-400 truncate">
+            Awaiting triage
           </div>
         </div>
 
         {/* In Progress */}
-        <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-3 relative overflow-hidden group hover:border-[#16C7E8]/50 transition-all">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-2 sm:space-y-3 relative overflow-hidden group hover:border-[#16C7E8]/50 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-sentinel-cyan font-bold">
               In Progress
             </span>
-            <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/15 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30">
-              <Activity className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sentinel-cyan/15 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30">
+              <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="font-mono text-3xl font-black text-sentinel-cyan">
+          <div className="font-mono text-2xl sm:text-3xl font-black text-sentinel-cyan">
             {metrics.inProgress}
           </div>
-          <div className="text-[10px] font-mono text-slate-400">
-            Field units actively deployed
+          <div className="text-[10px] font-mono text-slate-400 truncate">
+            Field deployed
           </div>
         </div>
 
         {/* Resolved */}
-        <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-3 relative overflow-hidden group hover:border-emerald-500/50 transition-all col-span-2 lg:col-span-1">
+        <div className="p-3.5 sm:p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 shadow-xl space-y-2 sm:space-y-3 relative overflow-hidden group hover:border-emerald-500/50 transition-all col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold">
               Resolved
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
           </div>
-          <div className="font-mono text-3xl font-black text-emerald-400">
+          <div className="font-mono text-2xl sm:text-3xl font-black text-emerald-400">
             {metrics.resolved}
           </div>
-          <div className="text-[10px] font-mono text-emerald-400/80">
-            Scene cleared & documented
+          <div className="text-[10px] font-mono text-emerald-400/80 truncate">
+            Scene cleared
           </div>
         </div>
       </div>
@@ -233,7 +233,7 @@ export const DashboardPage: React.FC = () => {
       {/* DATA VISUALIZATIONS SECTION (Using Recharts with Dark Glassmorphism) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Incidents by Category (Bar Chart) - 7 Cols */}
-        <div className="lg:col-span-7 bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+        <div className="lg:col-span-7 bg-[#0B1E38]/90 p-4 sm:p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
@@ -243,8 +243,8 @@ export const DashboardPage: React.FC = () => {
                 Distribution across 6 categories with critical incident overlay
               </p>
             </div>
-            <span className="text-xs font-mono font-bold text-sentinel-cyan bg-[#16C7E8]/10 px-3 py-1 rounded-full border border-[#16C7E8]/30">
-              6 Categories
+            <span className="text-xs font-mono font-bold text-sentinel-cyan bg-[#16C7E8]/10 px-2.5 sm:px-3 py-1 rounded-full border border-[#16C7E8]/30">
+              6 Verticals
             </span>
           </div>
 
@@ -258,6 +258,7 @@ export const DashboardPage: React.FC = () => {
                 <XAxis
                   dataKey="category"
                   tick={{ fontSize: 10, fill: '#94A3B8' }}
+                  tickFormatter={val => val.replace(' Emergency', '')}
                   angle={-15}
                   textAnchor="end"
                   interval={0}
@@ -486,7 +487,7 @@ export const DashboardPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 self-end sm:self-center shrink-0">
+                <div className="flex items-center justify-between sm:justify-end gap-4 self-stretch sm:self-center shrink-0 pt-2 sm:pt-0 border-t border-white/5 sm:border-0">
                   <PriorityGauge score={inc.priorityScore} size="sm" showLabel={false} />
                   <span className="text-xs font-bold text-sentinel-cyan hover:underline flex items-center gap-1">
                     Inspect Dossier <ArrowRight className="w-3.5 h-3.5" />

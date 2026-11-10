@@ -188,14 +188,14 @@ export const TrackIncidentPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2 sm:gap-4 text-center pt-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-center pt-2">
                   {[
                     { label: 'Intake Registered', active: true, step: '01' },
                     { label: 'AI Triaged', active: true, step: '02' },
                     { label: 'Unit Dispatched', active: ['Pending', 'In Progress', 'Resolved'].includes(incident.status), step: '03' },
                     { label: 'Incident Resolved', active: incident.status === 'Resolved', step: '04' },
                   ].map((step, idx) => (
-                    <div key={idx} className="space-y-2">
+                    <div key={idx} className="space-y-2 p-2 rounded-xl bg-sentinel-darkSurface/40 sm:bg-transparent">
                       <div className="relative">
                         <div
                           className={`h-2 rounded-full transition-all ${
@@ -210,7 +210,7 @@ export const TrackIncidentPage: React.FC = () => {
                       </div>
                       <div className="text-left sm:text-center">
                         <span className="text-[10px] font-mono text-slate-500 block">STEP {step.step}</span>
-                        <span className={`text-xs font-bold ${step.active ? 'text-white' : 'text-slate-500'}`}>
+                        <span className={`text-xs font-bold block ${step.active ? 'text-white' : 'text-slate-500'}`}>
                           {step.label}
                         </span>
                       </div>

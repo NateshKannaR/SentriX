@@ -72,11 +72,11 @@ CREATE TABLE public.incidents (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
       {/* Header */}
       <div>
-        <div className="flex items-center gap-2.5">
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight">
             System Operations & Telemetry Console
           </h1>
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-sentinel-cyan/10 text-sentinel-cyan border border-sentinel-cyan/30 font-bold flex items-center gap-1">
+          <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-sentinel-cyan/10 text-sentinel-cyan border border-sentinel-cyan/30 font-bold flex items-center gap-1 shrink-0">
             <Cpu className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
             DIAGNOSTICS ONLINE
           </span>
@@ -87,22 +87,22 @@ CREATE TABLE public.incidents (
       </div>
 
       {/* Feature: Demo Simulation Center */}
-      <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-5">
-        <div className="flex items-center justify-between pb-3 border-b border-sentinel-darkBorder/60">
+      <div className="glass-panel p-4 sm:p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4 sm:space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-sentinel-darkBorder/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20">
-              <Zap className="w-6 h-6" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/20 shrink-0">
+              <Zap className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h3 className="text-sm sm:text-base font-bold text-white">
                   Crisis Simulation Reactor
                 </h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/30 font-bold">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/30 font-bold shrink-0">
                   CODE CLASH 2026 BENCHMARK
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Synthesize realistic multi-category disaster vectors with geospatial coordinates, randomized casualty counts, and AI scoring.
               </p>
             </div>
@@ -134,24 +134,24 @@ CREATE TABLE public.incidents (
         </div>
 
         {/* Action Controls */}
-        <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-2">
           <button
             onClick={() => {
               soundEffects.playBeep();
               onSimulate();
             }}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-sentinel-cyan to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-sentinel-navy font-black text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-sentinel-cyan to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-sentinel-navy font-black text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-4 h-4 shrink-0" />
             <span>Simulate Single Emergency</span>
           </button>
 
           <button
             onClick={handleBatchSimulate}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/20 transition-all active:scale-95"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/20 transition-all active:scale-95"
           >
-            <Zap className="w-4 h-4" />
-            <span>Simulate 3-Incident Burst Saturation</span>
+            <Zap className="w-4 h-4 shrink-0" />
+            <span>Simulate 3-Incident Burst</span>
           </button>
 
           <button
@@ -159,26 +159,26 @@ CREATE TABLE public.incidents (
               soundEffects.playClick();
               onReset();
             }}
-            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-sentinel-darkBorder text-xs font-semibold flex items-center gap-2 transition-colors active:scale-95"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-sentinel-darkBorder text-xs font-semibold flex items-center gap-2 transition-colors active:scale-95"
           >
-            <RotateCcw className="w-4 h-4 text-slate-400" />
-            <span>Reset to Clean Initial Seed</span>
+            <RotateCcw className="w-4 h-4 text-slate-400 shrink-0" />
+            <span>Reset to Clean Seed</span>
           </button>
         </div>
       </div>
 
       {/* Audio HUD Synthesizer Diagnostics */}
-      <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-sentinel-darkBorder/60">
+      <div className="glass-panel p-4 sm:p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-sentinel-darkBorder/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-sentinel-cyan flex items-center justify-center border border-cyan-500/20">
-              <Radio className="w-6 h-6" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/10 text-sentinel-cyan flex items-center justify-center border border-cyan-500/20 shrink-0">
+              <Radio className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-sm sm:text-base font-bold text-white">
                 Mission Control Audio HUD Synthesizer
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Synthesized Web Audio API sound telemetry for mission control operators
               </p>
             </div>
@@ -186,7 +186,7 @@ CREATE TABLE public.incidents (
 
           <button
             onClick={toggleSound}
-            className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border transition-colors ${
+            className={`self-start sm:self-auto px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 border transition-colors shrink-0 ${
               !isAudioMuted
                 ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -197,8 +197,8 @@ CREATE TABLE public.incidents (
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          <span className="text-xs font-mono text-slate-400 mr-2">Test Sound Profiles:</span>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 pt-1">
+          <span className="text-xs font-mono text-slate-400 mr-1 w-full sm:w-auto">Test Sound Profiles:</span>
           <button
             onClick={() => soundEffects.playBeep()}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono border border-sentinel-darkBorder hover:border-sentinel-cyan transition-colors"
@@ -227,23 +227,23 @@ CREATE TABLE public.incidents (
       </div>
 
       {/* Backend & MongoDB / Supabase Diagnostic Panel */}
-      <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-sentinel-darkBorder/60">
+      <div className="glass-panel p-4 sm:p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-sentinel-darkBorder/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
-              <Database className="w-6 h-6" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shrink-0">
+              <Database className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-sm sm:text-base font-bold text-white">
                 Persistence Layer Architecture
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400">
                 Dual persistence engine: MongoDB Atlas Cloud + Local Reactive Fallback
               </p>
             </div>
           </div>
 
-          <span className="font-mono text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="self-start sm:self-auto font-mono text-xs px-2.5 py-1 rounded-full font-bold flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             MongoDB Atlas Connected
           </span>

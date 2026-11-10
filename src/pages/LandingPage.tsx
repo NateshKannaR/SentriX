@@ -174,38 +174,38 @@ export const LandingPage: React.FC = () => {
               </div>
 
               {/* Live Metric Ticker under buttons */}
-              <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-4">
+              <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-2 sm:gap-4">
                 <div className="space-y-0.5">
-                  <span className="font-mono text-2xl font-black text-white">{metrics.total}</span>
-                  <p className="text-[11px] font-mono text-slate-400 uppercase">Tracked Incidents</p>
+                  <span className="font-mono text-xl sm:text-2xl font-black text-white">{metrics.total}</span>
+                  <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 uppercase truncate">Incidents</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="font-mono text-2xl font-black text-red-400">{metrics.critical}</span>
-                  <p className="text-[11px] font-mono text-red-300 uppercase">Critical Priority</p>
+                  <span className="font-mono text-xl sm:text-2xl font-black text-red-400">{metrics.critical}</span>
+                  <p className="text-[10px] sm:text-[11px] font-mono text-red-300 uppercase truncate">Critical</p>
                 </div>
                 <div className="space-y-0.5">
-                  <span className="font-mono text-2xl font-black text-sentinel-cyan">{metrics.avgPriorityScore}</span>
-                  <p className="text-[11px] font-mono text-slate-400 uppercase">Avg Priority Index</p>
+                  <span className="font-mono text-xl sm:text-2xl font-black text-sentinel-cyan">{metrics.avgPriorityScore}</span>
+                  <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 uppercase truncate">Avg Priority</p>
                 </div>
               </div>
             </div>
 
             {/* Right: Interactive Live AI Triage Playground */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-3xl bg-[#0B1E38]/90 border border-[#16C7E8]/30 p-6 shadow-2xl backdrop-blur-2xl space-y-5 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/20 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center">
+              <div className="relative rounded-2xl sm:rounded-3xl bg-[#0B1E38]/90 border border-[#16C7E8]/30 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl space-y-4 sm:space-y-5 overflow-hidden">
+                <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
+                  <div className="flex items-center gap-2 sm:gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/20 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center shrink-0">
                       <Cpu className="w-4 h-4 animate-spin-slow" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
-                        Smart Severity Engine Simulator
+                      <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+                        Severity Engine Simulator
                       </h3>
-                      <p className="text-[11px] text-slate-400 font-mono">Live rule-based decision support</p>
+                      <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono">Live rule-based decision support</p>
                     </div>
                   </div>
-                  <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30">
+                  <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 shrink-0">
                     INTERACTIVE
                   </span>
                 </div>

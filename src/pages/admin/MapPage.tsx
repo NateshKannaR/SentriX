@@ -18,6 +18,8 @@ import {
   Navigation,
   Crosshair,
   Radio,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -74,6 +76,8 @@ export const MapPage: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<string>('ALL');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [mapTileError, setMapTileError] = useState(false);
+  const [isHudExpanded, setIsHudExpanded] = useState(false);
+  const [isListExpanded, setIsListExpanded] = useState(false);
 
   // Filtered incidents with coordinates
   const mappedIncidents = incidents.filter(i => {
@@ -196,75 +200,89 @@ export const MapPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4.5rem)] flex flex-col lg:flex-row relative overflow-hidden bg-[#071426]">
-      {/* Tactical Floating HUD Controls */}
-      <div className="absolute top-4 left-4 right-4 sm:right-auto sm:w-88 z-[1000] bg-[#0B1E38]/95 backdrop-blur-2xl p-5 rounded-3xl border border-[#16C7E8]/30 shadow-2xl space-y-4 glow-cyan">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/20 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30">
-              <Crosshair className="w-4 h-4 animate-spin-slow" />
+    <div className="h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] flex flex-col lg:flex-row relative overflow-hidden bg-[#071426]">
+      {/* Tactical Floating HUD Controls (Collapsible on mobile) */}
+      <div className="absolute top-2 sm:top-4 left-2 right-2 sm:right-auto sm:left-4 sm:w-88 z-[1000] bg-[#0B1E38]/95 backdrop-blur-2xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#16C7E8]/30 shadow-2xl space-y-3 sm:space-y-4 glow-cyan transition-all">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sentinel-cyan/20 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30">
+              <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin-slow" />
             </div>
             <div>
               <h3 className="font-mono font-black text-xs text-white uppercase tracking-wider">
                 Geospatial War Room
               </h3>
-              <p className="text-[10px] text-slate-400 font-mono">Dark Matter Cartographic View</p>
+              <p className="text-[9px] sm:text-[10px] text-slate-400 font-mono hidden xs:block">
+                Dark Matter Cartographic View
+              </p>
             </div>
           </div>
-          <span className="font-mono text-xs font-black text-sentinel-cyan px-2 py-0.5 rounded bg-sentinel-cyan/10 border border-sentinel-cyan/30">
-            {mappedIncidents.length} Targets
-          </span>
-        </div>
 
-        {/* Filter dropdowns */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <label className="text-[10px] font-mono text-slate-400 block mb-1">Category</label>
-            <select
-              value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-[11px] font-black text-sentinel-cyan px-2 py-0.5 rounded bg-sentinel-cyan/10 border border-sentinel-cyan/30">
+              {mappedIncidents.length} Targets
+            </span>
+            <button
+              onClick={() => setIsHudExpanded(!isHudExpanded)}
+              className="sm:hidden p-1 rounded-lg text-slate-300 hover:text-white bg-white/5 border border-white/10"
+              aria-label="Toggle filters"
             >
-              <option value="ALL">All Categories</option>
-              <option value="Fire Emergency">Fire</option>
-              <option value="Road Accident">Road</option>
-              <option value="Medical Emergency">Medical</option>
-              <option value="Flood">Flood</option>
-              <option value="Building Collapse">Collapse</option>
-              <option value="Other Emergencies">Other</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-mono text-slate-400 block mb-1">Severity</label>
-            <select
-              value={severityFilter}
-              onChange={e => setSeverityFilter(e.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
-            >
-              <option value="ALL">All Severities</option>
-              <option value="Critical">Critical</option>
-              <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
+              {isHudExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[10px] font-mono text-slate-400">
-          <span className="flex items-center gap-1.5 text-red-400">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse glow-red" /> Critical
-          </span>
-          <span className="flex items-center gap-1.5 text-orange-400">
-            <span className="w-2 h-2 rounded-full bg-orange-500" /> High
-          </span>
-          <span className="flex items-center gap-1.5 text-amber-400">
-            <span className="w-2 h-2 rounded-full bg-amber-500" /> Medium
-          </span>
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" /> Low
-          </span>
+        {/* Filter dropdowns (Always visible on sm+, expandable on mobile) */}
+        <div className={`${isHudExpanded ? 'block' : 'hidden sm:block'} space-y-3 pt-1 border-t border-white/10`}>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label className="text-[10px] font-mono text-slate-400 block mb-1">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={e => setCategoryFilter(e.target.value)}
+                className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
+              >
+                <option value="ALL">All Categories</option>
+                <option value="Fire Emergency">Fire</option>
+                <option value="Road Accident">Road</option>
+                <option value="Medical Emergency">Medical</option>
+                <option value="Flood">Flood</option>
+                <option value="Building Collapse">Collapse</option>
+                <option value="Other Emergencies">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-mono text-slate-400 block mb-1">Severity</label>
+              <select
+                value={severityFilter}
+                onChange={e => setSeverityFilter(e.target.value)}
+                className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
+              >
+                <option value="ALL">All Severities</option>
+                <option value="Critical">Critical</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center justify-between pt-1 border-t border-white/10 text-[10px] font-mono text-slate-400">
+            <span className="flex items-center gap-1.5 text-red-400">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse glow-red" /> Critical
+            </span>
+            <span className="flex items-center gap-1.5 text-orange-400">
+              <span className="w-2 h-2 rounded-full bg-orange-500" /> High
+            </span>
+            <span className="flex items-center gap-1.5 text-amber-400">
+              <span className="w-2 h-2 rounded-full bg-amber-500" /> Med
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" /> Low
+            </span>
+          </div>
         </div>
       </div>
 
@@ -281,30 +299,44 @@ export const MapPage: React.FC = () => {
         )}
       </div>
 
-      {/* Side Tactical Incident Inspector Drawer */}
-      <div className="w-full lg:w-96 bg-[#0B1E38]/95 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col h-72 lg:h-full z-10 shadow-2xl backdrop-blur-2xl">
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+      {/* Side Tactical Incident Inspector Drawer (Responsive height on mobile) */}
+      <div
+        className={`w-full lg:w-96 bg-[#0B1E38]/95 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col z-10 shadow-2xl backdrop-blur-2xl transition-all duration-300 ${
+          isListExpanded ? 'h-72' : 'h-36 sm:h-52'
+        } lg:h-full`}
+      >
+        <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between">
           <h4 className="font-mono font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Radio className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
-            Geolocated Dispatches ({mappedIncidents.length})
+            <span>Dispatches ({mappedIncidents.length})</span>
           </h4>
-          <span className="text-[10px] font-mono text-sentinel-cyan">1-Click Center</span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsListExpanded(!isListExpanded)}
+              className="lg:hidden text-[11px] font-mono text-sentinel-cyan flex items-center gap-1 p-1 hover:bg-white/5 rounded-lg"
+            >
+              <span>{isListExpanded ? 'Collapse' : 'Expand'}</span>
+              {isListExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+            </button>
+            <span className="hidden sm:inline-block text-[10px] font-mono text-slate-500">Tap to Center</span>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+        <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
           {mappedIncidents.map(inc => {
             const isSelected = selectedIncident?.id === inc.id;
             return (
               <div
                 key={inc.id}
                 onClick={() => panToIncident(inc)}
-                className={`p-3.5 rounded-2xl border text-left cursor-pointer transition-all ${
+                className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                   isSelected
                     ? 'border-sentinel-cyan bg-sentinel-cyan/15 ring-1 ring-sentinel-cyan shadow-lg shadow-sentinel-cyan/20 glow-cyan'
                     : 'border-white/10 bg-[#071426] hover:border-white/20 hover:bg-white/5'
                 }`}
               >
-                <div className="flex items-center justify-between gap-1 mb-1.5">
+                <div className="flex items-center justify-between gap-1 mb-1">
                   <span className="font-mono text-xs font-black text-sentinel-cyan">
                     {inc.incidentCode}
                   </span>
@@ -313,11 +345,11 @@ export const MapPage: React.FC = () => {
                 <h5 className="text-xs font-bold text-white line-clamp-1">
                   {inc.title}
                 </h5>
-                <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
                   📍 {inc.location}
                 </p>
 
-                <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between">
+                <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between">
                   <span className="text-[10px] font-mono text-slate-400">
                     👥 {inc.peopleAffected} Casualties
                   </span>

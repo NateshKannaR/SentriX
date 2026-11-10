@@ -28,8 +28,8 @@ export const EmergencyAlertDrawer: React.FC<EmergencyAlertDrawerProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/70 backdrop-blur-md animate-fadeIn selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
-      <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md glass-panel bg-sentinel-navy shadow-2xl border-l border-sentinel-darkBorder flex flex-col">
+      <div className="absolute inset-y-0 right-0 max-w-full flex pl-3 sm:pl-10">
+        <div className="w-screen max-w-full sm:max-w-md glass-panel bg-sentinel-navy shadow-2xl border-l border-sentinel-darkBorder flex flex-col">
           {/* Header */}
           <div className="p-4 sm:p-5 bg-gradient-to-r from-sentinel-darkSurface to-slate-900 text-white flex items-center justify-between border-b border-sentinel-darkBorder">
             <div className="flex items-center gap-2.5">
@@ -175,11 +175,11 @@ export const EmergencyAlertDrawer: React.FC<EmergencyAlertDrawerProps> = ({
                       }}
                       className="p-3 rounded-xl glass-panel border border-sentinel-darkBorder hover:border-sentinel-cyan cursor-pointer transition-all flex items-center justify-between group"
                     >
-                      <div className="space-y-0.5 max-w-[240px]">
+                      <div className="space-y-0.5 min-w-0 flex-1 pr-2">
                         <p className="text-xs font-bold text-white truncate group-hover:text-sentinel-cyan transition-colors">
                           {inc.title}
                         </p>
-                        <p className="text-[10px] text-slate-400 font-mono">{inc.location}</p>
+                        <p className="text-[10px] text-slate-400 font-mono truncate">{inc.location}</p>
                       </div>
                       <SeverityBadge severity={inc.severity} size="sm" />
                     </div>

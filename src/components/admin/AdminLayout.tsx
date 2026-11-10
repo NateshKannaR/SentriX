@@ -157,9 +157,11 @@ export const AdminLayout: React.FC = () => {
             className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <div className="relative z-10 w-72 max-w-full">
+          <div className="relative z-10 w-72 max-w-[85vw]">
             <AdminSidebar
               incidents={incidents}
+              onNavigate={() => setMobileSidebarOpen(false)}
+              onClose={() => setMobileSidebarOpen(false)}
               onSimulate={() => {
                 handleSimulate();
                 setMobileSidebarOpen(false);
@@ -176,26 +178,26 @@ export const AdminLayout: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#071426]">
         {/* Top Tactical Command HUD Bar */}
-        <header className="h-18 bg-[#0B1E38]/95 border-b border-[#16C7E8]/20 flex items-center justify-between px-4 sm:px-6 shrink-0 z-20 backdrop-blur-xl shadow-xl">
-          <div className="flex items-center gap-3">
+        <header className="h-16 sm:h-18 bg-[#0B1E38]/95 border-b border-[#16C7E8]/20 flex items-center justify-between px-3 sm:px-6 shrink-0 z-20 backdrop-blur-xl shadow-xl">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
+              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 min-w-[38px] min-h-[38px] flex items-center justify-center"
               aria-label="Toggle navigation menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Global Search with Glow */}
-            <div className="relative w-48 sm:w-80">
+            <div className="relative w-32 xs:w-44 sm:w-64 md:w-80">
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Search code, address, keyword..."
-                  className="w-full text-xs rounded-xl bg-[#071426] border border-white/15 focus:border-sentinel-cyan focus:ring-1 focus:ring-sentinel-cyan pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none transition-all"
+                  placeholder="Search code, title..."
+                  className="w-full text-xs rounded-xl bg-[#071426] border border-white/15 focus:border-sentinel-cyan focus:ring-1 focus:ring-sentinel-cyan pl-8 sm:pl-9 pr-2 sm:pr-3 py-1.5 sm:py-2 text-white placeholder-slate-500 focus:outline-none transition-all"
                 />
               </div>
 
@@ -341,7 +343,7 @@ export const AdminLayout: React.FC = () => {
         )}
 
         {/* Router Outlet Viewport */}
-        <main className="flex-1 overflow-y-auto bg-[#071426]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#071426]">
           <Outlet
             context={{
               incidents,

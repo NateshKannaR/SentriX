@@ -244,36 +244,36 @@ export const ReportPage: React.FC = () => {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Post-Submission Success Screen with Emergency Ticket Receipt */}
           {submittedIncident ? (
-            <div className="bg-[#0B1E38]/95 rounded-3xl border border-[#16C7E8]/40 shadow-2xl p-6 sm:p-10 text-center space-y-6 animate-scaleUp glow-cyan">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/40 shadow-lg shadow-emerald-500/20">
-                <CheckCircle2 className="w-10 h-10 animate-bounce" />
+            <div className="bg-[#0B1E38]/95 rounded-2xl sm:rounded-3xl border border-[#16C7E8]/40 shadow-2xl p-4 sm:p-10 text-center space-y-5 sm:space-y-6 animate-scaleUp glow-cyan">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/40 shadow-lg shadow-emerald-500/20">
+                <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 animate-bounce" />
               </div>
 
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30">
                   OFFICIALLY LOGGED IN EMERGENCY GRID
                 </span>
-                <h1 className="text-2xl sm:text-3xl font-black text-white mt-2">
+                <h1 className="text-xl sm:text-3xl font-black text-white mt-2">
                   Emergency Report Transmitted
                 </h1>
-                <p className="text-sm text-slate-300 max-w-md mx-auto mt-2">
+                <p className="text-xs sm:text-sm text-slate-300 max-w-md mx-auto mt-2">
                   Your incident brief has been accepted by the SentriX Command Center. Field units are actively being notified.
                 </p>
               </div>
 
               {/* Unique Incident Code Box */}
-              <div className="max-w-md mx-auto p-5 rounded-2xl bg-[#071426] text-white border border-[#16C7E8]/50 shadow-xl flex items-center justify-between">
-                <div className="text-left">
+              <div className="max-w-md mx-auto p-4 sm:p-5 rounded-2xl bg-[#071426] text-white border border-[#16C7E8]/50 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-center sm:text-left">
                   <span className="text-[10px] uppercase font-mono tracking-wider text-slate-400 block">
                     Your Incident Tracking Code
                   </span>
-                  <span className="font-mono text-2xl font-black text-sentinel-cyan">
+                  <span className="font-mono text-xl sm:text-2xl font-black text-sentinel-cyan">
                     {submittedIncident.incidentCode}
                   </span>
                 </div>
                 <button
                   onClick={copyIncidentCode}
-                  className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all border border-white/20 active:scale-95"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all border border-white/20 active:scale-95"
                 >
                   <Copy className="w-4 h-4 text-sentinel-cyan" />
                   {copiedCode ? 'Copied!' : 'Copy Code'}
@@ -345,15 +345,15 @@ export const ReportPage: React.FC = () => {
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 1. Category Grid */}
-                <div className="bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       Step 1: Emergency Category <span className="text-red-400">*</span>
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">6 Verticals Supported</span>
+                    <span className="text-[10px] text-slate-400 font-mono">6 Verticals</span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                     {CATEGORIES.map(cat => {
                       const Icon = cat.icon;
                       const isSelected = category === cat.label;
@@ -365,7 +365,7 @@ export const ReportPage: React.FC = () => {
                             soundFx.playClick();
                             setCategory(cat.label);
                           }}
-                          className={`p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-3 ${
+                          className={`p-3 sm:p-4 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2.5 sm:gap-3 min-h-[96px] ${
                             isSelected
                               ? 'border-sentinel-red bg-red-500/15 text-white ring-2 ring-sentinel-red/30 shadow-lg shadow-sentinel-red/20 glow-red'
                               : 'border-white/10 hover:border-white/20 bg-[#071426] text-slate-300'
@@ -373,11 +373,11 @@ export const ReportPage: React.FC = () => {
                         >
                           <div className="flex items-center justify-between">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${
                                 isSelected ? 'bg-sentinel-red text-white' : 'bg-white/5 text-slate-400'
                               }`}
                             >
-                              <Icon className="w-5 h-5" />
+                              <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                             </div>
                             {isSelected && <span className="w-2.5 h-2.5 rounded-full bg-sentinel-red animate-pulse" />}
                           </div>
@@ -396,7 +396,7 @@ export const ReportPage: React.FC = () => {
                 </div>
 
                 {/* 2. Situation Report & Live Neural Scanner */}
-                <div className="bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                     Step 2: Incident Title & Detailed Field Description <span className="text-red-400">*</span>
                   </label>
@@ -441,8 +441,8 @@ export const ReportPage: React.FC = () => {
                 </div>
 
                 {/* 3. Location & Interactive Leaflet Pin-Drop Map */}
-                <div className="bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       Step 3: Location & Interactive Map Pin <span className="text-red-400">*</span>
                     </label>
@@ -490,40 +490,40 @@ export const ReportPage: React.FC = () => {
                   {/* Leaflet Pin-Drop Mini Map Canvas */}
                   <div className="rounded-2xl overflow-hidden border border-white/15 h-56 relative shadow-inner">
                     <div ref={mapContainerRef} className="w-full h-full" />
-                    <div className="absolute top-2 left-2 z-[1000] bg-[#071426]/90 backdrop-blur-md px-3 py-1 rounded-xl border border-white/10 text-[10px] font-mono text-slate-300">
+                    <div className="absolute top-2 left-2 z-[1000] bg-[#071426]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl border border-white/10 text-[10px] font-mono text-slate-300">
                       📍 Click or drag marker to set coordinates
                     </div>
                   </div>
 
                   {/* Coordinates pill */}
                   {latitude && longitude && (
-                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 px-2">
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-mono text-slate-400 px-1">
                       <span>Coordinates: {latitude.toFixed(4)}, {longitude.toFixed(4)}</span>
-                      <span className="text-sentinel-cyan">Geocoded</span>
+                      <span className="text-sentinel-cyan font-bold">Geocoded</span>
                     </div>
                   )}
                 </div>
 
                 {/* 4. Casualties & Live AI Triage Preview */}
-                <div className="bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
                   <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                     Step 4: People Affected & Casualty Triage <span className="text-red-400">*</span>
                   </label>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-center">
                     {/* Stepper */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-2">
                         Estimated People Injured, Trapped, or at Risk
                       </label>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2.5 sm:gap-3">
                         <button
                           type="button"
                           onClick={() => {
                             soundFx.playClick();
                             setPeopleAffected(Math.max(0, peopleAffected - 1));
                           }}
-                          className="w-12 h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95 shrink-0"
                         >
                           -
                         </button>
@@ -532,7 +532,7 @@ export const ReportPage: React.FC = () => {
                           min="0"
                           value={peopleAffected}
                           onChange={e => setPeopleAffected(Math.max(0, parseInt(e.target.value) || 0))}
-                          className="w-24 text-center font-mono font-black text-2xl rounded-2xl border border-white/15 bg-[#071426] text-white py-2 focus:outline-none focus:border-sentinel-cyan"
+                          className="w-20 sm:w-24 text-center font-mono font-black text-xl sm:text-2xl rounded-2xl border border-white/15 bg-[#071426] text-white py-2 focus:outline-none focus:border-sentinel-cyan"
                         />
                         <button
                           type="button"
@@ -540,7 +540,7 @@ export const ReportPage: React.FC = () => {
                             soundFx.playClick();
                             setPeopleAffected(peopleAffected + 1);
                           }}
-                          className="w-12 h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95"
+                          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#071426] hover:bg-white/10 border border-white/15 text-white font-black text-xl flex items-center justify-center transition-colors active:scale-95 shrink-0"
                         >
                           +
                         </button>
@@ -551,10 +551,10 @@ export const ReportPage: React.FC = () => {
                     </div>
 
                     {/* Live AI Decision Support Preview */}
-                    <div className="p-5 rounded-2xl bg-[#071426] border border-[#16C7E8]/40 space-y-3">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-[#071426] border border-[#16C7E8]/40 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-mono uppercase text-sentinel-cyan font-bold flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 animate-pulse" /> Live AI Triage Preview
+                          <Sparkles className="w-3.5 h-3.5 animate-pulse shrink-0" /> Live AI Triage Preview
                         </span>
                         <SeverityBadge severity={liveIntelligence.recommendedSeverity} size="sm" pulsing={false} />
                       </div>
@@ -567,12 +567,12 @@ export const ReportPage: React.FC = () => {
                 </div>
 
                 {/* 5. Optional Reporter Information & Photo */}
-                <div className="bg-[#0B1E38]/90 p-6 rounded-3xl border border-white/10 shadow-2xl space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       Step 5: Optional Contact Information & Scene Photo
                     </label>
-                    <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                    <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/30 w-fit">
                       NON-MANDATORY
                     </span>
                   </div>
