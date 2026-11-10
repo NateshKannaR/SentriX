@@ -16,53 +16,58 @@ export const SeverityBadge: React.FC<SeverityBadgeProps> = ({
   pulsing = true,
 }) => {
   let bgClass = '';
-  let textClass = '';
-  let borderClass = '';
+  let dotClass = '';
+  let glowClass = '';
   let Icon = AlertCircle;
 
   switch (severity) {
     case 'Critical':
-      bgClass = 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30';
-      borderClass = 'border-red-500/30';
+      bgClass = 'bg-red-500/15 text-red-400 border-red-500/40';
+      dotClass = 'bg-red-500 shadow-[0_0_8px_#F04452]';
+      glowClass = 'glow-red';
       Icon = ShieldAlert;
       break;
     case 'High':
-      bgClass = 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30';
-      borderClass = 'border-orange-500/30';
+      bgClass = 'bg-orange-500/15 text-orange-400 border-orange-500/40';
+      dotClass = 'bg-orange-500 shadow-[0_0_8px_#FF7A00]';
+      glowClass = '';
       Icon = AlertTriangle;
       break;
     case 'Medium':
-      bgClass = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-      borderClass = 'border-amber-500/30';
+      bgClass = 'bg-amber-500/15 text-amber-400 border-amber-500/40';
+      dotClass = 'bg-amber-500 shadow-[0_0_8px_#F5A623]';
+      glowClass = '';
       Icon = AlertCircle;
       break;
     case 'Low':
-      bgClass = 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-      borderClass = 'border-emerald-500/30';
+      bgClass = 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40';
+      dotClass = 'bg-emerald-500 shadow-[0_0_8px_#19B878]';
+      glowClass = '';
       Icon = CheckCircle2;
       break;
   }
 
   const sizeClasses = {
-    sm: 'text-xs px-2 py-0.5 gap-1',
-    md: 'text-xs px-2.5 py-1 gap-1.5 font-medium',
-    lg: 'text-sm px-3.5 py-1.5 gap-2 font-semibold',
+    sm: 'text-[10px] px-2 py-0.5 gap-1.5 font-mono font-bold tracking-wider',
+    md: 'text-xs px-2.5 py-1 gap-1.5 font-mono font-bold tracking-wider',
+    lg: 'text-xs px-3.5 py-1.5 gap-2 font-mono font-bold tracking-wider',
   };
 
   const iconSizes = {
-    sm: 12,
-    md: 14,
-    lg: 16,
+    sm: 11,
+    md: 13,
+    lg: 15,
   };
 
   const isCritical = severity === 'Critical' && pulsing;
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border ${bgClass} ${borderClass} ${sizeClasses[size]} tracking-wide uppercase transition-all duration-200 ${
-        isCritical ? 'animate-pulse ring-2 ring-red-500/20' : ''
+      className={`inline-flex items-center rounded-lg border uppercase backdrop-blur-md transition-all duration-300 ${bgClass} ${sizeClasses[size]} ${
+        isCritical ? `${glowClass} animate-pulse ring-1 ring-red-500/50` : ''
       }`}
     >
+      <span className={`w-1.5 h-1.5 rounded-full ${dotClass} ${isCritical ? 'animate-ping' : ''}`} />
       {showIcon && <Icon size={iconSizes[size]} className="shrink-0" />}
       <span>{severity}</span>
     </span>

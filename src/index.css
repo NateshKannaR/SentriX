@@ -9,73 +9,132 @@
   }
 
   body {
-    @apply bg-[#F4F7FB] text-slate-800 antialiased;
+    @apply bg-[#071426] text-slate-100 antialiased selection:bg-[#16C7E8]/25 selection:text-white;
   }
 }
 
-/* Custom Scrollbars */
+/* Glassmorphism Tactical Surfaces */
+.glass-panel {
+  background: rgba(11, 30, 56, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(22, 199, 232, 0.15);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 20px -3px rgba(22, 199, 232, 0.35);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px -3px rgba(240, 68, 82, 0.4);
+}
+
+.glow-amber {
+  box-shadow: 0 0 20px -3px rgba(245, 166, 35, 0.35);
+}
+
+/* Tactical HUD Grid Overlay */
+.hud-grid {
+  background-image: 
+    linear-gradient(to right, rgba(22, 199, 232, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 199, 232, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.radar-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.radar-sweep::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, rgba(22, 199, 232, 0.15) 0deg, transparent 60deg, transparent 360deg);
+  animation: rotateSweep 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotateSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Custom Tactical Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(7, 20, 38, 0.8);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: rgba(22, 199, 232, 0.3);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
+  background: rgba(22, 199, 232, 0.6);
 }
 
-/* Leaflet Container Fixes */
+/* Leaflet Container & Dark Map Styles */
 .leaflet-container {
   width: 100%;
   height: 100%;
   z-index: 1;
-  background-color: #0b1e38 !important;
+  background-color: #071426 !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #ffffff !important;
-  color: #0f172a !important;
+  background: #0B1E38 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(22, 199, 232, 0.3) !important;
   border-radius: 14px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7) !important;
   padding: 4px !important;
 }
 
 .leaflet-popup-tip {
-  background: #ffffff !important;
+  background: #0B1E38 !important;
+  border: 1px solid rgba(22, 199, 232, 0.3) !important;
 }
 
-/* Animation Utilities */
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.97); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scaleUp {
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-slideDown {
-  animation: slideDown 0.25s ease-out forwards;
+.animate-pulseGlow {
+  animation: pulseGlow 2s ease-in-out infinite;
 }

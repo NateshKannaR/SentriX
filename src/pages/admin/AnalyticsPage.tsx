@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Incident, DashboardMetrics } from '../../types';
 import { incidentService } from '../../services/incidentService';
+import { soundEffects } from '../../utils/soundEffects';
 import {
   BarChart,
   Bar,
@@ -25,6 +26,9 @@ import {
   Clock,
   Layers,
   Award,
+  Activity,
+  Flame,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -44,6 +48,7 @@ export const AnalyticsPage: React.FC = () => {
   }, [incidents]);
 
   const handleExportCSV = () => {
+    soundEffects.playBeep();
     const csvContent = incidentService.exportIncidentsCSV();
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -68,85 +73,103 @@ export const AnalyticsPage: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Intelligence Analytics & Reports
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Quantitative analysis of incident patterns, casualty impact, and system triage performance.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Intelligence Analytics & Operations Telemetry
+            </h1>
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-sentinel-cyan/10 text-sentinel-cyan border border-sentinel-cyan/30 font-bold flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
+              LIVE TELEMETRY
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            Empirical incident distribution, multi-casualty impact correlation, and AI response priority benchmarking.
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2 rounded-xl bg-sentinel-navy hover:bg-sentinel-darkBlue text-white text-xs font-semibold flex items-center gap-2 shadow-xs transition-colors self-start sm:self-center"
+          className="px-5 py-2.5 rounded-xl bg-sentinel-cyan hover:bg-cyan-300 text-sentinel-navy text-xs font-bold flex items-center gap-2 shadow-lg shadow-sentinel-cyan/20 transition-all active:scale-95 self-start sm:self-center"
         >
-          <Download className="w-4 h-4 text-sentinel-cyan" />
+          <Download className="w-4 h-4 text-sentinel-navy" />
           <span>Export Analytics CSV</span>
         </button>
       </div>
 
       {/* KPI Quad */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white dark:bg-sentinel-darkCard border border-slate-200 dark:border-sentinel-darkBorder shadow-xs">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
+        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-cyan-500/10 rounded-full blur-xl pointer-events-none" />
+          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
             Average Priority Score
           </span>
           <span className="font-mono text-3xl font-black text-sentinel-cyan mt-1 block">
             {metrics.avgPriorityScore}
             <span className="text-sm text-slate-400 font-normal"> / 100</span>
           </span>
-          <p className="text-[11px] text-slate-500 mt-1">Weighted operational triage</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-sentinel-darkCard border border-slate-200 dark:border-sentinel-darkBorder shadow-xs">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
-            Total Casualties Logged
-          </span>
-          <span className="font-mono text-3xl font-black text-red-500 mt-1 block">
-            {metrics.totalCasualties}
-          </span>
-          <p className="text-[11px] text-slate-500 mt-1">Across all 6 categories</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-white dark:bg-sentinel-darkCard border border-slate-200 dark:border-sentinel-darkBorder shadow-xs">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
-            Resolution Rate
-          </span>
-          <span className="font-mono text-3xl font-black text-emerald-500 mt-1 block">
-            {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}%
-          </span>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {metrics.resolved} of {metrics.total} cleared
+          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan" /> Weighted triage index
           </p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white dark:bg-sentinel-darkCard border border-slate-200 dark:border-sentinel-darkBorder shadow-xs">
-          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block">
+        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/10 rounded-full blur-xl pointer-events-none" />
+          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+            Total Casualties Logged
+          </span>
+          <span className="font-mono text-3xl font-black text-red-400 mt-1 block">
+            {metrics.totalCasualties}
+          </span>
+          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Across all 6 categories
+          </p>
+        </div>
+
+        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-full blur-xl pointer-events-none" />
+          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
+            Resolution Rate
+          </span>
+          <span className="font-mono text-3xl font-black text-emerald-400 mt-1 block">
+            {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}%
+          </span>
+          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400" /> {metrics.resolved} of {metrics.total} cleared
+          </p>
+        </div>
+
+        <div className="p-5 rounded-2xl glass-panel border border-sentinel-darkBorder shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 rounded-full blur-xl pointer-events-none" />
+          <span className="text-[11px] uppercase tracking-wider text-slate-400 font-bold block font-mono">
             Critical Incident Ratio
           </span>
-          <span className="font-mono text-3xl font-black text-amber-500 mt-1 block">
+          <span className="font-mono text-3xl font-black text-amber-400 mt-1 block">
             {metrics.total > 0 ? Math.round((metrics.critical / metrics.total) * 100) : 0}%
           </span>
-          <p className="text-[11px] text-slate-500 mt-1">Requiring rapid intervention</p>
+          <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
+            <Flame className="w-3 h-3 text-amber-400" /> Rapid dispatch protocol
+          </p>
         </div>
       </div>
 
       {/* Visualizations Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Casualty Impact by Category */}
-        <div className="bg-white dark:bg-sentinel-darkCard p-6 rounded-2xl border border-slate-200 dark:border-sentinel-darkBorder shadow-xs space-y-4">
+        <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              <h3 className="font-bold text-base text-white">
                 Casualties & People Affected by Category
               </h3>
-              <p className="text-xs text-slate-400">Total volume of individuals reported at risk</p>
+              <p className="text-xs text-slate-400">Total volume of individuals registered at risk</p>
             </div>
-            <Users className="w-5 h-5 text-sentinel-red" />
+            <div className="p-2 rounded-xl bg-sentinel-red/10 text-sentinel-red">
+              <Users className="w-5 h-5 text-sentinel-red" />
+            </div>
           </div>
 
           <div className="h-64 w-full">
@@ -155,7 +178,7 @@ export const AnalyticsPage: React.FC = () => {
                 data={casualtiesByCategory}
                 margin={{ top: 10, right: 10, left: -20, bottom: 25 }}
               >
-                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#1F293D" opacity={0.5} />
                 <XAxis
                   dataKey="category"
                   tick={{ fontSize: 10, fill: '#94A3B8' }}
@@ -171,6 +194,7 @@ export const AnalyticsPage: React.FC = () => {
                     borderRadius: '12px',
                     color: '#fff',
                     fontSize: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                   }}
                 />
                 <Bar dataKey="casualties" fill="#F04452" radius={[6, 6, 0, 0]} name="People Affected" />
@@ -180,15 +204,17 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Severity Proportions */}
-        <div className="bg-white dark:bg-sentinel-darkCard p-6 rounded-2xl border border-slate-200 dark:border-sentinel-darkBorder shadow-xs space-y-4">
+        <div className="glass-panel p-6 rounded-2xl border border-sentinel-darkBorder shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+              <h3 className="font-bold text-base text-white">
                 Severity Ratio Distribution
               </h3>
               <p className="text-xs text-slate-400">Relative proportions of classified emergency tiers</p>
             </div>
-            <ShieldAlert className="w-5 h-5 text-sentinel-cyan" />
+            <div className="p-2 rounded-xl bg-sentinel-cyan/10 text-sentinel-cyan">
+              <ShieldAlert className="w-5 h-5 text-sentinel-cyan" />
+            </div>
           </div>
 
           <div className="h-64 w-full flex items-center justify-center">
@@ -200,7 +226,10 @@ export const AnalyticsPage: React.FC = () => {
                   nameKey="severity"
                   cx="50%"
                   cy="50%"
-                  outerRadius={90}
+                  outerRadius={88}
+                  innerRadius={36}
+                  stroke="#08101E"
+                  strokeWidth={2}
                   label={({ name, percent }: { name?: string; percent?: number }) =>
                     `${name || ''} ${((percent || 0) * 100).toFixed(0)}%`
                   }
@@ -216,6 +245,7 @@ export const AnalyticsPage: React.FC = () => {
                     borderRadius: '12px',
                     color: '#fff',
                     fontSize: '12px',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
                   }}
                 />
               </PieChart>
