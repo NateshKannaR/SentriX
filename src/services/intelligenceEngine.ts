@@ -136,28 +136,37 @@ export function analyzeIncidentIntelligence(input: IntelligenceInput): Intellige
     recommendedSeverity = 'Low';
   }
 
-  // Calculate 0 - 100 Priority Score based on the 4 mandatory factors:
-  // 1. Severity (40%)
-  // 2. People Affected (30%)
-  // 3. Time Since Reporting aging escalation (15%)
-  // 4. Emergency Category urgency (15%)
+  // Calculate 0 - 100 Priority Score based on the four official Code Clash factors:
+  // 1. Severity: 40% (Critical: 40, High: 30, Medium: 18, Low: 8)
+  // 2. People Affected: 25% (Capped scaling: 0-25 pts)
+  // 3. Waiting Time: 20% (Aging escalation: +1 pt per 5 mins, capped at 20 pts)
+  // 4. Category Urgency: 15% (Risk weight: 6-15 pts)
   const severityMultiplier =
     recommendedSeverity === 'Critical' ? 40 :
-    recommendedSeverity === 'High' ? 28 :
-    recommendedSeverity === 'Medium' ? 16 : 8;
+    recommendedSeverity === 'High' ? 30 :
+    recommendedSeverity === 'Medium' ? 18 : 8;
 
-  const peopleFactor = Math.min(30, Math.round((Math.min(count, 20) / 20) * 30));
+  // Capped scaling for casualty impact (25% max)
+  let peopleFactor = 0;
+  if (count > 20) peopleFactor = 25;
+  else if (count > 10) peopleFactor = 23;
+  else if (count > 5) peopleFactor = 19;
+  else if (count > 2) peopleFactor = 14;
+  else if (count > 0) peopleFactor = 8;
+  else peopleFactor = 0;
 
-  // Time elapsed aging factor (+1 per 10 mins, up to +15 pts)
+  // Time elapsed aging factor (20% max, +1 pt per 5 mins)
+  // Escalation rule: Never allow a minor incident to outrank an immediate life-threatening emergency
   const elapsedMinutes = input.createdAt
     ? Math.max(0, Math.floor((Date.now() - new Date(input.createdAt).getTime()) / (1000 * 60)))
     : 0;
-  const timeFactor = Math.min(15, Math.floor(elapsedMinutes / 10));
+  const maxTimeCap = (recommendedSeverity === 'Low' || recommendedSeverity === 'Medium') && count <= 1 ? 8 : 20;
+  const timeFactor = Math.min(maxTimeCap, Math.floor(elapsedMinutes / 5));
 
-  // Category urgency factor (up to 15 pts)
+  // Category urgency factor (15% max)
   let catUrgency = 10;
   if (input.category === 'Building Collapse' || input.category === 'Fire Emergency') catUrgency = 15;
-  else if (input.category === 'Medical Emergency') catUrgency = 14;
+  else if (input.category === 'Medical Emergency') catUrgency = 13;
   else if (input.category === 'Flood') catUrgency = 12;
   else if (input.category === 'Road Accident') catUrgency = 10;
   else catUrgency = 6;
@@ -174,20 +183,20 @@ export function analyzeIncidentIntelligence(input: IntelligenceInput): Intellige
     {
       label: 'Casualty Impact',
       score: peopleFactor,
-      weight: '30%',
-      description: `${count} individual(s) at direct risk (${peopleFactor}/30 pts)`,
+      weight: '25%',
+      description: `${count} individual(s) at direct risk (${peopleFactor}/25 pts)`,
+    },
+    {
+      label: 'Time Waiting Escalation',
+      score: timeFactor,
+      weight: '20%',
+      description: `${elapsedMinutes}m elapsed since report (+${timeFactor}/20 aging pts)`,
     },
     {
       label: 'Category Urgency',
       score: catUrgency,
       weight: '15%',
       description: `${input.category} baseline response urgency (${catUrgency}/15 pts)`,
-    },
-    {
-      label: 'Time Since Reporting',
-      score: timeFactor,
-      weight: '15%',
-      description: `${elapsedMinutes}m elapsed since report (+${timeFactor} escalation pts)`,
     },
   ];
 
@@ -214,23 +223,32 @@ export function calculateDynamicPriorityScore(incident: Incident): {
   // Severity Weight (40%)
   const severityMultiplier =
     incident.severity === 'Critical' ? 40 :
-    incident.severity === 'High' ? 28 :
-    incident.severity === 'Medium' ? 16 : 8;
+    incident.severity === 'High' ? 30 :
+    incident.severity === 'Medium' ? 18 : 8;
 
-  // Casualty Factor (30%)
+  // Casualty Factor (25%)
   const count = Math.max(0, incident.peopleAffected || 0);
-  const peopleFactor = Math.min(30, Math.round((Math.min(count, 20) / 20) * 30));
+  let peopleFactor = 0;
+  if (count > 20) peopleFactor = 25;
+  else if (count > 10) peopleFactor = 23;
+  else if (count > 5) peopleFactor = 19;
+  else if (count > 2) peopleFactor = 14;
+  else if (count > 0) peopleFactor = 8;
+  else peopleFactor = 0;
 
   // Category Urgency (15%)
   let catUrgency = 10;
   if (incident.category === 'Building Collapse' || incident.category === 'Fire Emergency') catUrgency = 15;
-  else if (incident.category === 'Medical Emergency') catUrgency = 14;
+  else if (incident.category === 'Medical Emergency') catUrgency = 13;
   else if (incident.category === 'Flood') catUrgency = 12;
   else if (incident.category === 'Road Accident') catUrgency = 10;
   else catUrgency = 6;
 
-  // Aging Escalation Factor (15%): +1 pt per 10 mins unattended, capped at 15
-  const timeFactor = incident.status === 'Resolved' ? 0 : Math.min(15, Math.floor(elapsedMinutes / 10));
+  // Aging Escalation Factor (20%): +1 pt per 5 mins unattended
+  // Escalation rule: Never allow an old minor incident to outrank an immediate life-threatening emergency
+  const isMinor = (incident.severity === 'Low' || incident.severity === 'Medium') && count <= 1;
+  const maxTimeCap = isMinor ? 8 : 20;
+  const timeFactor = incident.status === 'Resolved' ? 0 : Math.min(maxTimeCap, Math.floor(elapsedMinutes / 5));
 
   const priorityScore = Math.min(100, Math.max(10, severityMultiplier + peopleFactor + catUrgency + timeFactor));
 
@@ -244,8 +262,16 @@ export function calculateDynamicPriorityScore(incident: Incident): {
     {
       label: 'Casualty Impact',
       score: peopleFactor,
-      weight: '30%',
-      description: `${count} person(s) affected (${peopleFactor}/30 pts)`,
+      weight: '25%',
+      description: `${count} person(s) affected (${peopleFactor}/25 pts)`,
+    },
+    {
+      label: 'Time Waiting Escalation',
+      score: timeFactor,
+      weight: '20%',
+      description: incident.status === 'Resolved'
+        ? 'Resolved incident (escalation cleared)'
+        : `${elapsedMinutes}m waiting unattended (+${timeFactor}/20 aging pts)`,
     },
     {
       label: 'Category Urgency',
@@ -253,20 +279,123 @@ export function calculateDynamicPriorityScore(incident: Incident): {
       weight: '15%',
       description: `${incident.category} baseline urgency (${catUrgency}/15 pts)`,
     },
-    {
-      label: 'Time Aging Escalation',
-      score: timeFactor,
-      weight: '15%',
-      description: incident.status === 'Resolved'
-        ? 'Resolved incident (escalation cleared)'
-        : `${elapsedMinutes}m elapsed since report (+${timeFactor}/15 aging escalation pts)`,
-    },
   ];
 
   return {
     priorityScore,
     priorityFactors,
     elapsedMinutes,
+  };
+}
+
+export interface PriorityExplanation {
+  rank: number;
+  headline: string;
+  summary: string;
+  factors: {
+    name: string;
+    weight: string;
+    score: number;
+    maxScore: number;
+    value: string;
+    description: string;
+    level: 'critical' | 'high' | 'medium' | 'low';
+  }[];
+  decisionRecommendation: string;
+}
+
+/**
+ * Returns explainable dispatch intelligence for an incident explaining
+ * exactly why it is ranked #1 (or #X) in the operations queue.
+ */
+export function getPriorityExplanation(incident: Incident, allIncidents?: Incident[]): PriorityExplanation {
+  const rank = incident.priorityRank || (allIncidents ? allIncidents.findIndex(i => i.id === incident.id) + 1 : 1);
+  const elapsedMinutes = incident.createdAt
+    ? Math.max(0, Math.floor((Date.now() - new Date(incident.createdAt).getTime()) / (1000 * 60)))
+    : 0;
+
+  const count = Math.max(0, incident.peopleAffected || 0);
+
+  const sevScore = incident.severity === 'Critical' ? 40 : incident.severity === 'High' ? 30 : incident.severity === 'Medium' ? 18 : 8;
+  const peopleScore = count > 20 ? 25 : count > 10 ? 23 : count > 5 ? 19 : count > 2 ? 14 : count > 0 ? 8 : 0;
+  const isMinor = (incident.severity === 'Low' || incident.severity === 'Medium') && count <= 1;
+  const maxTimeCap = isMinor ? 8 : 20;
+  const timeScore = incident.status === 'Resolved' ? 0 : Math.min(maxTimeCap, Math.floor(elapsedMinutes / 5));
+  let catScore = 10;
+  if (incident.category === 'Building Collapse' || incident.category === 'Fire Emergency') catScore = 15;
+  else if (incident.category === 'Medical Emergency') catScore = 13;
+  else if (incident.category === 'Flood') catScore = 12;
+  else if (incident.category === 'Road Accident') catScore = 10;
+  else catScore = 6;
+
+  const sevLevel: 'critical' | 'high' | 'medium' | 'low' =
+    incident.severity === 'Critical' ? 'critical' : incident.severity === 'High' ? 'high' : incident.severity === 'Medium' ? 'medium' : 'low';
+  const peopleLevel: 'critical' | 'high' | 'medium' | 'low' =
+    count > 10 ? 'critical' : count > 3 ? 'high' : 'medium';
+  const timeLevel: 'critical' | 'high' | 'medium' | 'low' =
+    elapsedMinutes > 30 ? 'critical' : elapsedMinutes > 15 ? 'high' : 'low';
+  const catLevel: 'critical' | 'high' | 'medium' | 'low' =
+    catScore >= 14 ? 'critical' : 'high';
+
+  const factors = [
+    {
+      name: 'Incident Severity',
+      weight: '40%',
+      score: sevScore,
+      maxScore: 40,
+      value: incident.severity,
+      description: `${incident.severity} threat classification (${incident.severity === 'Critical' ? 'Immediate life hazard' : incident.severity === 'High' ? 'Substantial threat' : 'Controlled hazard'})`,
+      level: sevLevel,
+    },
+    {
+      name: 'Casualty Impact',
+      weight: '25%',
+      score: peopleScore,
+      maxScore: 25,
+      value: `${count} ${count === 1 ? 'Person' : 'People'}`,
+      description: `${count} victim(s) in direct harm's way (${count > 10 ? 'Mass casualty incident' : count > 3 ? 'Multi-victim triage' : 'Single/minor count'})`,
+      level: peopleLevel,
+    },
+    {
+      name: 'Waiting Time',
+      weight: '20%',
+      score: timeScore,
+      maxScore: 20,
+      value: `${elapsedMinutes}m Waiting`,
+      description: incident.status === 'Resolved'
+        ? 'Mission resolved (no ongoing waiting penalty)'
+        : `${elapsedMinutes}m elapsed since call (+${timeScore}/20 dynamic escalation pts)`,
+      level: timeLevel,
+    },
+    {
+      name: 'Category Urgency',
+      weight: '15%',
+      score: catScore,
+      maxScore: 15,
+      value: incident.category,
+      description: `${incident.category} baseline response risk rating (${catScore}/15 pts)`,
+      level: catLevel,
+    },
+  ];
+
+  let headline = `Priority Queue Rank #${rank}`;
+  if (rank === 1) headline = `Rank #1 — Primary Emergency Operational Priority`;
+  else if (incident.severity === 'Critical') headline = `Critical Life-Threat (Queue Rank #${rank})`;
+
+  const summary = `Why is this incident ranked #${rank}? Classified as ${incident.severity} with ${count} casualties waiting ${elapsedMinutes}m under ${incident.category}. Priority score of ${incident.priorityScore}/100 based on the 4-factor decision-support matrix.`;
+
+  const decisionRecommendation = incident.status === 'Resolved'
+    ? 'Incident successfully stabilized and resolved. All assigned units returned to available readiness.'
+    : incident.status === 'Assigned' || incident.status === 'In Progress'
+    ? `Unit "${incident.assignedTeamName || incident.assignedUnit}" is en route/active on-scene. Monitor field telemetry.`
+    : `Decision Support: Immediate dispatch recommended. Mobilize nearest compatible emergency response team.`;
+
+  return {
+    rank,
+    headline,
+    summary,
+    factors,
+    decisionRecommendation,
   };
 }
 

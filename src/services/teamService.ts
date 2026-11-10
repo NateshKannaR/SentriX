@@ -15,10 +15,10 @@ export interface NearestTeamMatch {
 export const INITIAL_TEAMS: ResponseTeam[] = [
   {
     id: 'TEAM-FIRE-01',
-    name: 'Alpha Fire Tender 1',
+    name: 'Fire Team Alpha (Heavy Foam Tender)',
     category: 'Fire & Rescue',
     latitude: 13.0280,
-    longitude: 77.5250,
+    longitude: 77.5380,
     locationName: 'Peenya Industrial Fire Station',
     status: 'Available',
     membersCount: 6,
@@ -30,11 +30,11 @@ export const INITIAL_TEAMS: ResponseTeam[] = [
   },
   {
     id: 'TEAM-FIRE-02',
-    name: 'Bravo Aerial Fire Platform',
+    name: 'Fire Team Bravo (Aerial Platform)',
     category: 'Fire & Rescue',
-    latitude: 12.9720,
-    longitude: 77.6080,
-    locationName: 'Mayo Hall Central Fire Command',
+    latitude: 12.9850,
+    longitude: 77.5400,
+    locationName: 'Central Command Fire Station',
     status: 'Available',
     membersCount: 5,
     leaderName: 'Lt. Suresh Gowda',
@@ -45,11 +45,11 @@ export const INITIAL_TEAMS: ResponseTeam[] = [
   },
   {
     id: 'TEAM-MED-01',
-    name: 'Delta Trauma ALS Ambulance',
+    name: 'Medical Team Charlie (ALS Trauma)',
     category: 'Medical & Trauma',
-    latitude: 12.9620,
-    longitude: 77.5750,
-    locationName: 'Victoria Hospital Trauma Center',
+    latitude: 13.0330,
+    longitude: 77.5270,
+    locationName: 'Peenya Emergency Trauma Clinic',
     status: 'Available',
     membersCount: 4,
     leaderName: 'Dr. Priya Menon, MD',
@@ -344,7 +344,145 @@ class TeamService {
     return matches;
   }
 
-  private checkCategorySuitability(incCat: EmergencyCategory, teamCat: ResponseTeamCategory): boolean {
+  /**
+   * PHASE 4: SMART NEAREST SUITABLE AVAILABLE RESPONSE TEAM RECOMMENDATION
+   * Steps 1 - 8 executed deterministically with full explainability.
+   */
+  public findSmartRecommendation(
+    incident: Pick<Incident, 'category' | 'latitude' | 'longitude' | 'title'>
+  ): SmartDispatchRecommendation {
+    // Step 1: Read incident coordinates
+    if (!incident.latitude || !incident.longitude) {
+      return {
+        recommendedMatch: null,
+        alternativeMatches: [],
+        excludedMatches: [],
+        explanation: 'Incident GPS coordinates are missing. Unable to compute geodesic Haversine distance.',
+        hasMissingCoordinates: true,
+        noTeamAvailableReason: 'Incident lacks verified dispatch latitude and longitude coordinates.',
+      };
+    }
+
+    const incLat = incident.latitude;
+    const incLng = incident.longitude;
+
+    // Step 2: Retrieve all response teams
+    const allTeams = this.getTeams();
+
+    const eligibleMatches: NearestTeamMatch[] = [];
+    const excludedMatches: { team: ResponseTeam; reason: string; distanceKm: number }[] = [];
+
+    allTeams.forEach(team => {
+      const distanceKm = Math.round(calculateHaversineDistance(team.latitude, team.longitude, incLat, incLng) * 10) / 10;
+      const etaMinutes = Math.max(2, Math.round((distanceKm / 40) * 60));
+      const isCategoryMatch = this.checkCategorySuitability(incident.category, team.category);
+      const isAvailable = team.status === 'Available';
+
+      if (!isCategoryMatch) {
+        excludedMatches.push({
+          team,
+          distanceKm,
+          reason: `Category mismatch (${team.category} does not service ${incident.category})`,
+        });
+        return;
+      }
+
+      if (!isAvailable) {
+        excludedMatches.push({
+          team,
+          distanceKm,
+          reason: `Unit is currently ${team.status}${team.assignedIncidentCode ? ` on Mission ${team.assignedIncidentCode}` : ''}`,
+        });
+        return;
+      }
+
+      // Eligible!
+      eligibleMatches.push({
+        team,
+        distanceKm,
+        etaMinutes,
+        isCategoryMatch: true,
+        suitabilityScore: 100,
+        isBestFit: false,
+      });
+    });
+
+    // Step 6: Sort eligible teams by distance
+    eligibleMatches.sort((a, b) => a.distanceKm - b.distanceKm);
+
+    if (eligibleMatches.length === 0) {
+      const busyMatches = allTeams.filter(t => this.checkCategorySuitability(incident.category, t.category));
+      const reason = busyMatches.length > 0
+        ? `All ${incident.category}-compatible units are currently deployed or offline.`
+        : `No response units commissioned for ${incident.category}.`;
+
+      return {
+        recommendedMatch: null,
+        alternativeMatches: [],
+        excludedMatches,
+        explanation: 'No suitable available response team found within operational range.',
+        hasMissingCoordinates: false,
+        noTeamAvailableReason: reason,
+      };
+    }
+
+    // Step 7: Recommend nearest suitable available team
+    eligibleMatches[0].isBestFit = true;
+    const recommended = eligibleMatches[0];
+    const alternatives = eligibleMatches.slice(1);
+
+    // Step 8: Clear explanation with comparison against closest excluded units
+    const closerExcluded = excludedMatches.find(e => e.distanceKm < recommended.distanceKm);
+    let explanation = `${recommended.team.name} is the nearest available team (${recommended.distanceKm} km, ~${recommended.etaMinutes}m ETA) with the appropriate ${recommended.team.category} capability.`;
+    if (closerExcluded) {
+      explanation += ` ${closerExcluded.team.name} was not selected despite being closer (${closerExcluded.distanceKm} km) because ${closerExcluded.reason.toLowerCase()}.`;
+    }
+
+    return {
+      recommendedMatch: recommended,
+      alternativeMatches: alternatives,
+      excludedMatches,
+      explanation,
+      hasMissingCoordinates: false,
+    };
+  }
+
+  /**
+   * PHASE 8 FEATURE B: RESOURCE CONFLICT DETECTION
+   * Prevents assigning busy or offline teams and suggests alternatives
+   */
+  public validateAssignment(teamId: string, incCat?: EmergencyCategory): {
+    allowed: boolean;
+    conflictReason?: string;
+    alternativeTeam?: ResponseTeam;
+  } {
+    const team = this.getTeamById(teamId);
+    if (!team) {
+      return { allowed: false, conflictReason: 'Selected response team does not exist in fleet registry.' };
+    }
+
+    if (team.status === 'Busy' || team.status === 'En Route') {
+      const alt = this.teams.find(t => t.id !== teamId && t.status === 'Available' && (!incCat || this.checkCategorySuitability(incCat, t.category)));
+      return {
+        allowed: false,
+        conflictReason: `Resource Conflict: Team "${team.name}" is currently Busy (deployed on mission ${team.assignedIncidentCode || 'active'}) and cannot be double-booked.`,
+        alternativeTeam: alt,
+      };
+    }
+
+    if (team.status === 'Offline' || team.status === 'Off Duty') {
+      const alt = this.teams.find(t => t.id !== teamId && t.status === 'Available' && (!incCat || this.checkCategorySuitability(incCat, t.category)));
+      return {
+        allowed: false,
+        conflictReason: `Resource Conflict: Team "${team.name}" is currently Offline/Off-Duty and unavailable for active deployment.`,
+        alternativeTeam: alt,
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  public checkCategorySuitability(incCat: EmergencyCategory, teamCat: ResponseTeamCategory): boolean {
     switch (incCat) {
       case 'Fire Emergency':
         return teamCat === 'Fire & Rescue' || teamCat === 'Hazmat & Chemical';
@@ -362,6 +500,15 @@ class TeamService {
         return false;
     }
   }
+}
+
+export interface SmartDispatchRecommendation {
+  recommendedMatch: NearestTeamMatch | null;
+  alternativeMatches: NearestTeamMatch[];
+  excludedMatches: { team: ResponseTeam; reason: string; distanceKm: number }[];
+  explanation: string;
+  hasMissingCoordinates: boolean;
+  noTeamAvailableReason?: string;
 }
 
 export const teamService = new TeamService();

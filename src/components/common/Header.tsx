@@ -111,8 +111,8 @@ export const Header: React.FC = () => {
                 </div>
                 <p className="text-[11px] text-slate-400 font-mono tracking-tight flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="hidden sm:inline">Intelligent Emergency Operations Platform</span>
-                  <span className="inline sm:hidden text-[10px] text-slate-400">Emergency Operations</span>
+                  <span className="hidden sm:inline">{t('header.tagline', 'Every Second Matters. Every Life Counts.')}</span>
+                  <span className="inline sm:hidden text-[10px] text-slate-400">Every Second Matters</span>
                 </p>
               </div>
             </Link>

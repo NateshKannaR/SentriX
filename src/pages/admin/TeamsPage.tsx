@@ -60,6 +60,22 @@ export const TeamsPage: React.FC = () => {
     equipment: '',
   });
 
+  // Modal State for Editing Team
+  const [editingTeam, setEditingTeam] = useState<ResponseTeam | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    category: 'Fire & Rescue' as ResponseTeamCategory,
+    status: 'Available' as ResponseTeamStatus,
+    locationName: '',
+    latitude: 12.9716,
+    longitude: 77.5946,
+    leaderName: '',
+    membersCount: 4,
+    contactRadio: '',
+    vehicleType: '',
+    equipment: '',
+  });
+
   useEffect(() => {
     const unsub = teamService.subscribe(() => {
       setTeams(teamService.getTeams());
@@ -70,6 +86,7 @@ export const TeamsPage: React.FC = () => {
   const totalTeams = teams.length;
   const availableTeams = teams.filter(t => t.status === 'Available').length;
   const busyTeams = teams.filter(t => t.status === 'Busy' || t.status === 'En Route').length;
+  const offlineTeams = teams.filter(t => t.status === 'Offline' || t.status === 'Off Duty').length;
   const readinessPercent = totalTeams > 0 ? Math.round((availableTeams / totalTeams) * 100) : 100;
 
   const filteredTeams = teams.filter(team => {
@@ -86,10 +103,49 @@ export const TeamsPage: React.FC = () => {
     return matchesSearch && matchesCat && matchesStatus;
   });
 
-  const handleToggleStatus = (team: ResponseTeam) => {
+  const handleSetStatus = (teamId: string, nextStatus: ResponseTeamStatus) => {
     soundFx.playClick();
-    const nextStatus: ResponseTeamStatus = team.status === 'Available' ? 'Busy' : 'Available';
-    teamService.setTeamStatus(team.id, nextStatus);
+    teamService.setTeamStatus(teamId, nextStatus);
+  };
+
+  const handleOpenEdit = (team: ResponseTeam) => {
+    soundFx.playClick();
+    setEditingTeam(team);
+    setEditForm({
+      name: team.name,
+      category: team.category,
+      status: team.status,
+      locationName: team.locationName,
+      latitude: team.latitude,
+      longitude: team.longitude,
+      leaderName: team.leaderName,
+      membersCount: team.membersCount,
+      contactRadio: team.contactRadio,
+      vehicleType: team.vehicleType,
+      equipment: team.equipment.join(', '),
+    });
+  };
+
+  const handleEditTeamSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTeam) return;
+    soundFx.playSuccess();
+    teamService.updateTeam(editingTeam.id, {
+      name: editForm.name.trim(),
+      category: editForm.category,
+      status: editForm.status,
+      locationName: editForm.locationName.trim(),
+      latitude: Number(editForm.latitude) || editingTeam.latitude,
+      longitude: Number(editForm.longitude) || editingTeam.longitude,
+      leaderName: editForm.leaderName.trim(),
+      membersCount: Number(editForm.membersCount) || editingTeam.membersCount,
+      contactRadio: editForm.contactRadio.trim(),
+      vehicleType: editForm.vehicleType.trim(),
+      equipment: editForm.equipment
+        ? editForm.equipment.split(',').map(s => s.trim()).filter(Boolean)
+        : editingTeam.equipment,
+    });
+    setEditingTeam(null);
   };
 
   const handleDeleteTeam = (id: string) => {
@@ -199,42 +255,58 @@ export const TeamsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Fleet KPI Banner */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Fleet KPI Banner - Round 2 Core 5-Card Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* 1. Total Response Teams */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-white/[0.08] shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-              Total Response Teams
+              Total Teams
             </span>
             <Truck className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-black text-white mt-2 font-mono">{totalTeams}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Multi-agency tactical fleet</div>
+          <div className="text-[11px] text-slate-400 mt-1">Multi-agency fleet</div>
         </div>
 
+        {/* 2. Available Teams */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-emerald-500/20 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-400">
-              Available Response Teams
+              Available Teams
             </span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-2 font-mono">{availableTeams}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Immediate dispatch ready</div>
+          <div className="text-[11px] text-emerald-400/80 mt-1">Immediate dispatch ready</div>
         </div>
 
+        {/* 3. Busy Teams */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-amber-500/20 shadow-lg">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
-              Busy Response Teams
+              Busy Teams
             </span>
             <Activity className="w-4 h-4 text-amber-400 animate-pulse" />
           </div>
           <div className="text-2xl sm:text-3xl font-black text-amber-400 mt-2 font-mono">{busyTeams}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Deployed on active emergencies</div>
+          <div className="text-[11px] text-amber-400/80 mt-1">Active on missions</div>
         </div>
 
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-cyan-500/20 shadow-lg">
+        {/* 4. Offline Teams */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-slate-700 shadow-lg">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+              Offline Teams
+            </span>
+            <AlertTriangle className="w-4 h-4 text-slate-500" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-black text-slate-400 mt-2 font-mono">{offlineTeams}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Maintenance / Off-duty</div>
+        </div>
+
+        {/* 5. Fleet Readiness */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-cyan-500/20 shadow-lg col-span-2 sm:col-span-1">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400">
               Fleet Readiness
@@ -242,7 +314,7 @@ export const TeamsPage: React.FC = () => {
             <Compass className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="text-2xl sm:text-3xl font-black text-cyan-400 mt-2 font-mono">{readinessPercent}%</div>
-          <div className="text-[11px] text-slate-400 mt-1">Active availability index</div>
+          <div className="text-[11px] text-cyan-400/80 mt-1">Operational capacity</div>
         </div>
       </div>
 
@@ -284,7 +356,7 @@ export const TeamsPage: React.FC = () => {
             <option value="ALL">All Statuses</option>
             <option value="Available">Available (Ready)</option>
             <option value="Busy">Busy (Deployed)</option>
-            <option value="En Route">En Route</option>
+            <option value="Offline">Offline (Standby / Maint)</option>
           </select>
         </div>
       </div>
@@ -302,11 +374,13 @@ export const TeamsPage: React.FC = () => {
               className={`p-5 rounded-2xl border transition-all space-y-4 ${
                 team.status === 'Available'
                   ? 'bg-[#09152C]/70 border-white/[0.08] hover:border-emerald-500/40'
-                  : 'bg-amber-950/20 border-amber-500/30'
+                  : team.status === 'Busy' || team.status === 'En Route'
+                  ? 'bg-amber-950/20 border-amber-500/30'
+                  : 'bg-slate-950/40 border-slate-700/50 opacity-80'
               }`}
             >
               {/* Card Header */}
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 font-bold">
@@ -323,23 +397,28 @@ export const TeamsPage: React.FC = () => {
                   <h3 className="text-base font-black text-white mt-1.5">{team.name}</h3>
                 </div>
 
-                {/* Status Toggle Badge */}
-                <button
-                  onClick={() => handleToggleStatus(team)}
-                  title="Click to toggle Available / Busy status"
-                  className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-black border transition-transform active:scale-95 flex items-center gap-1 ${
-                    team.status === 'Available'
-                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30'
-                      : 'bg-amber-500/20 text-amber-400 border-amber-500/40 hover:bg-amber-500/30'
-                  }`}
-                >
-                  <span
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      team.status === 'Available' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-                    }`}
-                  />
-                  <span>{team.status.toUpperCase()}</span>
-                </button>
+                {/* 3-State Availability Control */}
+                <div className="flex items-center gap-1 bg-[#040A17] p-1 rounded-xl border border-white/10 shrink-0 self-start">
+                  {(['Available', 'Busy', 'Offline'] as ResponseTeamStatus[]).map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => handleSetStatus(team.id, st)}
+                      title={`Set status to ${st}`}
+                      className={`px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold transition-all ${
+                        team.status === st
+                          ? st === 'Available'
+                            ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                            : st === 'Busy'
+                            ? 'bg-amber-500 text-slate-950 font-black shadow-sm'
+                            : 'bg-rose-500 text-white font-black shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Station Location & Coordinates */}
@@ -403,19 +482,26 @@ export const TeamsPage: React.FC = () => {
 
               {/* Footer Actions */}
               <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between">
-                <button
-                  onClick={() => handleToggleStatus(team)}
-                  className="text-xs font-mono font-bold text-cyan-400 hover:text-cyan-300 hover:underline"
-                >
-                  {team.status === 'Available' ? 'Dispatch to Field' : 'Recall to Base'}
-                </button>
-                <button
-                  onClick={() => handleDeleteTeam(team.id)}
-                  title="Decommission Team"
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                <span className="text-[10px] font-mono text-slate-400">
+                  Status: <strong className={team.status === 'Available' ? 'text-emerald-400' : team.status === 'Busy' ? 'text-amber-400' : 'text-slate-400'}>{team.status}</strong>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleOpenEdit(team)}
+                    title="Edit Team Specifications"
+                    className="px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex items-center gap-1 text-[11px] font-mono"
+                  >
+                    <Edit2 className="w-3 h-3 text-cyan-400" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteTeam(team.id)}
+                    title="Decommission Team"
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -582,6 +668,182 @@ export const TeamsPage: React.FC = () => {
                   className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black shadow-lg shadow-cyan-500/25 transition-transform active:scale-95"
                 >
                   Commission Team
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Response Team Modal */}
+      {editingTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-xl rounded-3xl bg-[#09152C] border border-white/15 p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-cyan-400" />
+                <h3 className="text-base font-black text-white">Edit Response Team Specifications</h3>
+              </div>
+              <button
+                onClick={() => setEditingTeam(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditTeamSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                    Team Callsign / Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.name}
+                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                    Response Category *
+                  </label>
+                  <select
+                    value={editForm.category}
+                    onChange={e => setEditForm({ ...editForm, category: e.target.value as ResponseTeamCategory })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                  >
+                    <option value="Fire & Rescue">Fire & Rescue</option>
+                    <option value="Medical & Trauma">Medical & Trauma</option>
+                    <option value="Disaster & Urban SAR">Disaster & Urban SAR</option>
+                    <option value="Hazmat & Chemical">Hazmat & Chemical</option>
+                    <option value="Flood & Marine Rescue">Flood & Marine Rescue</option>
+                    <option value="Police & Evacuation">Police & Evacuation</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  Operational Status *
+                </label>
+                <select
+                  value={editForm.status}
+                  onChange={e => setEditForm({ ...editForm, status: e.target.value as ResponseTeamStatus })}
+                  className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white font-mono font-bold"
+                >
+                  <option value="Available">Available (Ready for Dispatch)</option>
+                  <option value="Busy">Busy (Assigned / In Progress)</option>
+                  <option value="Offline">Offline (Maintenance / Off Duty)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  Base Station / Deployment Zone *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.locationName}
+                  onChange={e => setEditForm({ ...editForm, locationName: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Latitude</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={editForm.latitude}
+                    onChange={e => setEditForm({ ...editForm, latitude: parseFloat(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Longitude</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={editForm.longitude}
+                    onChange={e => setEditForm({ ...editForm, longitude: parseFloat(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Crew Size</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={editForm.membersCount}
+                    onChange={e => setEditForm({ ...editForm, membersCount: parseInt(e.target.value) })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Officer in Charge</label>
+                  <input
+                    type="text"
+                    value={editForm.leaderName}
+                    onChange={e => setEditForm({ ...editForm, leaderName: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Radio Channel</label>
+                  <input
+                    type="text"
+                    value={editForm.contactRadio}
+                    onChange={e => setEditForm({ ...editForm, contactRadio: e.target.value })}
+                    className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Vehicle Rig</label>
+                <input
+                  type="text"
+                  value={editForm.vehicleType}
+                  onChange={e => setEditForm({ ...editForm, vehicleType: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
+                  Equipment List (Comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={editForm.equipment}
+                  onChange={e => setEditForm({ ...editForm, equipment: e.target.value })}
+                  className="w-full rounded-xl border border-white/10 bg-[#040A17] px-3 py-2 text-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setEditingTeam(null)}
+                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black shadow-lg shadow-cyan-500/25 transition-transform active:scale-95"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>

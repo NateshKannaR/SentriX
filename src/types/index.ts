@@ -18,7 +18,7 @@ export type ResponseTeamCategory =
   | 'Hazmat & Chemical'
   | 'Flood & Marine Rescue';
 
-export type ResponseTeamStatus = 'Available' | 'Busy' | 'En Route' | 'Off Duty';
+export type ResponseTeamStatus = 'Available' | 'Busy' | 'Offline' | 'En Route' | 'Off Duty';
 
 export interface ResponseTeam {
   id: string; // e.g. "TEAM-FIRE-01"
@@ -28,6 +28,7 @@ export interface ResponseTeam {
   longitude: number;
   locationName: string;
   status: ResponseTeamStatus;
+  availability?: 'Available' | 'Busy' | 'Offline';
   assignedIncidentId?: string;
   assignedIncidentCode?: string;
   membersCount: number;
@@ -35,7 +36,20 @@ export interface ResponseTeam {
   contactRadio: string;
   vehicleType: string;
   equipment: string[];
+  createdAt?: string;
   updatedAt: string;
+}
+
+export interface Assignment {
+  id: string;
+  incidentId: string;
+  teamId: string;
+  teamName: string;
+  assignedAt: string;
+  assignedBy: string;
+  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  distanceKm: number;
+  etaMinutes: number;
 }
 
 export interface PriorityScoreFactor {
@@ -85,6 +99,9 @@ export interface Incident {
   assignedTeamCategory?: string;
   assignedDistanceKm?: number;
   assignedEtaMinutes?: number;
+  assignedAt?: string;
+  inProgressAt?: string;
+  resolvedAt?: string;
   imageUrl?: string;
   isDemo: boolean;
   createdAt: string;
@@ -129,8 +146,11 @@ export interface DashboardMetrics {
   totalCasualties: number;
   availableTeams: number;
   busyTeams: number;
+  offlineTeams: number;
   totalTeams: number;
   fleetReadinessPercent: number;
+  teamUtilizationPercent: number;
+  unassignedIncidents: number;
   byCategory: { category: EmergencyCategory; count: number; criticalCount: number }[];
   bySeverity: { severity: SeverityLevel; count: number; color: string }[];
   byStatus: { status: IncidentStatus; count: number; color: string }[];

@@ -32,7 +32,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'header.telemetryActive': 'TELEMETRY: ACTIVE (LATENCY 12ms)',
     'header.defcon': 'DEFCON LEVEL 2: HIGH READINESS',
     'header.hackathonTag': 'CODE CLASH 2026 EDITION',
-    'header.tagline': 'Intelligent Emergency Response & Disaster Management System',
+    'header.tagline': 'Every Second Matters. Every Life Counts.',
     'header.audioOn': 'Audio HUD Active',
     'header.audioMuted': 'Audio Muted',
 
@@ -252,7 +252,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'header.telemetryActive': 'டெலிமெட்ரி: செயலில் உள்ளது (12ms)',
     'header.defcon': 'டிஃப்கான் நிலை 2: உயர் தயார்நிலை',
     'header.hackathonTag': 'கோட் கிளாஷ் 2026 பதிப்பு',
-    'header.tagline': 'புத்திசாலித்தனமான அவசரக்கால பதில் மற்றும் பேரிடர் மேலாண்மை அமைப்பு',
+    'header.tagline': 'ஒவ்வொரு வினாடியும் முக்கியம். ஒவ்வொரு உயிரும் விலைமதிப்பற்றது.',
     'header.audioOn': 'ஒலி எச்சரிக்கை செயலில்',
     'header.audioMuted': 'ஒலி முடக்கப்பட்டது',
 
@@ -472,7 +472,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'header.telemetryActive': 'टेलीमेट्री: सक्रिय (विलंबता 12ms)',
     'header.defcon': 'डिफकॉन स्तर 2: उच्च तत्परता',
     'header.hackathonTag': 'कोड क्लैश 2026 संस्करण',
-    'header.tagline': 'बुद्धिमान आपातकालीन प्रतिक्रिया और आपदा प्रबंधन प्रणाली',
+    'header.tagline': 'हर सेकंड मायने रखता है। हर जान कीमती है।',
     'header.audioOn': 'ऑडियो एचयूडी सक्रिय',
     'header.audioMuted': 'ऑडियो म्यूट',
 
@@ -692,7 +692,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'header.telemetryActive': 'టెలిమెట్రీ: క్రియాశీలకం (12ms)',
     'header.defcon': 'డెఫ్‌కాన్ స్థాయి 2: అధిక సంసిద్ధత',
     'header.hackathonTag': 'కోడ్ క్లాష్ 2026 ఎడిషన్',
-    'header.tagline': 'తెలివైన అత్యవసర ప్రతిస్పందన మరియు విపత్తు నిర్వహణ వ్యవస్థ',
+    'header.tagline': 'ప్రతి సెకను ముఖ్యం. ప్రతి ప్రాణం విలువైనది.',
     'header.audioOn': 'ఆడియో క్రియాశీలకం',
     'header.audioMuted': 'ఆడియో మ్యూట్ చేయబడింది',
 
@@ -912,7 +912,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'header.telemetryActive': 'TELEMETRÍA: ACTIVA (12ms)',
     'header.defcon': 'NIVEL DEFCON 2: ALTA PREPARACIÓN',
     'header.hackathonTag': 'EDICIÓN CODE CLASH 2026',
-    'header.tagline': 'Sistema Inteligente de Respuesta a Emergencias y Gestión de Desastres',
+    'header.tagline': 'Cada segundo importa. Cada vida cuenta.',
     'header.audioOn': 'Audio HUD Activo',
     'header.audioMuted': 'Audio Silenciado',
 

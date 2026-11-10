@@ -356,8 +356,8 @@ export const MapPage: React.FC = () => {
           const midLng = (t.longitude + targetInc.longitude) / 2;
 
           const labelIcon = L.divIcon({
-            html: `<div style="transform: translate(-50%, -50%); background: #050D1A; border: 1px solid #06B6D4; border-radius: 8px; padding: 2px 7px; font-family: monospace; font-size: 10px; font-weight: bold; color: #38BDF8; white-space: nowrap; box-shadow: 0 0 10px rgba(6,182,212,0.5);">
-              ⚡ ${t.name} ➔ ${targetInc.incidentCode} (${dist}km • ~${eta}m ETA)
+            html: `<div style="transform: translate(-50%, -50%); background: #050D1A; border: 1px solid #06B6D4; border-radius: 8px; padding: 3px 8px; font-family: monospace; font-size: 10px; font-weight: bold; color: #38BDF8; white-space: nowrap; box-shadow: 0 0 12px rgba(6,182,212,0.6);">
+              ⚡ Direct Vector: ${dist} km (Straight-line Geodesic) • Est. Transit: ~${eta}m
             </div>`,
             className: 'route-label-icon',
           });

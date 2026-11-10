@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
-import { Incident, DashboardMetrics } from '../../types';
+import { Incident, DashboardMetrics, ResponseTeam, ResponseTeamCategory } from '../../types';
 import { incidentService } from '../../services/incidentService';
+import { teamService } from '../../services/teamService';
+import { getPriorityExplanation } from '../../services/intelligenceEngine';
 import { SeverityBadge } from '../../components/common/SeverityBadge';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { CategoryBadge } from '../../components/common/CategoryBadge';
@@ -49,6 +51,7 @@ interface AdminContextType {
   onOpenIncident: (incident: Incident) => void;
   onOpenDuplicate: (incident: Incident) => void;
   onSimulate: () => void;
+  onSimulateFire?: () => void;
   onReset: () => void;
   onOpenDrone?: (inc?: Incident) => void;
   onOpenPlaybook?: (inc?: Incident) => void;
@@ -62,15 +65,50 @@ export const DashboardPage: React.FC = () => {
     onOpenIncident,
     onOpenDuplicate,
     onSimulate,
+    onSimulateFire,
     onOpenDrone,
     onOpenPlaybook,
     onOpenHospitals,
   } = useOutletContext<AdminContextType>();
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => incidentService.getDashboardMetrics());
+  const [teams, setTeams] = useState<ResponseTeam[]>(() => teamService.getTeams());
 
   useEffect(() => {
     setMetrics(incidentService.getDashboardMetrics());
   }, [incidents]);
+
+  useEffect(() => {
+    const unsub = teamService.subscribe(() => {
+      setTeams(teamService.getTeams());
+    });
+    return unsub;
+  }, []);
+
+  const categoryReadiness = useMemo(() => {
+    const categories: ResponseTeamCategory[] = [
+      'Fire & Rescue',
+      'Medical & Trauma',
+      'Disaster & Urban SAR',
+      'Police & Evacuation',
+      'Hazmat & Chemical',
+      'Flood & Marine Rescue',
+    ];
+    return categories.map(cat => {
+      const total = teams.filter(t => t.category === cat).length;
+      const available = teams.filter(t => t.category === cat && t.status === 'Available').length;
+      const busy = teams.filter(t => t.category === cat && (t.status === 'Busy' || t.status === 'En Route')).length;
+      const offline = teams.filter(t => t.category === cat && (t.status === 'Offline' || t.status === 'Off Duty')).length;
+      return { category: cat, total, available, busy, offline, isZero: available === 0 };
+    });
+  }, [teams]);
+
+  const zeroAvailableCategories = categoryReadiness.filter(c => c.isZero && c.total > 0);
+  const busyTeamsCount = teams.filter(t => t.status === 'Busy' || t.status === 'En Route').length;
+  const unassignedCount = incidents.filter(i => (i.status === 'Reported' || i.status === 'Pending') && !i.assignedTeamName).length;
+
+  const sortedUnresolved = [...incidents.filter(i => i.status !== 'Resolved')].sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
+  const rankOneIncident = sortedUnresolved[0] || null;
+  const rankOneExplanation = rankOneIncident ? getPriorityExplanation(rankOneIncident, incidents) : null;
 
   const criticalQueue = incidents
     .filter(i => i.severity === 'Critical' && i.status !== 'Resolved')
@@ -171,6 +209,20 @@ export const DashboardPage: React.FC = () => {
             >
               <Hospital className="w-3.5 h-3.5 text-purple-400" />
               <span>{t('admin.header.hospitals', 'Beds Matrix')}</span>
+            </button>
+          )}
+
+          {onSimulateFire && (
+            <button
+              onClick={() => {
+                soundFx.playAlert();
+                onSimulateFire();
+              }}
+              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-600 via-rose-600 to-red-600 hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-rose-600/30 transition-all active:scale-95"
+              title="1-Click Round 2 Evaluation Scenario (Peenya Fire + Nearest Team Matching)"
+            >
+              <Flame className="w-3.5 h-3.5" />
+              <span>Simulate Critical Fire</span>
             </button>
           )}
 
@@ -290,6 +342,83 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="font-mono text-2xl font-black text-emerald-400">{metrics.resolved}</div>
           <div className="text-[10px] font-mono text-emerald-400/80 truncate">Scene stabilized</div>
+        </div>
+      </div>
+
+      {/* PHASE 8 FEATURE C: EMERGENCY RESPONSE READINESS PANEL */}
+      <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-white flex items-center gap-2">
+                Emergency Response Readiness Panel
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                  FLEET TELEMETRY
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Live availability by emergency category, mission deployment load, and unassigned queue monitor
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
+            <span className="text-amber-400 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+              Busy Teams: <strong>{busyTeamsCount}</strong>
+            </span>
+            <span className="text-red-400 font-bold bg-red-500/10 px-2.5 py-1 rounded-lg border border-red-500/20">
+              Unassigned Emergencies: <strong>{unassignedCount}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Zero Available Alert Warning */}
+        {zeroAvailableCategories.length > 0 && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-center gap-3 animate-pulse">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <span className="font-mono font-bold uppercase tracking-wider block text-amber-300">
+                CRITICAL READINESS DEFICIT: ZERO UNITS AVAILABLE
+              </span>
+              <span>
+                Zero available response units in sector for:{' '}
+                <strong>{zeroAvailableCategories.map(c => c.category).join(', ')}</strong>. Tactical redeployment or mutual aid escalation recommended.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Readiness Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {categoryReadiness.map((cat) => (
+            <div
+              key={cat.category}
+              className={`p-3 rounded-2xl border transition-all ${
+                cat.available === 0
+                  ? 'bg-rose-950/20 border-rose-500/40 shadow-inner'
+                  : 'bg-white/[0.02] border-white/10 hover:border-cyan-500/30'
+              }`}
+            >
+              <div className="text-[10px] font-mono text-slate-400 font-bold truncate mb-1">
+                {cat.category}
+              </div>
+              <div className="flex items-baseline justify-between">
+                <span className={`text-xl font-mono font-black ${cat.available > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {cat.available}
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">
+                  / {cat.total} total
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5 text-[9px] font-mono text-slate-400">
+                <span className="text-amber-400 font-semibold">{cat.busy} Busy</span>
+                <span>•</span>
+                <span className="text-slate-500">{cat.offline} Off</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -428,6 +557,49 @@ export const DashboardPage: React.FC = () => {
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
+
+        {/* Explainable Decision Support: Why is this incident ranked #1? */}
+        {rankOneIncident && rankOneExplanation && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-950/60 via-[#0D182A] to-[#0A101D] border border-red-500/30 space-y-3 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs px-2.5 py-1 rounded-md bg-red-500/20 text-red-300 font-black border border-red-500/40 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-red-400" />
+                  WHY IS THIS INCIDENT RANKED #1?
+                </span>
+                <span className="font-mono text-xs text-slate-300 font-bold">{rankOneIncident.incidentCode}</span>
+              </div>
+              <button
+                onClick={() => {
+                  soundFx.playClick();
+                  onOpenIncident(rankOneIncident);
+                }}
+                className="text-xs font-mono font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+              >
+                <span>Inspect & Dispatch Best-Fit Unit</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+              <div className="md:col-span-8 space-y-1">
+                <h4 className="text-sm font-black text-white">{rankOneIncident.title}</h4>
+                <p className="text-xs text-slate-300 leading-relaxed">{rankOneExplanation.headline}</p>
+                <p className="text-[11px] font-mono text-cyan-300 mt-1">{rankOneExplanation.decisionRecommendation}</p>
+              </div>
+              <div className="md:col-span-4 bg-black/40 p-3 rounded-xl border border-white/10 space-y-1 text-[11px] font-mono">
+                <div className="text-slate-400 font-bold uppercase text-[10px] tracking-wider mb-1">Dynamic Scoring Breakdown:</div>
+                {rankOneExplanation.factors.map(f => (
+                  <div key={f.name} className="flex justify-between text-slate-300">
+                    <span>{f.name} ({f.weight}):</span> <strong className="text-white">{f.score} / {f.maxScore} pts</strong>
+                  </div>
+                ))}
+                <div className="flex justify-between pt-1 border-t border-white/10 font-bold text-cyan-400">
+                  <span>Total Dynamic Score:</span> <span>{rankOneIncident.priorityScore} / 100</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {incidents.filter(i => i.status !== 'Resolved').length === 0 ? (
           <div className="p-8 text-center rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-slate-400">

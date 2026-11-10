@@ -5,7 +5,8 @@ import { CategoryBadge } from '../common/CategoryBadge';
 import { StatusBadge } from '../common/StatusBadge';
 import { PriorityGauge } from '../common/PriorityGauge';
 import { incidentService } from '../../services/incidentService';
-import { teamService, NearestTeamMatch } from '../../services/teamService';
+import { teamService, NearestTeamMatch, SmartDispatchRecommendation } from '../../services/teamService';
+import { getPriorityExplanation, PriorityExplanation } from '../../services/intelligenceEngine';
 import { soundFx } from '../../utils/soundEffects';
 import {
   X,
@@ -29,6 +30,9 @@ import {
   Navigation,
   Zap,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface IncidentDetailsModalProps {
@@ -57,20 +61,33 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
   const [overrideReason, setOverrideReason] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activities, setActivities] = useState<IncidentActivity[]>([]);
-
   const [nearestTeams, setNearestTeams] = useState<NearestTeamMatch[]>([]);
+  const [smartRec, setSmartRec] = useState<SmartDispatchRecommendation | null>(null);
+  const [conflictError, setConflictError] = useState<string | null>(null);
+  const [showExcluded, setShowExcluded] = useState(false);
 
   useEffect(() => {
     setCurrentStatus(incident.status);
     setCurrentSeverity(incident.severity);
     setAssignedUnit(incident.assignedUnit || '');
     setActivities(incidentService.getActivities(incident.id));
+    setConflictError(null);
     if (incident) {
       setNearestTeams(teamService.findNearestTeamsForIncident(incident));
+      setSmartRec(teamService.findSmartRecommendation(incident));
     }
   }, [incident]);
 
   const handleAssignTeam = (match: NearestTeamMatch) => {
+    // Phase 8 Feature B: Resource Conflict Detection
+    const validation = teamService.validateAssignment(match.team.id, incident.category);
+    if (!validation.allowed) {
+      soundFx.playAlert();
+      setConflictError(validation.conflictReason || 'Resource conflict detected. Unit cannot be dispatched.');
+      return;
+    }
+
+    setConflictError(null);
     soundFx.playSuccess();
     setAssignedUnit(match.team.name);
     setCurrentStatus('Assigned');
@@ -83,6 +100,7 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
     );
     setActivities(incidentService.getActivities(incident.id));
     setNearestTeams(teamService.findNearestTeamsForIncident(incident));
+    setSmartRec(teamService.findSmartRecommendation(incident));
     onIncidentUpdated();
   };
 
@@ -299,45 +317,67 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Smart Severity Intelligence Engine Breakdown */}
+            {/* Phase 2: Explainable Priority Decision Engine */}
             <div className="p-6 rounded-3xl bg-gradient-to-br from-[#0B1E38] via-[#071426] to-[#040C17] text-white border border-[#16C7E8]/40 shadow-2xl space-y-4 glow-cyan">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Sparkles className="w-5 h-5 text-sentinel-cyan animate-spin-slow" />
-                  <h3 className="text-sm font-bold tracking-tight text-white">
-                    Smart Severity Decision Engine
-                  </h3>
+                  <div>
+                    <h3 className="text-sm font-bold tracking-tight text-white">
+                      Intelligent Priority Engine (Rank #{incident.priorityRank || 1})
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-mono">4-Factor Decision-Support Matrix</p>
+                  </div>
                 </div>
-                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-sentinel-cyan/20 text-sentinel-cyan border border-sentinel-cyan/40">
-                  EXPLAINABLE AI
+                <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-sentinel-cyan/20 text-sentinel-cyan border border-sentinel-cyan/40">
+                  SCORE: {incident.priorityScore}/100
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
-                    Assigned Priority Level
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <SeverityBadge severity={incident.recommendedSeverity} size="md" pulsing={false} />
-                    {incident.severityOverridden && (
-                      <span className="text-xs text-amber-400 italic">
-                        (Overridden to {currentSeverity})
-                      </span>
-                    )}
+              {/* "Why is this incident ranked first / #X?" Explanation Card */}
+              {(() => {
+                const expl = getPriorityExplanation(incident);
+                return (
+                  <div className="p-4 rounded-2xl bg-[#050D1A]/90 border border-white/10 space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-mono font-bold text-sentinel-cyan">
+                      <Crosshair className="w-3.5 h-3.5" />
+                      <span>{expl.headline}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                      {expl.summary}
+                    </p>
+
+                    {/* 4 Factor Contribution Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                      {expl.factors.map((f, i) => (
+                        <div key={i} className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] font-mono">
+                            <span className="text-slate-400">{f.name} ({f.weight}):</span>
+                            <strong className="text-white">{f.score}/{f.maxScore} pts</strong>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                f.level === 'critical' ? 'bg-red-500' : f.level === 'high' ? 'bg-amber-500' : 'bg-cyan-500'
+                              }`}
+                              style={{ width: `${(f.score / f.maxScore) * 100}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] text-slate-400 block truncate">{f.description}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-cyan-950/40 border border-cyan-500/30 text-[11px] font-mono text-cyan-300 flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                      <span>{expl.decisionRecommendation}</span>
+                    </div>
                   </div>
-                </div>
+                );
+              })()}
 
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block mb-1">
-                    Calculated Priority Index
-                  </span>
-                  <PriorityGauge score={incident.priorityScore} size="md" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5 pt-3 border-t border-white/10">
-                <span className="text-xs font-mono font-bold text-sentinel-cyan">Triggered Rules & Factors:</span>
+              <div className="space-y-1.5 pt-2 border-t border-white/10">
+                <span className="text-xs font-mono font-bold text-sentinel-cyan">NLP & Rule Trigger Rationale:</span>
                 <ul className="space-y-1">
                   {incident.severityReasoning.map((reason, idx) => (
                     <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
@@ -445,15 +485,16 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
               </div>
             </div>
 
-            {/* Location-Based Response Team Dispatcher */}
+            {/* Smart Nearest Team Dispatcher */}
             <div className="p-5 rounded-2xl bg-[#0B1E38]/80 border border-white/10 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-300 flex items-center gap-1.5">
                   <Truck className="w-4 h-4 text-cyan-400" />
-                  Location-Based Team Dispatch
+                  Smart Nearest Team Dispatch
                 </h3>
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold">
-                  HAVERSINE GPS
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5 text-cyan-400" />
+                  HAVERSINE + CATEGORY AI
                 </span>
               </div>
 
@@ -483,59 +524,135 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
                 </div>
               )}
 
-              {/* Nearest Available Teams List */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-mono uppercase text-slate-400 block font-bold">
-                  Nearest Available Units (Auto-Calculated Distance):
-                </span>
-                {nearestTeams.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">No GPS coordinates or all response teams currently deployed.</p>
-                ) : (
-                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {nearestTeams.slice(0, 3).map((match) => (
+              {/* Conflict Error Notification Banner */}
+              {conflictError && (
+                <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-200 text-xs flex items-start gap-2 animate-pulse">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold font-mono uppercase block text-[10px] text-rose-300">Resource Conflict Detected:</span>
+                    <span>{conflictError}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Missing GPS Coordinates Warning */}
+              {smartRec?.hasMissingCoordinates && (
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold font-mono uppercase block text-[10px] text-amber-300">GPS Coordinates Not Available</span>
+                    <span>{smartRec.explanation}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommended Team Card */}
+              {smartRec?.recommendedMatch && (
+                <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/50 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
+                      ⭐ BEST-FIT RECOMMENDATION
+                    </span>
+                    <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                      {smartRec.recommendedMatch.distanceKm} km • ~{smartRec.recommendedMatch.etaMinutes}m ETA
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-white">{smartRec.recommendedMatch.team.name}</h4>
+                    <p className="text-[11px] font-mono text-slate-300 mt-0.5">
+                      {smartRec.recommendedMatch.team.category} • Base: {smartRec.recommendedMatch.team.locationName}
+                    </p>
+                  </div>
+                  {/* Explainable dispatch reason */}
+                  <div className="p-2.5 rounded-lg bg-emerald-950/60 border border-emerald-500/20 text-[11px] text-emerald-100 font-sans leading-relaxed">
+                    <strong className="text-emerald-400 font-mono text-[10px] block mb-0.5">DISPATCH RATIONALE:</strong>
+                    {smartRec.explanation}
+                  </div>
+                  <div className="pt-1 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => handleAssignTeam(smartRec.recommendedMatch!)}
+                      className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-mono font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/30 transition-transform active:scale-95 flex items-center justify-center gap-1.5"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Dispatch Recommended Unit</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* No Team Available notice */}
+              {!smartRec?.hasMissingCoordinates && !smartRec?.recommendedMatch && (
+                <div className="p-3 rounded-xl bg-slate-900 border border-white/10 text-xs text-slate-300">
+                  <p className="font-semibold text-rose-400 mb-1">No Compatible Available Units</p>
+                  <p className="text-[11px] text-slate-400">{smartRec?.noTeamAvailableReason || 'All suitable teams are deployed or offline.'}</p>
+                </div>
+              )}
+
+              {/* Alternative Eligible Teams (Admin Override) */}
+              {smartRec && smartRec.alternativeMatches.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block font-bold">
+                    Alternative Compatible Teams (Admin Override):
+                  </span>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {smartRec.alternativeMatches.map((alt) => (
                       <div
-                        key={match.team.id}
-                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
-                          match.isBestFit
-                            ? 'bg-emerald-950/40 border-emerald-500/40'
-                            : 'bg-[#071426] border-white/10 hover:border-white/20'
-                        }`}
+                        key={alt.team.id}
+                        className="p-2.5 rounded-xl border border-white/10 bg-[#071426] hover:border-white/20 flex items-center justify-between gap-2"
                       >
                         <div className="overflow-hidden">
-                          <div className="flex items-center gap-1.5">
-                            {match.isBestFit && (
-                              <span className="text-[9px] font-mono font-black px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                                BEST FIT
-                              </span>
-                            )}
-                            <span className="text-xs font-bold text-white truncate">{match.team.name}</span>
-                          </div>
-                          <div className="text-[10px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
-                            <span>{match.team.category}</span>
-                            <span>•</span>
-                            <span className="text-cyan-400 font-bold">{match.distanceKm} km</span>
-                            <span>•</span>
-                            <span className="text-amber-400 font-bold">~{match.etaMinutes}m ETA</span>
-                          </div>
+                          <span className="text-xs font-bold text-white block truncate">{alt.team.name}</span>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {alt.team.category} • <strong className="text-cyan-400">{alt.distanceKm} km</strong> • <strong className="text-amber-400">~{alt.etaMinutes}m ETA</strong>
+                          </span>
                         </div>
-
                         <button
                           type="button"
-                          onClick={() => handleAssignTeam(match)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold shrink-0 transition-transform active:scale-95 flex items-center gap-1 ${
-                            match.isBestFit
-                              ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20'
-                              : 'bg-white/10 hover:bg-white/20 text-white'
-                          }`}
+                          onClick={() => handleAssignTeam(alt)}
+                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-mono font-bold bg-white/10 hover:bg-white/20 text-white shrink-0 transition-transform active:scale-95 flex items-center gap-1"
                         >
-                          <Zap className="w-3 h-3" />
-                          <span>Dispatch</span>
+                          <Zap className="w-3 h-3 text-cyan-400" />
+                          <span>Override</span>
                         </button>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Excluded Units breakdown (Explainable Dispatch Intelligence) */}
+              {smartRec && smartRec.excludedMatches.length > 0 && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowExcluded(!showExcluded)}
+                    className="w-full py-1.5 px-2.5 rounded-lg bg-slate-900/60 border border-white/10 text-[10px] font-mono text-slate-400 hover:text-slate-200 flex items-center justify-between transition-colors"
+                  >
+                    <span>Excluded Units ({smartRec.excludedMatches.length})</span>
+                    <span className="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
+                      {showExcluded ? 'Hide Breakdown' : 'View Exclusions (Why Not Selected?)'}
+                      {showExcluded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </span>
+                  </button>
+
+                  {showExcluded && (
+                    <div className="mt-2 space-y-1.5 p-2 rounded-xl bg-slate-950/70 border border-white/10 max-h-40 overflow-y-auto">
+                      {smartRec.excludedMatches.map((excl) => (
+                        <div key={excl.team.id} className="text-[11px] font-mono p-1.5 rounded-lg bg-white/5 border border-white/5 flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-bold text-slate-200">{excl.team.name}</span>
+                            <span className="text-slate-400 block text-[10px]">{excl.team.category} • {excl.distanceKm} km away</span>
+                          </div>
+                          <span className="text-[10px] text-rose-300 font-semibold bg-rose-500/15 border border-rose-500/30 px-1.5 py-0.5 rounded text-right shrink-0">
+                            {excl.reason}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Custom Unit fallback */}
               <div className="pt-1">

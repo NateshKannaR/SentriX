@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Incident, DashboardMetrics } from '../../types';
+import { Incident, DashboardMetrics, ResponseTeam } from '../../types';
 import { incidentService } from '../../services/incidentService';
+import { teamService } from '../../services/teamService';
 import { soundEffects } from '../../utils/soundEffects';
 import { useLanguage } from '../../context/LanguageContext';
 import {
@@ -32,6 +33,8 @@ import {
   CheckCircle2,
   Truck,
   Zap,
+  Compass,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -46,10 +49,18 @@ export const AnalyticsPage: React.FC = () => {
   const { t } = useLanguage();
   const { incidents } = useOutletContext<AdminContextType>();
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => incidentService.getDashboardMetrics());
+  const [teams, setTeams] = useState<ResponseTeam[]>(() => teamService.getTeams());
 
   useEffect(() => {
     setMetrics(incidentService.getDashboardMetrics());
   }, [incidents]);
+
+  useEffect(() => {
+    const unsub = teamService.subscribe(() => {
+      setTeams(teamService.getTeams());
+    });
+    return unsub;
+  }, []);
 
   const handleExportCSV = () => {
     soundEffects.playBeep();
@@ -73,6 +84,24 @@ export const AnalyticsPage: React.FC = () => {
       category: cat.category.replace(' Emergency', ''),
       casualties: totalCasualties,
       reports: cat.count,
+    };
+  });
+
+  // Response Team workload by category
+  const teamWorkloadByCategory = [
+    'Fire & Rescue',
+    'Medical & Trauma',
+    'Disaster & Urban SAR',
+    'Police & Evacuation',
+    'Hazmat & Chemical',
+    'Flood & Marine Rescue',
+  ].map(cat => {
+    const catTeams = teams.filter(t => t.category === cat);
+    return {
+      category: cat.replace(' & Rescue', '').replace(' & Trauma', '').replace(' & Evacuation', '').replace(' & Chemical', '').replace(' & Urban SAR', '').replace(' & Marine Rescue', ''),
+      available: catTeams.filter(t => t.status === 'Available').length,
+      busy: catTeams.filter(t => t.status === 'Busy' || t.status === 'En Route').length,
+      offline: catTeams.filter(t => t.status === 'Offline' || t.status === 'Off Duty').length,
     };
   });
 
@@ -113,12 +142,12 @@ export const AnalyticsPage: React.FC = () => {
         </button>
       </div>
 
-      {/* KPI Hexad (6 Round 2 Challenge Metrics) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-        {/* Total Emergencies */}
+      {/* 8 Mandatory Round 2 Challenge Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {/* 1. Total Emergencies */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
-            Total Incidents
+            1. Total Emergencies
           </span>
           <span className="font-mono text-2xl font-black text-white mt-1 block">
             {metrics.total}
@@ -126,10 +155,10 @@ export const AnalyticsPage: React.FC = () => {
           <p className="text-[10px] font-mono text-slate-400 mt-1">Metropolitan scope</p>
         </div>
 
-        {/* Critical Emergencies */}
+        {/* 2. Critical Emergencies */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-red-500/30 shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-red-400 font-bold block">
-            Critical Incidents
+            2. Critical Emergencies
           </span>
           <span className="font-mono text-2xl font-black text-red-400 mt-1 block">
             {metrics.critical}
@@ -137,10 +166,10 @@ export const AnalyticsPage: React.FC = () => {
           <p className="text-[10px] font-mono text-red-400/80 mt-1">Immediate priority</p>
         </div>
 
-        {/* Available Teams */}
+        {/* 3. Available Teams */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-emerald-500/30 shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
-            Available Teams
+            3. Available Teams
           </span>
           <span className="font-mono text-2xl font-black text-emerald-400 mt-1 block">
             {metrics.availableTeams}
@@ -148,32 +177,32 @@ export const AnalyticsPage: React.FC = () => {
           <p className="text-[10px] font-mono text-emerald-400/80 mt-1">{metrics.fleetReadinessPercent}% Fleet Ready</p>
         </div>
 
-        {/* Busy Teams */}
+        {/* 4. Busy Teams */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-amber-500/30 shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-bold block">
-            Busy Teams
+            4. Busy Teams
           </span>
           <span className="font-mono text-2xl font-black text-amber-400 mt-1 block">
             {metrics.busyTeams}
           </span>
-          <p className="text-[10px] font-mono text-amber-400/80 mt-1">Field deployed</p>
+          <p className="text-[10px] font-mono text-amber-400/80 mt-1">Active on missions</p>
         </div>
 
-        {/* Assigned Incidents */}
+        {/* 5. Assigned Incidents */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-indigo-500/30 shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-indigo-400 font-bold block">
-            Assigned Incidents
+            5. Assigned Incidents
           </span>
           <span className="font-mono text-2xl font-black text-indigo-400 mt-1 block">
             {metrics.assigned}
           </span>
-          <p className="text-[10px] font-mono text-indigo-300 mt-1">Units en route</p>
+          <p className="text-[10px] font-mono text-indigo-300 mt-1">Units en route / in field</p>
         </div>
 
-        {/* Resolved Incidents */}
+        {/* 6. Resolved Incidents */}
         <div className="p-4 rounded-2xl bg-[#0A101D] border border-emerald-500/30 shadow-lg">
           <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
-            Resolved Incidents
+            6. Resolved Incidents
           </span>
           <span className="font-mono text-2xl font-black text-emerald-400 mt-1 block">
             {metrics.resolved}
@@ -181,6 +210,28 @@ export const AnalyticsPage: React.FC = () => {
           <p className="text-[10px] font-mono text-emerald-400 mt-1">
             {metrics.total > 0 ? Math.round((metrics.resolved / metrics.total) * 100) : 0}% cleared
           </p>
+        </div>
+
+        {/* 7. Team Utilization Percentage */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-cyan-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-cyan-400 font-bold block">
+            7. Team Utilization
+          </span>
+          <span className="font-mono text-2xl font-black text-cyan-400 mt-1 block">
+            {metrics.teamUtilizationPercent ?? 0}%
+          </span>
+          <p className="text-[10px] font-mono text-cyan-400/80 mt-1">(Busy / Total Fleet) × 100</p>
+        </div>
+
+        {/* 8. Unassigned Emergencies */}
+        <div className="p-4 rounded-2xl bg-[#0A101D] border border-rose-500/30 shadow-lg">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-rose-400 font-bold block">
+            8. Unassigned Incidents
+          </span>
+          <span className="font-mono text-2xl font-black text-rose-400 mt-1 block">
+            {metrics.unassignedIncidents ?? 0}
+          </span>
+          <p className="text-[10px] font-mono text-rose-400/80 mt-1">Awaiting dispatch</p>
         </div>
       </div>
 
@@ -307,6 +358,47 @@ export const AnalyticsPage: React.FC = () => {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Response Team Fleet Workload by Category (Stacked Bar Chart) */}
+        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-base text-white">
+                Team Workload & Fleet Distribution
+              </h3>
+              <p className="text-xs text-slate-400">Available vs Busy vs Offline units across 6 specialist branches</p>
+            </div>
+            <Truck className="w-5 h-5 text-cyan-400" />
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={teamWorkloadByCategory} margin={{ top: 10, right: 10, left: -20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.06} />
+                <XAxis dataKey="category" tick={{ fontSize: 10, fill: '#94A3B8' }} angle={-15} textAnchor="end" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#070D18',
+                    borderColor: '#06B6D4',
+                    borderRadius: '14px',
+                    color: '#fff',
+                    fontSize: '12px',
+                  }}
+                />
+                <Bar dataKey="available" stackId="a" fill="#10B981" radius={[0, 0, 0, 0]} name="Available" />
+                <Bar dataKey="busy" stackId="a" fill="#F59E0B" radius={[0, 0, 0, 0]} name="Busy (Deployed)" />
+                <Bar dataKey="offline" stackId="a" fill="#64748B" radius={[4, 4, 0, 0]} name="Offline" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="flex items-center justify-center gap-4 text-xs font-mono pt-2 border-t border-white/5">
+            <span className="flex items-center gap-1.5 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Available</span>
+            <span className="flex items-center gap-1.5 text-amber-400"><span className="w-2 h-2 rounded-full bg-amber-500" /> Busy</span>
+            <span className="flex items-center gap-1.5 text-slate-400"><span className="w-2 h-2 rounded-full bg-slate-500" /> Offline</span>
           </div>
         </div>
       </div>

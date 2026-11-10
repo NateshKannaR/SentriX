@@ -32,6 +32,7 @@ import {
   Plane,
   FileText,
   Hospital,
+  Flame,
   X,
 } from 'lucide-react';
 
@@ -132,6 +133,14 @@ export const AdminLayout: React.FC = () => {
     const simulated = incidentService.simulateEmergency();
     setSimulationToast(`🚨 ${simulated.incidentCode} (${simulated.category})`);
     setTimeout(() => setSimulationToast(null), 5000);
+  };
+
+  const handleSimulateFire = () => {
+    soundEffects.playCriticalSiren();
+    const result = incidentService.simulateCriticalBuildingFire();
+    setSimulationToast(`🔥 1-CLICK DEMO ACTIVATED: Critical Building Fire spawned (#1 Priority)! Recommends: ${result.recommendedTeamName}`);
+    setTimeout(() => setSimulationToast(null), 8000);
+    handleOpenIncident(result.incident);
   };
 
   const handleReset = () => {
@@ -403,6 +412,16 @@ export const AdminLayout: React.FC = () => {
               {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
             </button>
 
+            {/* 1-Click Round 2 Evaluation Scenario */}
+            <button
+              onClick={handleSimulateFire}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 via-rose-600 to-red-600 hover:brightness-110 text-white text-xs font-black transition-all shadow-md shadow-rose-600/30 active:scale-95"
+              title="1-Click Round 2 Evaluation Scenario (Peenya Fire + Nearest Team Matching)"
+            >
+              <Flame className="w-3.5 h-3.5 animate-pulse" />
+              <span className="hidden sm:inline">Simulate Critical Fire</span>
+            </button>
+
             {/* Quick Simulate Trigger */}
             <button
               onClick={handleSimulate}
@@ -551,6 +570,7 @@ export const AdminLayout: React.FC = () => {
               onOpenIncident: handleOpenIncident,
               onOpenDuplicate: handleOpenDuplicate,
               onSimulate: handleSimulate,
+              onSimulateFire: handleSimulateFire,
               onReset: handleReset,
               onOpenDrone: (inc?: Incident) => {
                 setDroneTargetIncident(inc || incidents[0] || null);

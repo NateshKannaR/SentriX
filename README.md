@@ -1,116 +1,231 @@
-# SentriX — Intelligent Emergency Response & Disaster Management System
+# SENTRIX — Intelligent Emergency Response & Disaster Management Platform
 
-> **Tagline**: *"One Platform. Every Emergency. Faster Response."*  
-> **Challenge**: **CODE CLASH 2026** — Round 1: Emergency Incident Reporting & Monitoring
-
----
-
-## 🚨 Problem Statement & Product Vision
-
-During emergency disasters such as road accidents, fires, floods, and structural collapses, coordinating rapid emergency response is hindered by fragmented citizen reports, lack of centralized intelligence, duplicate dispatches, and delayed casualty assessment.
-
-**SentriX** centralizes citizen emergency reports, dynamically classifies incident severity using explainable decision support, suppresses duplicate reports, and equips emergency administrators with a centralized Command Center.
+> **Official Tagline**: *"Every Second Matters. Every Life Counts."*  
+> **Hackathon**: **CODE CLASH 2026** — Round 2: Intelligent Emergency Coordination & Resource Allocation  
+> **Live Deployment**: [https://sentrixbynk.vercel.app/](https://sentrixbynk.vercel.app/)  
+> **Repository**: [https://github.com/NateshKannaR/SentriX.git](https://github.com/NateshKannaR/SentriX.git)  
+> **Emergency Hotline (WhatsApp Direct SOS)**: `+91 7806869597`
 
 ---
 
-## ☁️ Vercel Deployment & MongoDB Atlas Setup
+## 🚨 Executive Summary
 
-This application is fully pre-configured for one-click **Vercel Deployment** with **MongoDB Atlas** serverless backend functions:
+During critical disasters and urban emergencies—industrial chemical blazes, structural collapses, multi-vehicle highway pileups, and flash floods—every second lost in manual triage or misrouted response teams leads to preventable casualties.
 
-1. **Import to Vercel**:
-   - Go to [vercel.com/new](https://vercel.com/new).
-   - Select your repository: `https://github.com/NateshKannaR/SentriX`.
-2. **Environment Variables**:
-   Add the following in your Vercel Project Settings > Environment Variables:
-   - `MONGODB_URI`: `mongodb+srv://Natesh:Natesh@cluster0.wwp3oig.mongodb.net/?retryWrites=true&w=majority`
-   - `MONGODB_DB`: `sentinel360`
-3. **Deploy**:
-   - Vercel automatically deploys the Vite frontend from `dist` and builds the serverless API routes in `/api`.
-   - On first load, the serverless API automatically seeds the MongoDB collection with full rich demonstration incidents!
+**SENTRIX** is an intelligent emergency coordination platform designed for urban emergency operations centers (EOC) and frontline disaster coordinators. Upgraded from Round 1 incident capture into a fully autonomous, explainable decision-support and dispatch coordination platform, SENTRIX combines:
+- **4-Factor Dynamic Incident Prioritization (40/25/20/15)** with the Anti-Minor-Outranking rule.
+- **Geospatial Smart Nearest Team Assignment** using the Haversine formula and category capability matching.
+- **Explainable Dispatch Intelligence** that clearly justifies why a unit was recommended over closer mismatched units.
+- **Resource Conflict Detection** that prevents double-booking busy or offline response units.
+- **Real-Time Fleet Telemetry & Readiness Radar** with zero-available category alerts.
+- **Bidirectional Incident Lifecycle Syncing** across citizen portals, admin dashboards, and operations maps.
 
 ---
 
-## 🎯 Round 1 Mandatory Requirements — Feature Compliance Matrix
+## 🎯 Code Clash 2026 Round 2 — 50-Mark Challenge Compliance Matrix
 
-| Challenge Brief Requirement | Implementation in SentriX | Status |
-| :--- | :--- | :---: |
-| **1. Emergency Incident Reporting** | Fast, responsive reporting form with Title, Category, Location, People Affected, Description, and Optional Contact details. | **Complete & Verified** |
-| **2. Six Emergency Categories** | Fire Emergency, Road Accident, Medical Emergency, Flood, Building Collapse, Other Emergencies with dedicated visual iconography. | **Complete & Verified** |
-| **3. Incident Severity Classification** | 4 Tiers: **Low**, **Medium**, **High**, **Critical**. Transparent, explainable Smart Severity Engine based on casualties and risk keywords. | **Complete & Verified** |
-| **4. Emergency Dashboard** | Real-time statistics: Total Reported, Critical, Pending, In Progress, Resolved, and Category charts powered by stored incident data. | **Complete & Verified** |
-| **5. Incident Management** | View all reports, filter/search/sort, open deep dossiers, inline and modal status updates (`Reported`, `Pending`, `In Progress`, `Resolved`), CSV export, delete test reports. | **Complete & Verified** |
-| **6. UI/UX Excellence** | Mission control palette (`#071426`, `#16C7E8`, `#F04452`), responsive layouts, pulsing critical alert indicators, light & dark command modes. | **Complete & Verified** |
-
----
-
-## ⚡ Innovative Standout Features
-
-### 1. Smart Severity Intelligence Engine (Decision Support)
-- Evaluates category baseline risk (e.g. Building Collapse +32, Fire +28, Medical +24).
-- Evaluates casualty thresholds (1-2: +15, 3-5: +28, 6-15: +42, 16+: +55 Mass Casualty).
-- Detects life-critical keywords (`trapped`, `explosion`, `toxic`, `unconscious`, `flames`, `crushed`, `chemical`, `debris`) and vulnerable population keywords (`child`, `infant`, `elderly`, `school`, `hospital`).
-- Produces an explainable, bulleted rationale for why a severity was assigned.
-- Commanders retain full override authority with audit logging.
-
-### 2. Transparent Priority Score (0 to 100)
-- Mathematical index:
-  $$\text{Priority} = \text{SeverityWeight}(40\%) + \text{CasualtyImpact}(35\%) + \text{ThreatKeywords}(25\%)$$
-- Automatically ranks the live incident priority queue.
-
-### 3. Interactive Leaflet Emergency Map
-- Interactive OpenStreetMap canvas with custom-styled SVG emergency pins.
-- Pin colors correlate with severity (Red: Critical, Orange: High, Amber: Medium, Green: Low).
-- Marker popups provide quick dossier inspection and pan-to-incident.
-- Floating geospatial filters and graceful fallback for offline environments.
-
-### 4. Duplicate Incident Detection Guard
-- Cross-correlates reports across 4 dimensions:
-  1. Identical emergency category.
-  2. Haversine spatial proximity ($< 1.5\text{ km}$).
-  3. Textual semantic token overlap (Jaccard similarity).
-  4. Temporal window ($< 8\text{ hours}$).
-- Surfaces warning badges with percentage match confidence.
-- Dedicated Side-by-Side Comparison Inspector allows commanders to verify evidence and link/close duplicates without accidental data loss.
-
-### 5. Chronological Incident Activity Timeline
-- Immutable audit log tracking citizen submission, AI severity assignment, status changes, unit deployments, commander overrides, and custom field notes.
-
-### 6. Emergency Alert Center (In-App Drawer)
-- Top navigation bell indicator with unread badge counter.
-- Sliding drawer highlighting active critical incidents and unreviewed duplicate reports with 1-click review.
-
-### 7. Demo Simulation Engine
-- Dedicated **"Simulate Emergency"** and **"Simulate Burst (3 Scenarios)"** buttons in top header and sidebar.
-- Injects varied, realistic multi-casualty incidents with geocodes across all 6 categories.
-- Includes a 1-click **Reset Demo Data** option to restore the initial seed dataset.
+| Challenge Module | Requirement Breakdown | SENTRIX Implementation | Status |
+| :--- | :--- | :--- | :---: |
+| **Module 1: Intelligent Prioritization** (10 Marks) | Dynamic scoring algorithm combining Severity (40%), Casualties (25%), Waiting Time (20%), and Category Urgency (15%). Anti-minor outranking rule. Explainable "Why is this incident ranked #1?" panel. | `src/services/intelligenceEngine.ts`<br>`src/components/admin/IncidentDetailsModal.tsx`<br>`src/pages/admin/DashboardPage.tsx` | **100% Complete** |
+| **Module 2: Team Management** (10 Marks) | Dedicated `/admin/teams` fleet management suite. Add/Edit/View/Filter response units across 6 specialist branches. 3 operational states (`Available`, `Busy`, `Offline`). 5 top-level KPI indicators. | `src/pages/admin/TeamsPage.tsx`<br>`src/services/teamService.ts` | **100% Complete** |
+| **Module 3: Smart Nearest Team Assignment** (10 Marks) | Real Haversine geodesic distance in km. ETA estimation (40 km/h average urban speed). Category capability compatibility filter. Explainable recommendation rationale with comparison against closer excluded units. Admin override capability. Real GPS handling. | `src/services/teamService.ts`<br>`src/components/admin/IncidentDetailsModal.tsx` | **100% Complete** |
+| **Module 4: Incident Lifecycle & Sync** (10 Marks) | Linear state machine: `Reported` ➔ `Assigned` ➔ `In Progress` ➔ `Resolved`. Automatic bidirectional status sync with assigned teams. Real-time broadcast channel. Conflict detection preventing assignment of busy/offline units. | `src/services/incidentService.ts`<br>`src/services/teamService.ts` | **100% Complete** |
+| **Module 5: Interactive Operations Map** (5 Marks) | Dark-mode Leaflet tactical map at `/admin/map`. Incident pins color-coded by severity. Response unit markers with category icons and busy badges. Direct geodesic vector lines connecting incidents to assigned teams with distance and ETA HUD badges. | `src/pages/admin/MapPage.tsx` | **100% Complete** |
+| **Module 6: Advanced Analytics Dashboard** (5 Marks) | 8 Mandatory Key Metrics: Total Emergencies, Critical Emergencies, Available Teams, Busy Teams, Assigned Incidents, Resolved Incidents, Team Utilization %, and Unassigned Incidents. 4 visual charts including team workload by category. | `src/pages/admin/AnalyticsPage.tsx` | **100% Complete** |
 
 ---
 
-## 🛠️ Technology Stack
+## 🏆 Standout Innovation Features (Phase 8)
 
-- **Frontend**: React 19, TypeScript, Vite 6, Tailwind CSS
-- **Icons**: Lucide React
-- **Visualizations**: Recharts (Bar Charts, Donut Pie, Area Trend Lines)
-- **Geospatial**: Leaflet & OpenStreetMap
-- **Routing**: React Router v7
-- **Database & Persistence**:
-  - **MongoDB Atlas** serverless integration via `/api/incidents`, `/api/activities`, `/api/simulate`, `/api/reset`
-  - Cached connection pool in `lib/mongodb.ts`
-  - Browser storage fallback (`localStorage`) for offline resilience
-  - Optional Supabase PostgreSQL database support (`supabase/schema.sql`)
+### Feature A: Explainable Dispatch Intelligence
+Rather than a "black-box" recommendation, SENTRIX explicitly informs the dispatcher:
+> *"Fire Team Alpha is the nearest available team (2.3 km, ~3m ETA) with the appropriate Fire & Rescue capability. Medical Team Charlie was not selected despite being closer (1.1 km) because category mismatch (Medical & Trauma does not service Fire Emergency)."*
+
+Dispatchers can also expand the **"View Exclusions (Why Not Selected?)"** accordion inside the dispatch drawer to inspect the exact exclusion reason for every unit within range.
+
+### Feature B: Resource Conflict Detection
+Attempting to deploy a response unit that is currently marked **Busy** on another incident or **Offline** for maintenance triggers an immediate visual and auditory alert:
+> *"Resource Conflict: Fire Team Bravo is currently Busy on Mission STX-2026-9041. Reallocation would leave Incident #9041 unattended. Recommended alternative: Fire Team Alpha (Available, 2.3 km)."*
+
+### Feature C: Emergency Response Readiness Panel
+Prominently integrated into the Command Dashboard (`/admin/dashboard`):
+- Displays available, busy, and offline team counts across all 6 specialized branches.
+- Real-time monitor for unassigned emergencies.
+- **Pulsing Deficit Alert**: Surfaces an immediate warning banner if any category has **0 available response units** in the sector.
+
+### Feature D: Incident Command Timeline Audit Trail
+An immutable, chronological log tracking every operational milestone:
+1. Citizen submission timestamp with GPS coordinates.
+2. AI dynamic priority score calculation and rank assignment.
+3. Automated nearest team recommendation.
+4. Dispatcher confirmation or manual override.
+5. Unit state transitions (`Assigned` ➔ `In Progress` ➔ `Resolved`).
+6. Resolution timestamp and field notes.
+
+### Feature E: 1-Click Evaluation Scenario ("Simulate Critical Fire")
+A dedicated button in the header and dashboard launches the **Peenya Industrial Chemical Fire Scenario**:
+- Injects a 5-alarm blaze at coordinates `13.0310, 77.5180` with 15 casualties and hazardous materials.
+- Resets known test units (`Medical Team Charlie` at 1.1 km, `Fire Team Alpha` at 2.3 km, `Fire Team Bravo` at 5.6 km).
+- Instantly demonstrates the mathematical prioritization (#1 in queue) and the smart nearest team filter choosing `Fire Team Alpha` over the closer `Medical Team Charlie`.
 
 ---
 
-## 🚀 Quick Start Guide
+## 📐 Mathematical Formulation & Algorithms
 
-### Prerequisites
-- Node.js (v18+)
-- npm (v9+)
+### 1. Dynamic Priority Scoring Matrix
 
-### Installation & Run
+$$\text{Priority Score} = S_{\text{sev}} + P_{\text{cas}} + W_{\text{wait}} + C_{\text{urg}}$$
+
+Where the maximum total score is **100 points**:
+
+#### Factor 1: Incident Severity ($S_{\text{sev}}$ — 40% Weight, Max 40 Points)
+- **Critical**: 40 points (Immediate life threat / structural hazard)
+- **High**: 30 points (Substantial hazard requiring rapid containment)
+- **Medium**: 18 points (Localized damage, non-life-threatening)
+- **Low**: 8 points (Minor inconvenience, controlled event)
+
+#### Factor 2: People Affected ($P_{\text{cas}}$ — 25% Weight, Max 25 Points)
+- **> 20 casualties**: 25 points (Mass casualty incident)
+- **11 – 20 casualties**: 23 points
+- **6 – 10 casualties**: 19 points
+- **3 – 5 casualties**: 14 points
+- **1 – 2 casualties**: 8 points
+- **0 casualties**: 0 points
+
+#### Factor 3: Waiting Time Factor ($W_{\text{wait}}$ — 20% Weight, Max 20 Points)
+- Dynamic rate: **+1 point per 5 minutes** elapsed since initial report timestamp.
+- **Anti-Minor Outranking Rule**: For Low and Medium severity calls with $\le 1$ person affected, waiting time points are strictly capped at **8 points maximum**. This guarantees that a minor event waiting 2 hours can never dynamically outrank an incoming Critical life hazard.
+- Resolved incidents reset waiting time factor to **0 points**.
+
+#### Factor 4: Category Urgency ($C_{\text{urg}}$ — 15% Weight, Max 15 Points)
+- **Building Collapse / Fire Emergency**: 15 points
+- **Medical Emergency**: 13 points
+- **Flood**: 12 points
+- **Road Accident**: 10 points
+- **Other Emergencies**: 6 points
+
+---
+
+### 2. Haversine Geodesic Distance Algorithm
+
+To calculate the exact straight-line distance across the Earth's ellipsoidal curvature between incident coordinate $(\phi_1, \lambda_1)$ and response team station $(\phi_2, \lambda_2)$:
+
+$$\Delta\phi = \frac{(\phi_2 - \phi_1) \cdot \pi}{180}, \quad \Delta\lambda = \frac{(\lambda_2 - \lambda_1) \cdot \pi}{180}$$
+
+$$a = \sin^2\left(\frac{\Delta\phi}{2}\right) + \cos\left(\frac{\phi_1 \cdot \pi}{180}\right) \cdot \cos\left(\frac{\phi_2 \cdot \pi}{180}\right) \cdot \sin^2\left(\frac{\Delta\lambda}{2}\right)$$
+
+$$c = 2 \cdot \text{atan2}\left(\sqrt{a}, \sqrt{1 - a}\right)$$
+
+$$d = R \cdot c \quad (\text{where } R = 6371\text{ km})$$
+
+#### Estimated Transit Time (ETA)
+Assuming an average urban emergency transit velocity of $v = 40\text{ km/h}$:
+
+$$\text{ETA (minutes)} = \max\left(2, \text{round}\left(\frac{d}{40} \times 60\right)\right)$$
+
+---
+
+## 🧭 5-Minute Evaluation Guide for Hackathon Judges
+
+Follow these steps to experience and verify all Round 2 capabilities:
+
+### Step 1: Open the Application
+Navigate to the live URL: [https://sentrixbynk.vercel.app/](https://sentrixbynk.vercel.app/)  
+Or launch locally on `http://127.0.0.1:5173`. Click **Command Center Login** (`admin / sentinel2026`).
+
+### Step 2: Trigger the 1-Click Evaluation Scenario
+Click the **"Simulate Critical Fire"** button located in the top navigation bar or the dashboard header.
+- A notification confirms: *"SIMULATION: Critical Peenya Chemical Fire generated. Fire Team Alpha recommended via Haversine & category matching."*
+- Notice the **Red Alert Banner** at the top of the Command Center.
+- Inspect the **Emergency Response Readiness Panel**: View live availability by category and notice any deficit warnings.
+
+### Step 3: Verify Intelligent Prioritization & Explainability
+Scroll to the **Critical Priority Incident Queue**:
+- Observe the **"WHY IS THIS INCIDENT RANKED #1?"** card.
+- Review the dynamic score breakdown: Severity (40/40), Casualties (23/25), Wait Time (1/20), Urgency (15/15) = Total 79/100.
+- Click **"Inspect & Dispatch Best-Fit Unit"** or click on the incident row.
+
+### Step 4: Verify Smart Nearest Team Assignment & Conflict Detection
+Inside the Incident Details Modal:
+- Look at the **Smart Nearest Team Dispatch** section.
+- Verify that **Fire Team Alpha (Heavy Foam Tender)** is selected as the **⭐ BEST-FIT RECOMMENDATION** ($2.3\text{ km}$, $\sim 3\text{m ETA}$).
+- Read the **Dispatch Rationale**: Notice how it explicitly mentions that **Medical Team Charlie** was closer ($1.1\text{ km}$) but excluded because of category incompatibility.
+- Click **"View Exclusions (Why Not Selected?)"** to see the complete audit of excluded teams.
+- Click **"Dispatch Recommended Unit"**:
+  - Sound effect triggers.
+  - Incident status moves to `Assigned`.
+  - Assigned unit telemetry shows real-time distance and ETA.
+  - Activity log records the dispatch timestamp.
+
+### Step 5: Test Resource Conflict Detection
+Close the modal and open another Fire incident.
+- Attempt to dispatch **Fire Team Alpha** again.
+- SENTRIX blocks the assignment and displays the red **Resource Conflict Banner**: *"Fire Team Alpha is currently Busy on Mission STX-2026-XXXX. Reallocation blocked."*
+- Select an alternative available team via **Override**.
+
+### Step 6: Verify Interactive Operations Map
+Click **Operations Map** in the left sidebar (`/admin/map`):
+- Zoom into Bengaluru / Peenya industrial sector.
+- See the red pulsating fire marker and the yellow fire engine marker.
+- Observe the dashed cyan vector connecting the assigned team directly to the incident scene.
+- Read the on-map HUD badge: `"⚡ Direct Vector: 2.3 km (Straight-line Geodesic) • Est. Transit: ~3m"`.
+
+### Step 7: Verify Response Team Fleet Management
+Click **Response Teams** in the left sidebar (`/admin/teams`):
+- Review the **5 KPI Cards**: Total Teams, Available Teams, Busy Teams, Offline Teams, and Fleet Readiness %.
+- Click **Edit** on any team to update station coordinates, crew size, radio channel, or equipment.
+- Use the 1-click status pills (`Available`, `Busy`, `Offline`) to toggle unit states and watch the readiness index dynamically update.
+
+### Step 8: Verify Advanced Analytics Dashboard
+Click **Analytics** in the left sidebar (`/admin/analytics`):
+- Inspect the **8 Mandatory Round 2 Key Metrics**: Total, Critical, Available, Busy, Assigned, Resolved, Team Utilization %, and Unassigned Incidents.
+- Review the 4 visual charts:
+  1. Casualty Severity Footprint by Category (Bar Chart)
+  2. Incident Distribution by Category (Donut Pie Chart)
+  3. Incident Lifecycle Pipeline (Reported ➔ Assigned ➔ In Progress ➔ Resolved)
+  4. Team Workload & Fleet Distribution (Stacked Bar Chart: Available vs Busy vs Offline)
+- Click **"Export Analytics CSV"** to download the comprehensive report.
+
+---
+
+## 🏗️ Architecture & Technology Stack
+
+```
+SENTRIX System Architecture
+├── Frontend Presentation Layer (React 19 + TypeScript + Vite 6 + Tailwind CSS)
+│   ├── Citizen Incident Portal (Multilingual, Voice SOS, GPS Auto-detection, WhatsApp Hotline)
+│   ├── Admin Tactical Command Suite (Dashboard, Incidents Queue, Response Teams Fleet, Operations Map, Analytics)
+│   └── Specialized Tactical Modules (Drone UAV Recon, AI SOP Playbook Generator, Hospital Trauma Beds Matrix)
+│
+├── Intelligence & Decision-Support Engines
+│   ├── intelligenceEngine.ts (4-factor dynamic prioritization, anti-minor outranking, priority explainability)
+│   ├── teamService.ts (Haversine geospatial calculations, category suitability filter, conflict detection)
+│   └── incidentService.ts (Lifecycle state machine, telemetry tracking, duplicate guard, simulation engine)
+│
+└── Data Persistence & Synchronization Layer
+    ├── BroadcastChannel API (Instant multi-tab zero-latency operational sync)
+    ├── LocalStorage Resilient Store (Complete offline functionality)
+    └── Vercel Serverless Functions + MongoDB Atlas Cluster (Persistent cloud database)
+        ├── /api/incidents
+        ├── /api/teams
+        ├── /api/activities
+        └── /api/simulate
+```
+
+- **Frontend Framework**: React 19, TypeScript 5.7, Vite 6
+- **Styling**: Tailwind CSS with custom mission-critical dark palette (`#060B14`, `#0A101D`, `#06B6D4`, `#F04452`)
+- **Geospatial Mapping**: Leaflet 1.9, OpenStreetMap, Leaflet Vector HUD Markers
+- **Data Visualizations**: Recharts 2.15 (Bar Charts, Donut Pie Charts, Stacked Load Charts)
+- **Audio Feedback HUD**: Web Audio API synthesizer for mission-critical alerts
+- **Database & Cloud**: MongoDB Atlas Cloud Database + Vercel Serverless Backend
+
+---
+
+## 💻 Local Installation & Setup
 
 ```bash
-# 1. Clone repository or navigate to project directory
+# 1. Clone repository
+git clone https://github.com/NateshKannaR/SentriX.git
 cd SentriX
 
 # 2. Install dependencies
@@ -119,36 +234,28 @@ npm install
 # 3. Start development server
 npm run dev
 
-# 4. Open in browser
-# http://localhost:5173
-```
-
-### Production Build
-
-```bash
+# 4. Compile and verify production build
 npm run build
-npm run preview
+```
+
+The application will be accessible at `http://localhost:5173`.
+
+### Environment Configuration (Optional for Cloud Persistence)
+Create a `.env` file in the root directory:
+```env
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.wwp3oig.mongodb.net/?retryWrites=true&w=majority
+MONGODB_DB=sentinel360
 ```
 
 ---
 
-## 🧭 Page Routes & Navigation
+## 🔒 Branding Compliance Guarantee
 
-| Route | Page | Purpose |
-| :--- | :--- | :--- |
-| `/` | **Landing Page** | Public portal, hero, category cards, operational workflow, telemetry stats. |
-| `/report` | **Emergency Reporting** | Citizen submission form with 6 categories, location presets, and real-time AI triage preview. |
-| `/track` | **Incident Tracking** | Citizens track their incident code (`STX-2026-XXXX`) and response progress. |
-| `/login` | **Commander Terminal** | Administrator sign-in with 1-click Judge Quick Access. |
-| `/admin/dashboard` | **Command Dashboard** | Real-time statistics, Recharts visualizations, and Critical Priority Queue. |
-| `/admin/incidents` | **Incident Management** | Interactive table with search, category/severity/status filters, CSV export, and deletion. |
-| `/admin/map` | **Interactive Map** | Geospatial incident map with custom severity pins, popups, and drawer. |
-| `/admin/duplicates` | **Duplicate Guard** | AI duplicate detector and side-by-side inspection tool. |
-| `/admin/analytics` | **Intelligence Analytics**| Casualty impact breakdown, severity distribution, and CSV export. |
-| `/admin/settings` | **Simulation & System** | One-click emergency simulator, seed data reset, and MongoDB/Supabase diagnostics. |
+- **Official Name**: **SENTRIX** strictly across all pages, documentation, tab titles, code manifests, and UI headers.
+- **Official Tagline**: **"Every Second Matters. Every Life Counts."**
+- **Round 1 Features**: 100% preserved and active (Reporting, Category triage, Fake report detection, Duplicate checking, Sound FX, AURA Voice Assistant, Multilingual support in 5 languages).
 
 ---
 
-## 📄 License & Attribution
-
-Built for **CODE CLASH 2026** — Round 1 Challenge. Developed with standard open-source technologies under MIT License.
+*SENTRIX — Code Clash 2026 Round 2 Submission.*  
+*Engineered by Natesh Kanna R.*

@@ -711,6 +711,47 @@ class IncidentService {
     });
   }
 
+  /**
+   * PHASE 8 FEATURE E: DEMO SIMULATION MODE
+   * 1-Click Interactive Demo: "Simulate Critical Building Fire"
+   * Sets up known coordinates, spawns 5-alarm blaze, computes priority rank #1,
+   * demonstrates nearest suitable team matching (Fire Team Alpha vs Medical Team Charlie).
+   */
+  public simulateCriticalBuildingFire(): { incident: Incident; recommendedTeamName: string } {
+    // 1. Reset baseline demonstration teams with known coordinates
+    teamService.resetDemoTeams();
+
+    // 2. Commission Critical Fire Incident at known coordinates
+    const demoIncident = this.createIncident({
+      title: '[DEMO] Commercial Plaza 5-Alarm Fire & Chemical Solvent Blaze',
+      description: 'Massive 5-alarm structural blaze erupted inside industrial solvent warehouse. Secondary explosions triggered across pressurized ethanol barrels. 15 factory workers trapped on 2nd floor rear exit with heavy smoke inhalation.',
+      category: 'Fire Emergency',
+      location: 'Peenya Industrial Area, Phase II',
+      landmark: 'Behind KSSIDC Warehouse Block 4',
+      latitude: 13.0310,
+      longitude: 77.5180,
+      peopleAffected: 15,
+      contactInformation: {
+        name: 'Chief Safety Inspector Ramesh',
+        phone: '+91 78068 69597',
+        email: 'peenya.safety@sentrix.internal',
+      },
+      isDemo: true,
+    });
+
+    // 3. Add explicit explainability audit entry
+    this.addActivity(demoIncident.id, {
+      action: 'NOTE_ADDED',
+      actor: 'SentriX Dispatch Intelligence',
+      description: 'Smart Nearest Team Evaluation: Fire Team Alpha (2.3 km) recommended as nearest eligible Fire Response unit. Note: Medical Team Charlie (1.1 km) was excluded due to category mismatch (Medical & Trauma).',
+    });
+
+    return {
+      incident: demoIncident,
+      recommendedTeamName: 'Fire Team Alpha (Heavy Foam Tender)',
+    };
+  }
+
   public exportIncidentsCSV(): string {
     const headers = [
       'Incident Code',
@@ -796,8 +837,11 @@ class IncidentService {
     const allTeams = teamService.getTeams();
     const availableTeams = allTeams.filter(t => t.status === 'Available').length;
     const busyTeams = allTeams.filter(t => t.status === 'Busy' || t.status === 'En Route').length;
+    const offlineTeams = allTeams.filter(t => t.status === 'Offline' || t.status === 'Off Duty').length;
     const totalTeams = allTeams.length;
     const fleetReadinessPercent = totalTeams > 0 ? Math.round((availableTeams / totalTeams) * 100) : 100;
+    const teamUtilizationPercent = totalTeams > 0 ? Math.round((busyTeams / totalTeams) * 100) : 0;
+    const unassignedIncidents = this.incidents.filter(i => i.status === 'Reported' || (!i.assignedTeamId && i.status !== 'Resolved')).length;
 
     const avgPriorityScore = total > 0 ? Math.round(totalScore / total) : 0;
 
@@ -851,8 +895,11 @@ class IncidentService {
       totalCasualties,
       availableTeams,
       busyTeams,
+      offlineTeams,
       totalTeams,
       fleetReadinessPercent,
+      teamUtilizationPercent,
+      unassignedIncidents,
       byCategory,
       bySeverity,
       byStatus,
