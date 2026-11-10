@@ -206,14 +206,14 @@ export const Header: React.FC = () => {
                 <span className="hidden xl:inline">{t('nav.voiceAssistant', 'Voice AI')}</span>
               </button>
 
-              {/* Offline SOS Beacon Trigger */}
+              {/* WhatsApp Emergency SOS Beacon Trigger */}
               <button
                 onClick={() => setIsSosOpen(true)}
-                className="px-2.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95"
-                title="Offline SOS Beacon & Helplines"
+                className="px-2.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 glow-emerald"
+                title="Direct WhatsApp Emergency SOS (+91 7806869597)"
               >
-                <LifeBuoy className="w-4 h-4 text-red-400" />
-                <span className="hidden xl:inline">{t('nav.offlineSos', 'SOS')}</span>
+                <LifeBuoy className="w-4 h-4 text-emerald-400 animate-pulse" />
+                <span className="hidden xl:inline">WhatsApp SOS</span>
               </button>
 
               {/* Rescue Strobe Trigger */}
@@ -262,10 +262,10 @@ export const Header: React.FC = () => {
 
               <button
                 onClick={() => setIsSosOpen(true)}
-                className="p-2 rounded-xl bg-red-500/15 text-red-400 border border-red-500/30"
-                title="SOS"
+                className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                title="WhatsApp SOS (+91 7806869597)"
               >
-                <LifeBuoy className="w-4 h-4" />
+                <LifeBuoy className="w-4 h-4 animate-pulse" />
               </button>
 
               <button
@@ -403,10 +403,10 @@ export const Header: React.FC = () => {
                   setIsSosOpen(true);
                   setMobileMenuOpen(false);
                 }}
-                className="w-full py-3 rounded-2xl text-center font-extrabold bg-gradient-to-r from-sentinel-red to-rose-600 text-white flex items-center justify-center gap-2 shadow-lg shadow-sentinel-red/30 text-xs"
+                className="w-full py-3 rounded-2xl text-center font-extrabold bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 text-white flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 text-xs glow-emerald"
               >
                 <LifeBuoy className="w-4 h-4" />
-                Emergency Offline SOS Beacon
+                WhatsApp Emergency SOS (+91 7806869597)
               </button>
               <Link
                 to="/admin/dashboard"

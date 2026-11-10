@@ -146,6 +146,7 @@ export const soundEffects = {
   playBeep: (freq?: number, duration?: number) => soundFx.playBeep(freq || 880, duration || 0.08),
   playClick: () => soundFx.playClick(),
   playAlert: () => soundFx.playAlert(),
+  playSuccess: () => soundFx.playSuccess(),
   playSiren: () => soundFx.playCriticalSiren(),
   playCriticalSiren: () => soundFx.playCriticalSiren(),
   toggleMute: () => !soundFx.toggle(),

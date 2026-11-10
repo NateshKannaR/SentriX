@@ -11,30 +11,36 @@ import { MapPage } from './pages/admin/MapPage';
 import { DuplicatesPage } from './pages/admin/DuplicatesPage';
 import { AnalyticsPage } from './pages/admin/AnalyticsPage';
 import { SettingsPage } from './pages/admin/SettingsPage';
+import { FloatingEmergencyWhatsApp } from './components/common/FloatingEmergencyWhatsApp';
 
 export const App: React.FC = () => {
   return (
-    <Routes>
-      {/* Public Pages */}
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/report" element={<ReportPage />} />
-      <Route path="/track" element={<TrackIncidentPage />} />
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <Routes>
+        {/* Public Pages */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/report" element={<ReportPage />} />
+        <Route path="/track" element={<TrackIncidentPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Admin Command Center Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="dashboard" element={<DashboardPage />} />
-        <Route path="incidents" element={<IncidentsPage />} />
-        <Route path="map" element={<MapPage />} />
-        <Route path="duplicates" element={<DuplicatesPage />} />
-        <Route path="analytics" element={<AnalyticsPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-      </Route>
+        {/* Admin Command Center Routes */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="map" element={<MapPage />} />
+          <Route path="duplicates" element={<DuplicatesPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
 
-      {/* Fallback to home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+
+      {/* Persistent Floating Emergency WhatsApp SOS (Direct to +91 7806869597) */}
+      <FloatingEmergencyWhatsApp />
+    </>
   );
 };
 

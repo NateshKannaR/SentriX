@@ -219,11 +219,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'voice.quickFirstAid': 'First Aid SOP',
     'voice.quickHelpline': 'Emergency Helplines',
 
-    // Offline SOS
-    'sos.title': 'Emergency Offline SOS Beacon',
-    'sos.subtitle': 'Zero-Internet Cellular Dispatch Link Generator',
+    // Direct WhatsApp Emergency SOS
+    'sos.title': 'WhatsApp Emergency SOS (+91 7806869597)',
+    'sos.subtitle': 'Direct 24/7 WhatsApp Emergency Dispatch Line',
     'sos.smsBtn': 'Send Emergency SMS to 112',
-    'sos.whatsappBtn': 'Send WhatsApp Emergency SOS',
+    'sos.whatsappBtn': 'Send Emergency SOS to WhatsApp (+91 7806869597)',
     'sos.callPolice': 'Call Police (100)',
     'sos.callFire': 'Call Fire (101)',
     'sos.callAmbulance': 'Call Ambulance (108)',
@@ -439,11 +439,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'voice.quickFirstAid': 'முதலுதவி வழிகாட்டி',
     'voice.quickHelpline': 'அவசர உதவி எண்கள்',
 
-    // Offline SOS
-    'sos.title': 'ஆஃப்லைன் அவசர SOS சிக்னல்',
-    'sos.subtitle': 'இணையமில்லா நேரடி SMS & WhatsApp அனுப்பும் வசதி',
+    // நேரடி வாட்ஸ்அப் அவசர SOS
+    'sos.title': 'நேரடி வாட்ஸ்அப் அவசர SOS (+91 7806869597)',
+    'sos.subtitle': 'நேரடி 24/7 அவசர உதவி வாட்ஸ்அப் எண்',
     'sos.smsBtn': '112-க்கு அவசர SMS அனுப்பவும்',
-    'sos.whatsappBtn': 'WhatsApp அவசர செய்தி அனுப்பவும்',
+    'sos.whatsappBtn': 'வாட்ஸ்அப் அவசர SOS அனுப்பு (+91 7806869597)',
     'sos.callPolice': 'காவல்துறை (100)',
     'sos.callFire': 'தீயணைப்புத்துறை (101)',
     'sos.callAmbulance': 'ஆம்புலன்ஸ் (108)',
@@ -659,11 +659,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'voice.quickFirstAid': 'प्राथमिक उपचार',
     'voice.quickHelpline': 'हेल्पलाइन नंबर',
 
-    // Offline SOS
-    'sos.title': 'आपातकालीन ऑफलाइन एसओएस',
-    'sos.subtitle': 'बिना इंटरनेट सीधा एसएमएस और व्हाट्सएप प्रेषक',
+    // डायरेक्ट व्हाट्सएप आपातकालीन एसओएस
+    'sos.title': 'व्हाट्सएप आपातकालीन एसओएस (+91 7806869597)',
+    'sos.subtitle': 'प्रत्यक्ष 24/7 आपातकालीन व्हाट्सएप नंबर',
     'sos.smsBtn': '112 पर आपातकालीन एसएमएस भेजें',
-    'sos.whatsappBtn': 'व्हाट्सएप एसओएस भेजें',
+    'sos.whatsappBtn': 'व्हाट्सएप आपातकालीन एसओएस भेजें (+91 7806869597)',
     'sos.callPolice': 'पुलिस को कॉल करें (100)',
     'sos.callFire': 'फायर ब्रिगेड को कॉल करें (101)',
     'sos.callAmbulance': 'एम्बुलेंस को कॉल करें (108)',
@@ -879,11 +879,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'voice.quickFirstAid': 'ప్రథమ చికిత్స',
     'voice.quickHelpline': 'హెల్ప్‌లైన్ నంబర్లు',
 
-    // Offline SOS
-    'sos.title': 'ఆఫ్‌లైన్ అత్యవసర SOS బీకాన్',
-    'sos.subtitle': 'ఇంటర్నెట్ లేకుండా నేరుగా SMS మరియు వాట్సాప్ సందేశం',
+    // ప్రత్యక్ష వాట్సాప్ అత్యవసర SOS
+    'sos.title': 'వాట్సాప్ అత్యవసర SOS (+91 7806869597)',
+    'sos.subtitle': 'ప్రత్యక్ష 24/7 అత్యవసర వాట్సాప్ లైన్',
     'sos.smsBtn': '112కి అత్యవసర SMS పంపండి',
-    'sos.whatsappBtn': 'వాట్సాప్ SOS పంపండి',
+    'sos.whatsappBtn': 'వాట్సాప్ అత్యవసర SOS పంపండి (+91 7806869597)',
     'sos.callPolice': 'పోలీస్ (100)',
     'sos.callFire': 'ఫైర్ (101)',
     'sos.callAmbulance': 'అంబులెన్స్ (108)',
@@ -1099,11 +1099,11 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     'voice.quickFirstAid': 'Primeros Auxilios',
     'voice.quickHelpline': 'Números de Emergencia',
 
-    // Offline SOS
-    'sos.title': 'Baliza SOS de Emergencia Sin Conexión',
-    'sos.subtitle': 'Generador de Mensaje Celular Directo',
+    // WhatsApp SOS de Emergencia Directo
+    'sos.title': 'WhatsApp SOS de Emergencia (+91 7806869597)',
+    'sos.subtitle': 'Línea de Ayuda de Emergencia Directa 24/7 por WhatsApp',
     'sos.smsBtn': 'Enviar SMS de Emergencia al 112',
-    'sos.whatsappBtn': 'Enviar WhatsApp SOS',
+    'sos.whatsappBtn': 'Enviar SOS de Emergencia a WhatsApp (+91 7806869597)',
     'sos.callPolice': 'Llamar a Policía (100)',
     'sos.callFire': 'Llamar a Bomberos (101)',
     'sos.callAmbulance': 'Llamar a Ambulancia (108)',

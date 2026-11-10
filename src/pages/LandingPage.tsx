@@ -561,22 +561,22 @@ export const LandingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 4. Zero-Data Offline SOS */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-red-500/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-400 flex items-center justify-center">
+            {/* 4. Direct WhatsApp Emergency SOS (+91 7806869597) */}
+            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
                 <Radio className="w-6 h-6 group-hover:scale-110 transition-transform" />
               </div>
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Zero-Data Cellular SOS
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/40 font-bold">
-                  OFFLINE READY
+                WhatsApp Emergency SOS
+                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                  DIRECT: +91 7806869597
                 </span>
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                When internet towers collapse, triggers pre-formatted SMS to 112, WhatsApp panic dispatches with GPS coordinates, and 1-tap speed dials (100, 101, 108, 1077).
+                Direct 1-tap WhatsApp emergency distress dispatch to verified response helpline <span className="text-emerald-400 font-mono font-bold">+91 7806869597</span> with live satellite GPS pin, reverse-geocoded landmark, and battery telemetry.
               </p>
-              <div className="pt-2 text-[11px] font-mono text-red-400">
-                • Zero-Internet Telemetry • Speed Dial Matrix
+              <div className="pt-2 text-[11px] font-mono text-emerald-400">
+                • Direct WhatsApp: 7806869597 • Live GPS Telemetry
               </div>
             </div>
 
