@@ -16,9 +16,11 @@ class IncidentService {
   private incidents: Incident[] = [];
   private activities: Record<string, IncidentActivity[]> = {};
   private listeners: (() => void)[] = [];
+  private isApiConnected = false;
 
   constructor() {
     this.loadFromStorage();
+    this.syncWithBackend();
   }
 
   private loadFromStorage(): void {
@@ -43,6 +45,23 @@ class IncidentService {
       console.warn('Error reading from localStorage, using in-memory seed', e);
       this.incidents = getInitialSeedIncidents();
       this.activities = { ...INITIAL_ACTIVITIES };
+    }
+  }
+
+  public async syncWithBackend(): Promise<void> {
+    try {
+      const res = await fetch('/api/incidents');
+      if (res.ok) {
+        const remoteIncidents = await res.json();
+        if (Array.isArray(remoteIncidents) && remoteIncidents.length > 0) {
+          this.incidents = remoteIncidents;
+          this.saveIncidents();
+          this.isApiConnected = true;
+        }
+      }
+    } catch {
+      // Running offline or local vite dev without API server; fallback to localStorage
+      this.isApiConnected = false;
     }
   }
 
@@ -93,7 +112,10 @@ class IncidentService {
     return this.activities[incidentId] || [];
   }
 
-  public addActivity(incidentId: string, activityData: Omit<IncidentActivity, 'id' | 'incidentId' | 'timestamp'>): IncidentActivity {
+  public addActivity(
+    incidentId: string,
+    activityData: Omit<IncidentActivity, 'id' | 'incidentId' | 'timestamp'>
+  ): IncidentActivity {
     const activity: IncidentActivity = {
       id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       incidentId,
@@ -106,6 +128,14 @@ class IncidentService {
     }
     this.activities[incidentId].unshift(activity);
     this.saveActivities();
+
+    // Async push to MongoDB API if active
+    fetch('/api/activities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(activity),
+    }).catch(() => {});
+
     return activity;
   }
 
@@ -201,6 +231,13 @@ class IncidentService {
       });
     }
 
+    // Push to MongoDB API if active
+    fetch('/api/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newIncident),
+    }).catch(() => {});
+
     return newIncident;
   }
 
@@ -233,6 +270,13 @@ class IncidentService {
       description: notes || `Operational status transitioned from ${oldStatus} to ${newStatus}.`,
     });
 
+    // Sync with MongoDB API
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status: newStatus, actor, notes }),
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -264,6 +308,13 @@ class IncidentService {
       description: reason || `Commander manually adjusted severity classification to ${newSeverity}.`,
     });
 
+    // Sync with MongoDB API
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, severity: newSeverity, actor, notes: reason }),
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -288,6 +339,12 @@ class IncidentService {
       description: `Rapid Response Unit "${unitName}" assigned to incident scene.`,
     });
 
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, assignedUnit: unitName, actor }),
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -309,6 +366,12 @@ class IncidentService {
       actor: 'Incident Commander',
       description: 'Duplicate warning reviewed and dismissed. Confirmed as independent incident.',
     });
+
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, dismissDuplicate: true }),
+    }).catch(() => {});
 
     return updated;
   }
@@ -333,6 +396,12 @@ class IncidentService {
       description: `Incident marked as duplicate of ${targetId} and closed.`,
     });
 
+    fetch('/api/incidents', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, duplicateOf: targetId }),
+    }).catch(() => {});
+
     return updated;
   }
 
@@ -343,6 +412,11 @@ class IncidentService {
       delete this.activities[id];
       this.saveIncidents();
       this.saveActivities();
+
+      fetch(`/api/incidents?id=${id}`, {
+        method: 'DELETE',
+      }).catch(() => {});
+
       return true;
     }
     return false;
@@ -353,6 +427,8 @@ class IncidentService {
     localStorage.removeItem(ACTIVITIES_STORAGE_KEY);
     this.loadFromStorage();
     this.notifyListeners();
+
+    fetch('/api/reset', { method: 'POST' }).catch(() => {});
   }
 
   public simulateEmergency(): Incident {
@@ -539,7 +615,6 @@ class IncidentService {
       { status: 'Resolved', count: resolved, color: '#19B878' },
     ];
 
-    // Compute 6-interval hourly timeline from incidents
     const timelineSlots: Record<string, { count: number; critical: number }> = {
       '00:00 - 04:00': { count: 1, critical: 0 },
       '04:00 - 08:00': { count: 2, critical: 1 },

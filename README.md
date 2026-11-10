@@ -13,6 +13,23 @@ During emergency disasters such as road accidents, fires, floods, and structural
 
 ---
 
+## ☁️ Vercel Deployment & MongoDB Atlas Setup
+
+This application is fully pre-configured for one-click **Vercel Deployment** with **MongoDB Atlas** serverless backend functions:
+
+1. **Import to Vercel**:
+   - Go to [vercel.com/new](https://vercel.com/new).
+   - Select your repository: `https://github.com/NateshKannaR/SentriX`.
+2. **Environment Variables**:
+   Add the following in your Vercel Project Settings > Environment Variables:
+   - `MONGODB_URI`: `mongodb+srv://Natesh:Natesh@cluster0.wwp3oig.mongodb.net/?retryWrites=true&w=majority`
+   - `MONGODB_DB`: `sentinel360`
+3. **Deploy**:
+   - Vercel automatically deploys the Vite frontend from `dist` and builds the serverless API routes in `/api`.
+   - On first load, the serverless API automatically seeds the MongoDB collection with full rich demonstration incidents!
+
+---
+
 ## 🎯 Round 1 Mandatory Requirements — Feature Compliance Matrix
 
 | Challenge Brief Requirement | Implementation in SENTINEL 360 | Status |
@@ -77,8 +94,9 @@ During emergency disasters such as road accidents, fires, floods, and structural
 - **Geospatial**: Leaflet & OpenStreetMap
 - **Routing**: React Router v7
 - **Database & Persistence**:
-  - Reusable service layer (`src/services/incidentService.ts`)
-  - Out-of-the-box persistent browser storage (`localStorage`)
+  - **MongoDB Atlas** serverless integration via `/api/incidents`, `/api/activities`, `/api/simulate`, `/api/reset`
+  - Cached connection pool in `lib/mongodb.ts`
+  - Browser storage fallback (`localStorage`) for offline resilience
   - Optional Supabase PostgreSQL database support (`supabase/schema.sql`)
 
 ---
@@ -127,40 +145,7 @@ npm run preview
 | `/admin/map` | **Interactive Map** | Geospatial incident map with custom severity pins, popups, and drawer. |
 | `/admin/duplicates` | **Duplicate Guard** | AI duplicate detector and side-by-side inspection tool. |
 | `/admin/analytics` | **Intelligence Analytics**| Casualty impact breakdown, severity distribution, and CSV export. |
-| `/admin/settings` | **Simulation & System** | One-click emergency simulator, seed data reset, and Supabase schema viewer. |
-
----
-
-## 🧪 Judge Evaluation & Testing Walkthrough
-
-1. **Test Emergency Reporting**:
-   - Go to `/report`.
-   - Select **Fire Emergency**, enter title *"Chemical Warehouse Blaze"*, add description *"5 people trapped inside with heavy black smoke"*, select a location preset.
-   - Notice the **Live AI Triage Preview** immediately calculates **Critical Severity** and explains why!
-   - Click **Submit Emergency Report**.
-   - Note the generated Incident Code (e.g. `STX-2026-XXXX`).
-
-2. **Test Tracking**:
-   - Go to `/track` and enter the generated code to view live status and response steps.
-
-3. **Test Admin Command Center**:
-   - Click **Admin Command Center** in the top navigation (or visit `/admin/dashboard`).
-   - Notice your submitted incident is already in the priority queue and stats have recalculated.
-
-4. **Test Live Incident Management**:
-   - Go to `/admin/incidents`.
-   - Filter by **Critical**, search for your incident, or export to CSV.
-   - Click on the row to open the complete **Incident Dossier**.
-   - Change status to **In Progress**, assign a unit (*"Fire Engine 04"*), and add a commander note.
-
-5. **Test Duplicate Detection**:
-   - In the table or side menu, look at `STX-2026-1003` (flagged with **Duplicate Alert**).
-   - Click **Inspect & Resolve Duplicate** to open the side-by-side comparison modal.
-   - Review the similarity score and match signals, then click **Confirm as Duplicate** or **Dismiss**.
-
-6. **Test Demo Simulation**:
-   - Click **Simulate Emergency** in the top header.
-   - A new realistic incident is generated and instantly updates the dashboard, table, and map pins.
+| `/admin/settings` | **Simulation & System** | One-click emergency simulator, seed data reset, and MongoDB/Supabase diagnostics. |
 
 ---
 
