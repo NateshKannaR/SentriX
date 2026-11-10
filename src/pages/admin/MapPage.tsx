@@ -195,21 +195,16 @@ export const MapPage: React.FC = () => {
         // Add custom zoom control in bottom right
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // CartoDB Dark Matter tiles
+        // Stealth Tactical Dark tiles via OpenStreetMap
         const darkTileLayer = L.tileLayer(
-          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           {
             maxZoom: 19,
-            subdomains: 'abcd',
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abc',
+            attribution: '&copy; OpenStreetMap contributors • SENTRIX Tactical GIS',
+            className: 'dark-invert-tiles',
           }
         );
-
-        darkTileLayer.on('tileerror', () => {
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-          }).addTo(map);
-        });
 
         darkTileLayer.addTo(map);
 

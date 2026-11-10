@@ -99,6 +99,11 @@
   border-radius: 9999px;
 }
 
+/* Tactical Dark Leaflet Tiles (No API key watermark) */
+.dark-invert-tiles {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%) saturate(40%);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(22, 199, 232, 0.6);
 }

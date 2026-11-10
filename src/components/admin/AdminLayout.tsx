@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSidebar } from './AdminSidebar';
 import { EmergencyAlertDrawer } from './EmergencyAlertDrawer';
 import { IncidentDetailsModal } from './IncidentDetailsModal';
@@ -40,6 +40,7 @@ export const AdminLayout: React.FC = () => {
   const { session, logout, theme, toggleTheme } = useAuth();
   const { language, setLanguage, currentLanguageOption, languages, t } = useLanguage();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [incidents, setIncidents] = useState<Incident[]>(() => incidentService.getIncidents());
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +85,18 @@ export const AdminLayout: React.FC = () => {
     });
     return () => unsubscribe();
   }, []);
+
+  // Deep-link / open incident modal directly via query parameter
+  useEffect(() => {
+    const code = searchParams.get('openIncident');
+    if (code && incidents.length > 0) {
+      const target = incidents.find(i => i.incidentCode === code || i.id === code);
+      if (target) {
+        setSelectedIncident(target);
+        setIsDetailsOpen(true);
+      }
+    }
+  }, [searchParams, incidents]);
 
   const [liveBroadcastAlert, setLiveBroadcastAlert] = useState<{
     code: string;
