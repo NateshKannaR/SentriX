@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useMatch } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { FloatingEmergencyWhatsApp } from './components/common/FloatingEmergencyWhatsApp';
 
@@ -17,6 +17,7 @@ const TeamsPage = lazy(() => import('./pages/admin/TeamsPage').then(module => ({
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage').then(module => ({ default: module.SettingsPage })));
 
 export const App: React.FC = () => {
+  const inCommandCenter = useMatch('/admin/*');
   return (
     <>
       <Suspense fallback={<div role="status" className="grid min-h-screen place-items-center text-sm text-slate-300">Loading SentriX…</div>}>
@@ -46,7 +47,7 @@ export const App: React.FC = () => {
       </Suspense>
 
       {/* Persistent Floating Emergency WhatsApp SOS (Direct to +91 7806869597) */}
-      <FloatingEmergencyWhatsApp />
+      {!inCommandCenter && <FloatingEmergencyWhatsApp />}
     </>
   );
 };

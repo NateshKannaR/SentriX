@@ -43,7 +43,7 @@ interface AdminContextType {
   onOpenHospitals?: () => void;
 }
 
-const FILTER_KEYS = ['category', 'severity', 'status'] as const;
+const FILTER_KEYS = ['category', 'severity', 'status', 'scope'] as const;
 const PAGE_SIZE = 12;
 const SAVED_VIEWS_KEY = 'sentrix_incident_views';
 type SavedView = { name: string; filters: string };
@@ -75,6 +75,7 @@ export const IncidentsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryFilter = searchParams.get('category') || 'ALL';
   const severityFilter = searchParams.get('severity') || 'ALL';
+  const activeOnly = searchParams.get('scope') === 'active';
   const statusFilter = searchParams.get('status') || 'ALL';
   const [searchQuery, setSearchQuery] = useState('');
   const [savedViews, setSavedViews] = useState(readSavedViews);
@@ -146,7 +147,7 @@ export const IncidentsPage: React.FC = () => {
     setSearchParams(next, { replace: true });
   };
 
-  const setFilter = (name: 'category' | 'severity' | 'status', value: string) => {
+  const setFilter = (name: (typeof FILTER_KEYS)[number], value: string) => {
     const next = new URLSearchParams(searchParams);
     if (value === 'ALL') next.delete(name);
     else next.set(name, value);
@@ -163,6 +164,7 @@ export const IncidentsPage: React.FC = () => {
   const filteredIncidents = useMemo(() => {
     return incidents
       .filter(inc => {
+        if (activeOnly && inc.status === 'Resolved') return false;
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matches =
@@ -196,7 +198,7 @@ export const IncidentsPage: React.FC = () => {
 
         return sortOrder === 'desc' ? valB - valA : valA - valB;
       });
-  }, [incidents, searchQuery, categoryFilter, severityFilter, statusFilter, sortBy, sortOrder]);
+  }, [incidents, activeOnly, searchQuery, categoryFilter, severityFilter, statusFilter, sortBy, sortOrder]);
 
   const requestedPage = Number(searchParams.get('page') ?? '1');
   const totalPages = Math.max(1, Math.ceil(filteredIncidents.length / PAGE_SIZE));
@@ -243,11 +245,11 @@ export const IncidentsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="ops-page">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="ops-page-heading">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="ops-heading-title">
             {t('admin.nav.incidents', 'Live Incidents')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -259,7 +261,7 @@ export const IncidentsPage: React.FC = () => {
           <button
             onClick={handleExportCSV}
             disabled={!filteredIncidents.length}
-            className="px-3.5 py-2 rounded-xl bg-[#0A101D] border border-white/10 hover:border-cyan-400 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
+            className="ops-action disabled:opacity-50"
           >
             <Download className="w-4 h-4 text-cyan-400" />
             <span>Export results</span>
@@ -268,12 +270,15 @@ export const IncidentsPage: React.FC = () => {
       </div>
 
       {/* Filter and Control Toolbar */}
-      <div className="bg-[#0A101D] p-5 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+      <div className="ops-panel p-5 space-y-4">
         {/* Quick Filter Pill Buttons */}
         <div className="flex items-center gap-2 pb-3 border-b border-white/[0.08] overflow-x-auto no-scrollbar py-0.5">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mr-1 shrink-0">
             Quick Views:
           </span>
+          <button type="button" className="ops-filter shrink-0" aria-pressed={activeOnly} onClick={() => setFilter('scope', activeOnly ? 'ALL' : 'active')}>
+            Active only
+          </button>
           <button
             aria-pressed={severityFilter === 'Critical'}
             onClick={() => {
@@ -330,7 +335,7 @@ export const IncidentsPage: React.FC = () => {
           >
             🕒 {t('status.reported', 'Reported')}
           </button>
-          {(categoryFilter !== 'ALL' || severityFilter !== 'ALL' || statusFilter !== 'ALL' || searchQuery) && (
+          {(hasFilters || searchQuery) && (
             <button
               onClick={() => {
                 soundFx.playClick();
@@ -423,8 +428,8 @@ export const IncidentsPage: React.FC = () => {
             <span>Showing <strong className="text-white">{filteredIncidents.length}</strong> of {incidents.length} incidents</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-mono text-[11px]">SORT BY:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="hidden text-slate-400 sm:inline">Sort by</span>
             <div className="flex items-center gap-1 bg-[#060B14] p-1 rounded-xl border border-white/10">
               <button
                 onClick={() => {
@@ -438,7 +443,7 @@ export const IncidentsPage: React.FC = () => {
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
-                {t('dash.priorityScore', 'Priority')}
+                Priority
               </button>
               <button
                 onClick={() => {
@@ -490,7 +495,7 @@ export const IncidentsPage: React.FC = () => {
           Saved views{savedViews.length > 0 && ` (${savedViews.length})`}
         </summary>
         <div className="space-y-3 px-4 pb-4 text-sm">
-          <p className="text-slate-400">Save category, severity, and status filters on this browser.</p>
+          <p className="text-slate-400">Save the current report filters on this browser.</p>
           <form onSubmit={saveView} className="flex flex-wrap gap-2">
             <input
               aria-label="View name"
@@ -519,7 +524,7 @@ export const IncidentsPage: React.FC = () => {
       </details>
 
       {/* Incident Management Table */}
-      <div className="bg-[#0A101D] rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden">
+      <div className="ops-panel overflow-hidden">
         {filteredIncidents.length === 0 ? (
           <div className="p-10 text-center space-y-2">
             <div className="w-12 h-12 rounded-2xl bg-white/5 text-slate-400 flex items-center justify-center mx-auto border border-white/10">
@@ -624,7 +629,7 @@ export const IncidentsPage: React.FC = () => {
                         <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
                       </select>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2">
                         {onOpenDrone && (
                           <button
                             onClick={() => {

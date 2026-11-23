@@ -13,7 +13,6 @@ import {
   Clock,
   AlertTriangle,
   RotateCcw,
-  Zap,
   Activity,
   Flame,
   HeartPulse,
@@ -213,21 +212,17 @@ export const TeamsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="ops-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="ops-page-heading">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Emergency Response Team Management
+            <h1 className="ops-heading-title">
+              Response teams
             </h1>
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 font-bold flex items-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              FLEET RADAR
-            </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Mobilize, track, and assign frontline response units with real-time GPS coordinates and capability matching.
+            Manage response units, availability, capabilities, and assignments.
           </p>
         </div>
 
@@ -237,7 +232,7 @@ export const TeamsPage: React.FC = () => {
               soundFx.playClick();
               setIsAddModalOpen(true);
             }}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/25 transition-transform active:scale-95"
+            className="ops-action"
           >
             <Plus className="w-4 h-4" />
             <span>Add Response Team</span>
@@ -245,7 +240,7 @@ export const TeamsPage: React.FC = () => {
           <button
             onClick={() => {
               soundFx.playClick();
-              teamService.resetDemoTeams();
+              if (window.confirm('Reset the response teams to the demo defaults?')) teamService.resetDemoTeams();
             }}
             title="Reset Response Teams to Defaults"
             className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border border-white/10 transition-colors"
@@ -256,9 +251,9 @@ export const TeamsPage: React.FC = () => {
       </div>
 
       {/* Fleet KPI Banner - Round 2 Core 5-Card Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         {/* 1. Total Response Teams */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-[#081226]/80 border border-white/[0.08] shadow-lg">
+        <div className="p-4 sm:p-5 ops-panel">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
               Total Teams
@@ -325,6 +320,7 @@ export const TeamsPage: React.FC = () => {
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
+            aria-label="Search response teams"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search team callsign, commander, vehicle, or station..."
@@ -335,6 +331,7 @@ export const TeamsPage: React.FC = () => {
         {/* Category & Status Selectors */}
         <div className="flex flex-wrap items-center gap-2">
           <select
+            aria-label="Team category"
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}
             className="text-xs rounded-xl border border-white/10 bg-[#040914] px-3 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-500"
@@ -349,6 +346,7 @@ export const TeamsPage: React.FC = () => {
           </select>
 
           <select
+            aria-label="Team availability"
             value={selectedStatus}
             onChange={e => setSelectedStatus(e.target.value)}
             className="text-xs rounded-xl border border-white/10 bg-[#040914] px-3 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-500"
@@ -361,8 +359,11 @@ export const TeamsPage: React.FC = () => {
         </div>
       </div>
 
+      {filteredTeams.length === 0 && (
+        <div className="ops-panel p-6 text-sm text-slate-300">No teams match the current filters.</div>
+      )}
       {/* Response Teams Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {filteredTeams.map(team => {
           const assignedInc = team.assignedIncidentId
             ? incidents.find(i => i.id === team.assignedIncidentId)
@@ -373,16 +374,16 @@ export const TeamsPage: React.FC = () => {
               key={team.id}
               className={`p-5 rounded-2xl border transition-all space-y-4 ${
                 team.status === 'Available'
-                  ? 'bg-[#09152C]/70 border-white/[0.08] hover:border-emerald-500/40'
+                  ? 'ops-panel hover:border-emerald-500/40'
                   : team.status === 'Busy' || team.status === 'En Route'
                   ? 'bg-amber-950/20 border-amber-500/30'
                   : 'bg-slate-950/40 border-slate-700/50 opacity-80'
               }`}
             >
               {/* Card Header */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+              <div className="flex flex-col gap-2">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-slate-400 font-bold">
                       {team.id}
                     </span>

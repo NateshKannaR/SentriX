@@ -16,7 +16,6 @@ import {
   Volume2,
   VolumeX,
   Radio,
-  Cpu,
   Flame,
   Cloud,
 } from 'lucide-react';
@@ -70,25 +69,16 @@ CREATE TABLE public.incidents (
 );`;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            {t('admin.nav.settings', 'System & Simulator')}
-          </h1>
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold flex items-center gap-1 shrink-0">
-            <Cpu className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            DIAGNOSTICS ONLINE
-          </span>
+    <div className="ops-page">
+      <header className="ops-page-heading">
+        <div>
+          <h1>{t('admin.nav.settings', 'System & Simulator')}</h1>
+          <p>Manage the simulator, data connections, and notification sounds.</p>
         </div>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Configure backend persistence layers, manage multi-channel emergency simulation tests, and inspect audio synthesizers.
-        </p>
-      </div>
+      </header>
 
       {/* Feature: Demo Simulation Center */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#0A101D] border border-white/[0.08] shadow-xl space-y-5">
+      <div className="p-5 sm:p-6 ops-panel space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-purple-500/15 text-purple-400 flex items-center justify-center border border-purple-500/30 shrink-0">
@@ -169,7 +159,7 @@ CREATE TABLE public.incidents (
       </div>
 
       {/* Audio HUD Synthesizer Diagnostics */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#0A101D] border border-white/[0.08] shadow-xl space-y-4">
+      <div className="p-5 sm:p-6 ops-panel space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0">
@@ -228,7 +218,7 @@ CREATE TABLE public.incidents (
       </div>
 
       {/* Backend & MongoDB Persistence Panel */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-[#0A101D] border border-white/[0.08] shadow-xl space-y-4">
+      <div className="p-5 sm:p-6 ops-panel space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30 shrink-0">

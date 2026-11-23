@@ -38,7 +38,7 @@ export const DuplicateComparisonModal: React.FC<DuplicateComparisonModalProps> =
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                <h3 className="text-sm sm:text-lg font-black tracking-tight truncate">Duplicate Resolution Center</h3>
+                <h3 className="text-sm sm:text-lg font-black tracking-tight truncate">Compare incident reports</h3>
                 {warning && (
                   <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] sm:text-xs font-mono font-bold shadow-xs">
                     {warning.similarityScore}% Match

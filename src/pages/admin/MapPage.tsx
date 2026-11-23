@@ -20,7 +20,6 @@ import {
   Sparkles,
   WifiOff,
   Navigation,
-  Crosshair,
   Radio,
   ChevronDown,
   ChevronUp,
@@ -159,7 +158,7 @@ export const MapPage: React.FC = () => {
 
   // Filtered incidents with coordinates
   const mappedIncidents = incidents.filter(i => {
-    if (!i.latitude || !i.longitude) return false;
+    if (i.latitude == null || i.longitude == null) return false;
     if (categoryFilter !== 'ALL' && i.category !== categoryFilter) return false;
     if (severityFilter !== 'ALL' && i.severity !== severityFilter) return false;
     return true;
@@ -235,6 +234,14 @@ export const MapPage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(() => mapInstanceRef.current?.invalidateSize({ pan: false }));
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
   // Sync Incident Markers
   useEffect(() => {
     if (!mapInstanceRef.current || !markersLayerRef.current) return;
@@ -242,7 +249,7 @@ export const MapPage: React.FC = () => {
     markersLayerRef.current.clearLayers();
 
     mappedIncidents.forEach(inc => {
-      if (inc.latitude && inc.longitude) {
+      if (inc.latitude != null && inc.longitude != null) {
         const marker = L.marker([inc.latitude, inc.longitude], {
           icon: createCustomMarker(inc.severity),
         });
@@ -296,7 +303,7 @@ export const MapPage: React.FC = () => {
 
     if (showTeams) {
       teams.forEach(t => {
-        if (t.latitude && t.longitude) {
+        if (t.latitude != null && t.longitude != null) {
           const marker = L.marker([t.latitude, t.longitude], {
             icon: createTeamMarker(t),
           });
@@ -329,7 +336,7 @@ export const MapPage: React.FC = () => {
         if (!targetIncId) return;
 
         const targetInc = incidents.find(i => i.id === targetIncId);
-        if (targetInc && targetInc.latitude && targetInc.longitude && t.latitude && t.longitude) {
+        if (targetInc && targetInc.latitude != null && targetInc.longitude != null && t.latitude != null && t.longitude != null) {
           const latlngs: L.LatLngExpression[] = [
             [t.latitude, t.longitude],
             [targetInc.latitude, targetInc.longitude],
@@ -451,7 +458,7 @@ export const MapPage: React.FC = () => {
   const panToIncident = (inc: Incident) => {
     soundEffects.playClick();
     setSelectedIncident(inc);
-    if (mapInstanceRef.current && inc.latitude && inc.longitude) {
+    if (mapInstanceRef.current && inc.latitude != null && inc.longitude != null) {
       mapInstanceRef.current.flyTo([inc.latitude, inc.longitude], 15, {
         duration: 1.2,
       });
@@ -459,42 +466,24 @@ export const MapPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] sm:h-[calc(100vh-4.5rem)] flex flex-col lg:flex-row relative overflow-hidden bg-[#071426]">
-      {/* Tactical Floating HUD Controls */}
-      <div className="absolute top-2 sm:top-4 left-2 right-2 sm:right-auto sm:left-4 sm:w-88 z-[1000] bg-[#0B1E38]/95 backdrop-blur-2xl p-3 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#16C7E8]/30 shadow-2xl space-y-3 sm:space-y-4 glow-cyan transition-all">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sentinel-cyan/20 text-sentinel-cyan flex items-center justify-center border border-sentinel-cyan/30 shrink-0">
-              <Crosshair className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin-slow" />
-            </div>
-            <div>
-              <h3 className="font-mono font-black text-xs text-white uppercase tracking-wider">
-                Geospatial War Room
-              </h3>
-              <p className="text-[9px] sm:text-[10px] text-slate-400 font-mono hidden xs:block">
-                Dark Matter Cartographic View
-              </p>
-            </div>
+    <div className="flex h-full min-h-[26rem] flex-col overflow-hidden xl:flex-row">
+      <section className="ops-map-controls shrink-0 space-y-3 overflow-auto p-4 xl:w-64" aria-label="Map controls">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h1 className="text-lg font-semibold text-white">Incident map</h1>
+            <p className="mt-1 text-xs text-slate-400">{mappedIncidents.length} mapped reports</p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] font-black text-sentinel-cyan px-2 py-0.5 rounded bg-sentinel-cyan/10 border border-sentinel-cyan/30">
-              {mappedIncidents.length} Targets
-            </span>
-            <button
-              onClick={() => setIsHudExpanded(!isHudExpanded)}
-              className="sm:hidden p-1 rounded-lg text-slate-300 hover:text-white bg-white/5 border border-white/10"
-              aria-label="Toggle filters"
-            >
-              {isHudExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-          </div>
+          <button type="button" onClick={() => setIsHudExpanded(value => !value)} className="ops-icon ops-map-toggle" aria-label="Toggle map controls" aria-expanded={isHudExpanded}>
+            {isHudExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
         </div>
+        <div className={`${isHudExpanded ? 'block' : 'hidden xl:block'} space-y-3`}>
 
         {/* Live Location & Safe Zones Action Buttons */}
         {/* HUD Layer & Telemetry Toggles */}
         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
           <button
+            aria-pressed={showTeams}
             onClick={() => {
               setShowTeams(s => !s);
               soundEffects.playClick();
@@ -510,6 +499,7 @@ export const MapPage: React.FC = () => {
           </button>
 
           <button
+            aria-pressed={showRoutes}
             onClick={() => {
               setShowRoutes(s => !s);
               soundEffects.playClick();
@@ -525,6 +515,7 @@ export const MapPage: React.FC = () => {
           </button>
 
           <button
+            aria-pressed={isLiveTracking}
             onClick={handleToggleLiveLocation}
             className={`py-2 px-2.5 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm ${
               isLiveTracking
@@ -537,6 +528,7 @@ export const MapPage: React.FC = () => {
           </button>
 
           <button
+            aria-pressed={showSafeZones}
             onClick={() => {
               setShowSafeZones(s => !s);
               soundEffects.playClick();
@@ -575,11 +567,12 @@ export const MapPage: React.FC = () => {
         )}
 
         {/* Filter dropdowns (Expandable on mobile, always visible on sm+) */}
-        <div className={`${isHudExpanded ? 'block' : 'hidden sm:block'} space-y-3 pt-1 border-t border-white/10`}>
+        <div className={`space-y-3 pt-1 border-t border-white/10`}>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
               <label className="text-[10px] font-mono text-slate-400 block mb-1">Category</label>
               <select
+                aria-label="Map category"
                 value={categoryFilter}
                 onChange={e => setCategoryFilter(e.target.value)}
                 className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
@@ -597,6 +590,7 @@ export const MapPage: React.FC = () => {
             <div>
               <label className="text-[10px] font-mono text-slate-400 block mb-1">Severity</label>
               <select
+                aria-label="Map severity"
                 value={severityFilter}
                 onChange={e => setSeverityFilter(e.target.value)}
                 className="w-full rounded-xl border border-white/15 bg-[#071426] text-white px-2.5 py-1.5 focus:outline-none focus:border-sentinel-cyan text-xs"
@@ -626,10 +620,11 @@ export const MapPage: React.FC = () => {
             </span>
           </div>
         </div>
-      </div>
+        </div>
+      </section>
 
       {/* Main Map Canvas */}
-      <div className="flex-1 h-full relative">
+      <div className="relative min-h-[12rem] min-w-0 flex-1">
         <div ref={mapContainerRef} className="w-full h-full z-0 bg-[#071426]" />
 
         {/* Fallback notice if tiles fail */}
@@ -643,57 +638,53 @@ export const MapPage: React.FC = () => {
 
       {/* Side Tactical Incident Inspector Drawer */}
       <div
-        className={`w-full lg:w-96 bg-[#0B1E38]/95 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col z-10 shadow-2xl backdrop-blur-2xl transition-all duration-300 ${
-          isListExpanded ? 'h-72' : 'h-36 sm:h-52'
-        } lg:h-full`}
+        className={`ops-map-list flex w-full shrink-0 flex-col border-t border-white/10 transition-all duration-300 xl:w-72 xl:border-l xl:border-t-0 ${
+          isListExpanded ? 'h-56' : 'h-32 sm:h-40'
+        } xl:h-full`}
       >
         <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between">
           <h4 className="font-mono font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <Radio className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
-            <span>Dispatches ({mappedIncidents.length})</span>
+            <span>Mapped incidents ({mappedIncidents.length})</span>
           </h4>
 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setIsListExpanded(!isListExpanded)}
-              className="lg:hidden text-[11px] font-mono text-sentinel-cyan flex items-center gap-1 p-1 hover:bg-white/5 rounded-lg"
+              className="xl:hidden text-[11px] font-mono text-sentinel-cyan flex items-center gap-1 p-1 hover:bg-white/5 rounded-lg"
             >
               <span>{isListExpanded ? 'Collapse' : 'Expand'}</span>
               {isListExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
             </button>
-            <span className="hidden sm:inline-block text-[10px] font-mono text-slate-500">Tap to Center</span>
+            <span className="hidden sm:inline-block text-[10px] font-mono text-slate-500">Select to center</span>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2.5 sm:p-3 space-y-2">
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">
+          {mappedIncidents.length === 0 && <p className="p-2 text-xs text-slate-400">No mapped reports match the current filters.</p>}
           {mappedIncidents.map(inc => {
             const isSelected = selectedIncident?.id === inc.id;
-            const distFromMe = userLocation && inc.latitude && inc.longitude
+            const distFromMe = userLocation && inc.latitude != null && inc.longitude != null
               ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, inc.latitude, inc.longitude)
               : null;
 
             return (
               <div
                 key={inc.id}
-                onClick={() => panToIncident(inc)}
-                className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                className={`p-3 rounded-xl border text-left transition-all ${
                   isSelected
                     ? 'border-sentinel-cyan bg-sentinel-cyan/15 ring-1 ring-sentinel-cyan shadow-lg shadow-sentinel-cyan/20 glow-cyan'
                     : 'border-white/10 bg-[#071426] hover:border-white/20 hover:bg-white/5'
                 }`}
               >
-                <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="font-mono text-xs font-black text-sentinel-cyan">
-                    {inc.incidentCode}
+                <button type="button" onClick={() => panToIncident(inc)} className="block w-full text-left" aria-pressed={isSelected}>
+                  <span className="mb-1 flex items-center justify-between gap-1">
+                    <span className="text-xs font-semibold text-cyan-200">{inc.incidentCode}</span>
+                    <SeverityBadge severity={inc.severity} size="sm" />
                   </span>
-                  <SeverityBadge severity={inc.severity} size="sm" />
-                </div>
-                <h5 className="text-xs font-bold text-white line-clamp-1">
-                  {inc.title}
-                </h5>
-                <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
-                  📍 {inc.location}
-                </p>
+                  <span className="block break-words text-sm font-semibold text-white">{inc.title}</span>
+                  <span className="mt-0.5 block break-words text-xs text-slate-400">{inc.location}</span>
+                </button>
 
                 <div className="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-400">
                   <span>
@@ -708,7 +699,7 @@ export const MapPage: React.FC = () => {
                     }}
                     className="text-[11px] font-bold text-sentinel-cyan hover:underline flex items-center gap-1"
                   >
-                    Dossier <ArrowRight className="w-3 h-3" />
+                    Details <ArrowRight className="w-3 h-3" />
                   </button>
                 </div>
               </div>

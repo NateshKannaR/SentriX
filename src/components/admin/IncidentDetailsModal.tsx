@@ -162,9 +162,9 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-5">
-      <div className="bg-[#0B1E38] rounded-2xl sm:rounded-3xl max-w-5xl w-full border border-[#16C7E8]/30 shadow-2xl overflow-hidden max-h-[95vh] sm:max-h-[92vh] flex flex-col animate-scaleUp glow-cyan">
+      <div className="ops-panel max-w-5xl w-full shadow-xl overflow-hidden max-h-[95dvh] flex flex-col">
         {/* Top Header */}
-        <div className="p-3.5 sm:p-6 bg-[#071426] text-white flex items-center justify-between border-b border-white/10 shrink-0">
+        <div className="p-3.5 sm:p-5 text-white flex items-center justify-between border-b border-white/10 shrink-0">
           <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#0B1E38] border border-[#16C7E8]/40 flex items-center justify-center shadow-lg shrink-0">
               <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 text-sentinel-cyan" />
@@ -181,7 +181,7 @@ export const IncidentDetailsModal: React.FC<IncidentDetailsModalProps> = ({
                 )}
                 <StatusBadge status={currentStatus} size="sm" />
               </div>
-              <h2 className="text-sm sm:text-xl font-black text-white mt-0.5 sm:mt-1 line-clamp-1 truncate">
+              <h2 className="text-sm sm:text-xl font-semibold text-white mt-1 break-words">
                 {incident.title}
               </h2>
             </div>

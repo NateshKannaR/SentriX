@@ -29,19 +29,18 @@ export const EmergencyAlertDrawer: React.FC<EmergencyAlertDrawerProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-slate-950/70 backdrop-blur-md animate-fadeIn selection:bg-sentinel-cyan/30 selection:text-sentinel-cyan">
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-3 sm:pl-10">
-        <div className="w-screen max-w-full sm:max-w-md glass-panel bg-sentinel-navy shadow-2xl border-l border-sentinel-darkBorder flex flex-col">
+        <div className="ops-drawer w-screen max-w-full shadow-2xl sm:max-w-md flex flex-col">
           {/* Header */}
-          <div className="p-4 sm:p-5 bg-gradient-to-r from-sentinel-darkSurface to-slate-900 text-white flex items-center justify-between border-b border-sentinel-darkBorder">
+          <div className="p-4 sm:p-5 text-white flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-sentinel-red flex items-center justify-center text-white shadow-lg shadow-sentinel-red/30 animate-pulse">
+              <div className="w-9 h-9 rounded-xl bg-rose-400/15 flex items-center justify-center text-rose-300">
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="font-black text-base tracking-tight text-white flex items-center gap-2">
-                  <span>Emergency Alert Center</span>
-                  <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
+                  <span>Emergency alerts</span>
                 </h3>
-                <p className="text-xs text-slate-400 font-mono">CRITICAL OPS QUEUE • {criticalIncidents.length + duplicateWarnings.length} ALERTS</p>
+                <p className="text-xs text-slate-400 font-mono">{criticalIncidents.length} critical · {duplicateWarnings.length} possible duplicates</p>
               </div>
             </div>
             <button
