@@ -64,15 +64,15 @@ const LOCATION_PRESETS = [
 export const ReportPage: React.FC = () => {
   const { currentLanguageOption, t } = useLanguage();
   const [searchParams] = useSearchParams();
-  const initialCategory = (searchParams.get('category') as EmergencyCategory) || 'Fire Emergency';
+  const initialCategory = CATEGORIES.find(item => item.label === searchParams.get('category'))?.label ?? 'Fire Emergency';
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<EmergencyCategory>(initialCategory);
   const [location, setLocation] = useState('');
   const [landmark, setLandmark] = useState('');
-  const [latitude, setLatitude] = useState<number | undefined>(12.9716);
-  const [longitude, setLongitude] = useState<number | undefined>(77.5946);
+  const [latitude, setLatitude] = useState<number>();
+  const [longitude, setLongitude] = useState<number>();
   const [peopleAffected, setPeopleAffected] = useState<number>(0);
   const [reporterName, setReporterName] = useState('');
   const [reporterPhone, setReporterPhone] = useState('');
@@ -86,8 +86,11 @@ export const ReportPage: React.FC = () => {
 
   // Live Location & Speech State
   const [isGpsLocating, setIsGpsLocating] = useState(false);
+  const [gpsMessage, setGpsMessage] = useState('');
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
   const [isDictating, setIsDictating] = useState(false);
+
+  const reportSubmitted = submittedIncident !== null;
 
   // Mini Leaflet Map Picker
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -99,7 +102,7 @@ export const ReportPage: React.FC = () => {
 
     try {
       const map = L.map(mapContainerRef.current, {
-        center: [latitude || 12.9716, longitude || 77.5946],
+        center: [12.9716, 77.5946],
         zoom: 13,
         zoomControl: false,
       });
@@ -109,24 +112,15 @@ export const ReportPage: React.FC = () => {
         attribution: '&copy; OpenStreetMap',
       }).addTo(map);
 
-      const marker = L.marker([latitude || 12.9716, longitude || 77.5946], {
-        draggable: true,
-      }).addTo(map);
-
-      marker.on('dragend', () => {
-        const pos = marker.getLatLng();
-        setLatitude(pos.lat);
-        setLongitude(pos.lng);
-      });
-
-      map.on('click', e => {
-        marker.setLatLng(e.latlng);
-        setLatitude(e.latlng.lat);
-        setLongitude(e.latlng.lng);
+      map.on('click', ({ latlng }) => {
+        const position = map.wrapLatLng(latlng);
+        setLatitude(position.lat);
+        setLongitude(position.lng);
+        setGpsAccuracy(null);
+        setGpsMessage('');
         soundEffects.playBeep();
       });
 
-      markerRef.current = marker;
       mapInstanceRef.current = map;
     } catch {
       // fallback
@@ -136,17 +130,36 @@ export const ReportPage: React.FC = () => {
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
+        markerRef.current = null;
       }
     };
-  }, []);
+  }, [reportSubmitted]);
 
-  // Update marker position when preset is clicked or GPS is acquired
   useEffect(() => {
-    if (markerRef.current && mapInstanceRef.current && latitude && longitude) {
-      markerRef.current.setLatLng([latitude, longitude]);
-      mapInstanceRef.current.panTo([latitude, longitude]);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (latitude == null || longitude == null) {
+      markerRef.current?.remove();
+      markerRef.current = null;
+      return;
     }
-  }, [latitude, longitude]);
+
+    const position: L.LatLngTuple = [latitude, longitude];
+    if (markerRef.current) {
+      markerRef.current.setLatLng(position);
+    } else {
+      const marker = L.marker(position, { draggable: true }).addTo(map);
+      marker.on('dragend', () => {
+        const point = map.wrapLatLng(marker.getLatLng());
+        setLatitude(point.lat);
+        setLongitude(point.lng);
+        setGpsAccuracy(null);
+        setGpsMessage('');
+      });
+      markerRef.current = marker;
+    }
+    map.panTo(position);
+  }, [latitude, longitude, reportSubmitted]);
 
   // Real-time Intelligence Preview
   const liveIntelligence = useMemo(() => {
@@ -165,27 +178,30 @@ export const ReportPage: React.FC = () => {
     setLandmark(preset.landmark);
     setLatitude(preset.lat);
     setLongitude(preset.lng);
+    setGpsAccuracy(null);
+    setGpsMessage('');
   };
 
   // Live Location Auto-Detection
   const handleDetectLiveLocation = async () => {
     soundEffects.playBeep();
     setIsGpsLocating(true);
+    setGpsMessage('');
     try {
       const loc = await getLiveLocation();
+      if (loc.isMockFallback) {
+        setGpsMessage('Location is unavailable. Enter the address or place a pin on the map.');
+        return;
+      }
       setLatitude(loc.latitude);
       setLongitude(loc.longitude);
       setGpsAccuracy(loc.accuracy);
       if (loc.address) {
         setLocation(loc.address);
       }
-      if (mapInstanceRef.current && markerRef.current) {
-        markerRef.current.setLatLng([loc.latitude, loc.longitude]);
-        mapInstanceRef.current.flyTo([loc.latitude, loc.longitude], 15);
-      }
       soundEffects.playAlert();
     } catch {
-      // Handled in getLiveLocation
+      setGpsMessage('Location is unavailable. Enter the address or place a pin on the map.');
     } finally {
       setIsGpsLocating(false);
     }
@@ -388,7 +404,7 @@ export const ReportPage: React.FC = () => {
 
                 <a
                   href={buildEmergencyWhatsAppUrl(
-                    `🚨 *SENTRIX INCIDENT LOGGED* 🚨\n• Code: ${submittedIncident.incidentCode}\n• Category: ${submittedIncident.category}\n• Title: ${submittedIncident.title}\n• Severity: ${submittedIncident.severity}\n• Location: ${submittedIncident.location}\n• Live Map: https://maps.google.com/?q=${submittedIncident.latitude || 12.9716},${submittedIncident.longitude || 77.5946}\n\nPlease dispatch emergency rescue unit immediately!`
+                    `🚨 *SENTRIX INCIDENT LOGGED* 🚨\n• Code: ${submittedIncident.incidentCode}\n• Category: ${submittedIncident.category}\n• Title: ${submittedIncident.title}\n• Severity: ${submittedIncident.severity}\n• Location: ${submittedIncident.location}\n${submittedIncident.latitude != null && submittedIncident.longitude != null ? `• Map: https://maps.google.com/?q=${submittedIncident.latitude},${submittedIncident.longitude}\n` : ''}\n\nPlease dispatch emergency rescue unit immediately!`
                   )}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -409,6 +425,13 @@ export const ReportPage: React.FC = () => {
                     setDescription('');
                     setLocation('');
                     setLandmark('');
+                    setLatitude(undefined);
+                    setLongitude(undefined);
+                    setGpsAccuracy(null);
+                    setGpsMessage('');
+                    setReporterName('');
+                    setReporterPhone('');
+                    setReporterEmail('');
                     setPeopleAffected(0);
                     setImagePreview(null);
                   }}
@@ -421,28 +444,22 @@ export const ReportPage: React.FC = () => {
           ) : (
             /* Emergency Submission Terminal */
             <div className="space-y-8 animate-fadeIn">
-              {/* Header */}
-              <div className="text-center space-y-2">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-mono font-bold uppercase tracking-wider">
-                  <Radio className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                  {t('report.badge', 'EMERGENCY SOS INTAKE CONSOLE')}
-                </div>
-                <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
-                  {t('report.title', 'Report an Emergency Incident')}
+              <div className="space-y-3 border-b border-white/10 pb-6">
+                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                  {t('report.title', 'Report an emergency')}
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto">
-                  {t('report.subtitle', 'Submit real-time situation parameters. The Smart Severity Engine analyzes casualties, keywords, and geography in sub-seconds.')}
+                <p className="max-w-xl text-sm leading-relaxed text-slate-300">
+                  Describe what happened, where it happened, and how many people are affected. You’ll receive a code to track the report.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 1. Category Grid */}
-                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#111e2d] p-4 sm:p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       {t('report.step1', 'Step 1: Emergency Category')} <span className="text-red-400">*</span>
                     </label>
-                    <span className="text-[10px] text-slate-400 font-mono">6 Verticals</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
@@ -453,6 +470,7 @@ export const ReportPage: React.FC = () => {
                         <button
                           key={cat.label}
                           type="button"
+                          aria-pressed={isSelected}
                           onClick={() => {
                             soundEffects.playClick();
                             setCategory(cat.label);
@@ -488,7 +506,7 @@ export const ReportPage: React.FC = () => {
                 </div>
 
                 {/* 2. Situation Report & Live Neural Scanner */}
-                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#111e2d] p-4 sm:p-6 space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       {t('report.step2', 'Step 2: Incident Title & Detailed Field Description')} <span className="text-red-400">*</span>
@@ -510,11 +528,14 @@ export const ReportPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label htmlFor="incident-title" className="block text-xs font-semibold text-slate-300 mb-1">
                       {t('report.titleLabel', 'Incident Headline / Summary')}
                     </label>
                     <input
                       type="text"
+                      id="incident-title"
+                      aria-invalid={Boolean(errors.title)}
+                      aria-describedby={errors.title ? 'incident-title-error' : undefined}
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                       placeholder={t('report.titlePlaceholder', 'e.g. 3rd Floor Restaurant Fire with Trapped Diners')}
@@ -524,15 +545,18 @@ export const ReportPage: React.FC = () => {
                           : 'border-white/15 focus:border-sentinel-cyan focus:ring-1 focus:ring-sentinel-cyan'
                       }`}
                     />
-                    {errors.title && <p className="text-xs text-red-400 mt-1 font-mono">{errors.title}</p>}
+                    {errors.title && <p id="incident-title-error" className="mt-1 text-xs text-red-400">{errors.title}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label htmlFor="incident-description" className="block text-xs font-semibold text-slate-300 mb-1">
                       {t('report.descLabel', 'Detailed Field Situation (Mention trapped people, smoke, collapse, hazards)')}
                     </label>
                     <textarea
                       rows={4}
+                      id="incident-description"
+                      aria-invalid={Boolean(errors.description)}
+                      aria-describedby={errors.description ? 'incident-description-error' : undefined}
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder={t('report.descPlaceholder', 'Describe what you see: visible flames, structural debris, water depth, conscious/unconscious casualties...')}
@@ -543,13 +567,13 @@ export const ReportPage: React.FC = () => {
                       }`}
                     />
                     {errors.description && (
-                      <p className="text-xs text-red-400 mt-1 font-mono">{errors.description}</p>
+                      <p id="incident-description-error" className="mt-1 text-xs text-red-400">{errors.description}</p>
                     )}
                   </div>
                 </div>
 
                 {/* 3. Location & Interactive Leaflet Pin-Drop Map */}
-                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#111e2d] p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       {t('report.step3', 'Step 3: Location & Interactive Map Pin')} <span className="text-red-400">*</span>
@@ -567,6 +591,8 @@ export const ReportPage: React.FC = () => {
                     </button>
                   </div>
 
+                  {gpsMessage && <p role="status" className="text-sm text-amber-300">{gpsMessage}</p>}
+
                   {/* Location Presets */}
                   <div className="flex flex-wrap gap-2">
                     {LOCATION_PRESETS.map((pr, idx) => (
@@ -583,13 +609,16 @@ export const ReportPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label htmlFor="incident-address" className="block text-xs font-semibold text-slate-300 mb-1">
                       {t('report.addressLabel', 'Address or Landmark Description')}
                     </label>
                     <div className="relative">
                       <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                       <input
                         type="text"
+                        id="incident-address"
+                        aria-invalid={Boolean(errors.location)}
+                        aria-describedby={errors.location ? 'incident-address-error' : undefined}
                         value={location}
                         onChange={e => setLocation(e.target.value)}
                         placeholder={t('report.addressPlaceholder', 'e.g. Phoenix Mall Block B, MG Road Metro Corridor')}
@@ -601,37 +630,44 @@ export const ReportPage: React.FC = () => {
                       />
                     </div>
                     {errors.location && (
-                      <p className="text-xs text-red-400 mt-1 font-mono">{errors.location}</p>
+                      <p id="incident-address-error" className="mt-1 text-xs text-red-400">{errors.location}</p>
                     )}
                   </div>
 
                   {/* Leaflet Pin-Drop Mini Map Canvas */}
-                  <div className="rounded-2xl overflow-hidden border border-white/15 h-56 relative shadow-inner">
+                  <div className="rounded-2xl overflow-hidden border border-white/15 h-56 relative isolate shadow-inner">
                     <div ref={mapContainerRef} className="w-full h-full" />
                     <div className="absolute top-2 left-2 z-[1000] bg-[#071426]/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-xl border border-white/10 text-[10px] font-mono text-slate-300 flex items-center gap-1.5">
                       <Crosshair className="w-3.5 h-3.5 text-sentinel-cyan animate-pulse" />
-                      <span>📍 Click or drag marker to set coordinates</span>
+                      <span>Optional map pin · click to place</span>
                     </div>
                   </div>
 
                   {/* Coordinates pill with Live Accuracy */}
-                  {latitude && longitude && (
+                  {latitude != null && longitude != null && (
                     <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] font-mono text-slate-400 px-1">
                       <span className="flex items-center gap-1 text-slate-300">
                         <Crosshair className="w-3.5 h-3.5 text-sentinel-cyan" />
                         Coordinates: {latitude.toFixed(4)}, {longitude.toFixed(4)}
                         {gpsAccuracy && <span className="text-emerald-400 text-[10px]"> (±{gpsAccuracy}m lock)</span>}
                       </span>
-                      <span className="text-sentinel-cyan font-bold flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-sentinel-cyan animate-pulse" />
-                        Geocoded
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLatitude(undefined);
+                          setLongitude(undefined);
+                          setGpsAccuracy(null);
+                        }}
+                        className="rounded px-2 py-1 font-semibold text-cyan-200 hover:bg-white/5"
+                      >
+                        Clear pin
+                      </button>
                     </div>
                   )}
                 </div>
 
                 {/* 4. Casualties & Live AI Triage Preview */}
-                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#111e2d] p-4 sm:p-6 space-y-4">
                   <label className="block text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                     {t('report.step4', 'Step 4: People Affected & Casualty Triage')} <span className="text-red-400">*</span>
                   </label>
@@ -693,7 +729,7 @@ export const ReportPage: React.FC = () => {
                 </div>
 
                 {/* 5. Optional Reporter Information & Photo */}
-                <div className="bg-[#0B1E38]/90 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#111e2d] p-4 sm:p-6 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <label className="text-xs font-mono font-bold uppercase tracking-widest text-sentinel-cyan">
                       {t('report.step5', 'Step 5: Optional Contact Information & Scene Photo')}
@@ -775,6 +811,11 @@ export const ReportPage: React.FC = () => {
 
                 {/* Submit Button */}
                 <div className="pt-2">
+                  {Object.keys(errors).length > 0 && (
+                    <p role="alert" className="mb-3 rounded-lg border border-rose-400/25 bg-rose-400/10 px-4 py-3 text-sm text-rose-200">
+                      Review the highlighted fields before submitting.
+                    </p>
+                  )}
                   <button
                     type="submit"
                     disabled={isSubmitting}

@@ -27,6 +27,9 @@ import {
   Plane,
   FileText,
   Truck,
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface AdminContextType {
@@ -38,6 +41,26 @@ interface AdminContextType {
   onOpenDrone?: (inc?: Incident) => void;
   onOpenPlaybook?: (inc?: Incident) => void;
   onOpenHospitals?: () => void;
+}
+
+const FILTER_KEYS = ['category', 'severity', 'status'] as const;
+const PAGE_SIZE = 12;
+const SAVED_VIEWS_KEY = 'sentrix_incident_views';
+type SavedView = { name: string; filters: string };
+
+function readSavedViews(): SavedView[] {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(SAVED_VIEWS_KEY) ?? '[]');
+    if (Array.isArray(saved)) {
+      return saved.filter((view): view is SavedView =>
+        view !== null && typeof view === 'object' &&
+        typeof view.name === 'string' && typeof view.filters === 'string',
+      );
+    }
+  } catch {
+    return [];
+  }
+  return [];
 }
 
 export const IncidentsPage: React.FC = () => {
@@ -54,11 +77,80 @@ export const IncidentsPage: React.FC = () => {
   const severityFilter = searchParams.get('severity') || 'ALL';
   const statusFilter = searchParams.get('status') || 'ALL';
   const [searchQuery, setSearchQuery] = useState('');
+  const [savedViews, setSavedViews] = useState(readSavedViews);
+  const [viewName, setViewName] = useState('');
+  const [selectedViewName, setSelectedViewName] = useState('');
+  const [viewMessage, setViewMessage] = useState('');
+  const hasFilters = FILTER_KEYS.some(name => searchParams.has(name) && searchParams.get(name) !== 'ALL');
+
+  const persistViews = (next: SavedView[], message: string) => {
+    try {
+      localStorage.setItem(SAVED_VIEWS_KEY, JSON.stringify(next));
+      setSavedViews(next);
+      setViewMessage(message);
+      return true;
+    } catch {
+      setViewMessage('Your browser could not save the change. Check its storage settings and try again.');
+      return false;
+    }
+  };
+
+  const saveView = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const name = viewName.trim();
+    if (!name || !hasFilters) return;
+    if (savedViews.some(view => view.name.toLowerCase() === name.toLowerCase())) {
+      setViewMessage('A view with that name already exists.');
+      return;
+    }
+
+    const filters = new URLSearchParams();
+    for (const key of FILTER_KEYS) {
+      const value = searchParams.get(key);
+      if (value && value !== 'ALL') filters.set(key, value);
+    }
+
+    if (persistViews([...savedViews, { name, filters: filters.toString() }], `Saved “${name}”.`)) {
+      setSelectedViewName(name);
+      setViewName('');
+    }
+  };
+
+  const applyView = () => {
+    const view = savedViews.find(item => item.name === selectedViewName);
+    if (!view) return;
+    const filters = new URLSearchParams(view.filters);
+    const next = new URLSearchParams(searchParams);
+    for (const key of FILTER_KEYS) {
+      const value = filters.get(key);
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    next.delete('page');
+    setSearchQuery('');
+    setSearchParams(next);
+    setViewMessage(`Applied “${view.name}”.`);
+  };
+
+  const removeView = () => {
+    if (!selectedViewName) return;
+    if (persistViews(savedViews.filter(view => view.name !== selectedViewName), `Removed “${selectedViewName}”.`)) {
+      setSelectedViewName('');
+    }
+  };
+
+  const resetPage = () => {
+    if (!searchParams.has('page')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('page');
+    setSearchParams(next, { replace: true });
+  };
 
   const setFilter = (name: 'category' | 'severity' | 'status', value: string) => {
     const next = new URLSearchParams(searchParams);
     if (value === 'ALL') next.delete(name);
     else next.set(name, value);
+    next.delete('page');
     setSearchParams(next);
   };
 
@@ -106,9 +198,22 @@ export const IncidentsPage: React.FC = () => {
       });
   }, [incidents, searchQuery, categoryFilter, severityFilter, statusFilter, sortBy, sortOrder]);
 
+  const requestedPage = Number(searchParams.get('page') ?? '1');
+  const totalPages = Math.max(1, Math.ceil(filteredIncidents.length / PAGE_SIZE));
+  const currentPage = Number.isSafeInteger(requestedPage) ? Math.min(totalPages, Math.max(1, requestedPage)) : 1;
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const visibleIncidents = filteredIncidents.slice(pageStart, pageStart + PAGE_SIZE);
+
+  const goToPage = (page: number) => {
+    const next = new URLSearchParams(searchParams);
+    if (page === 1) next.delete('page');
+    else next.set('page', String(page));
+    setSearchParams(next);
+  };
+
   const handleExportCSV = () => {
     soundFx.playClick();
-    const csvContent = incidentService.exportIncidentsCSV();
+    const csvContent = incidentService.exportIncidentsCSV(filteredIncidents);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -116,7 +221,8 @@ export const IncidentsPage: React.FC = () => {
     link.setAttribute('download', `sentrix_intel_report_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleInlineStatusChange = (
@@ -145,17 +251,18 @@ export const IncidentsPage: React.FC = () => {
             {t('admin.nav.incidents', 'Live Incidents')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Prioritize, inspect, update status, and deploy tactical reconnaissance.
+            Search reports, prioritize the queue, and review response progress.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl bg-[#0A101D] border border-white/10 hover:border-cyan-400 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+            disabled={!filteredIncidents.length}
+            className="px-3.5 py-2 rounded-xl bg-[#0A101D] border border-white/10 hover:border-cyan-400 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
           >
             <Download className="w-4 h-4 text-cyan-400" />
-            <span>Export Intel CSV</span>
+            <span>Export results</span>
           </button>
         </div>
       </div>
@@ -228,7 +335,8 @@ export const IncidentsPage: React.FC = () => {
               onClick={() => {
                 soundFx.playClick();
                 const next = new URLSearchParams(searchParams);
-                ['category', 'severity', 'status'].forEach(name => next.delete(name));
+                FILTER_KEYS.forEach(name => next.delete(name));
+                next.delete('page');
                 setSearchParams(next);
                 setSearchQuery('');
               }}
@@ -248,7 +356,10 @@ export const IncidentsPage: React.FC = () => {
               type="text"
               aria-label="Search incidents"
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={e => {
+                setSearchQuery(e.target.value);
+                resetPage();
+              }}
               placeholder={t('admin.header.search', 'Search code, title, street...')}
               className="w-full pl-10 pr-3 py-2 text-xs rounded-xl border border-white/10 bg-[#060B14] text-white focus:outline-none focus:border-cyan-400 placeholder-slate-400"
             />
@@ -319,6 +430,7 @@ export const IncidentsPage: React.FC = () => {
                 onClick={() => {
                   soundFx.playClick();
                   setSortBy('priority');
+                  resetPage();
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'priority'
@@ -332,6 +444,7 @@ export const IncidentsPage: React.FC = () => {
                 onClick={() => {
                   soundFx.playClick();
                   setSortBy('time');
+                  resetPage();
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'time'
@@ -345,6 +458,7 @@ export const IncidentsPage: React.FC = () => {
                 onClick={() => {
                   soundFx.playClick();
                   setSortBy('casualties');
+                  resetPage();
                 }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-mono font-bold transition-all ${
                   sortBy === 'casualties'
@@ -359,6 +473,7 @@ export const IncidentsPage: React.FC = () => {
               onClick={() => {
                 soundFx.playClick();
                 setSortOrder(prev => (prev === 'desc' ? 'asc' : 'desc'));
+                resetPage();
               }}
               className="p-2 rounded-xl bg-[#060B14] border border-white/10 text-slate-300 hover:text-white"
               title="Toggle Ascending/Descending"
@@ -368,6 +483,40 @@ export const IncidentsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <details className="rounded-2xl border border-white/10 bg-[#0e1826]">
+        <summary className="cursor-pointer rounded-2xl px-4 py-3 text-sm font-semibold text-white">
+          <Bookmark className="mr-2 inline h-4 w-4 text-cyan-300" aria-hidden="true" />
+          Saved views{savedViews.length > 0 && ` (${savedViews.length})`}
+        </summary>
+        <div className="space-y-3 px-4 pb-4 text-sm">
+          <p className="text-slate-400">Save category, severity, and status filters on this browser.</p>
+          <form onSubmit={saveView} className="flex flex-wrap gap-2">
+            <input
+              aria-label="View name"
+              placeholder="Name this view"
+              value={viewName}
+              onChange={event => setViewName(event.target.value)}
+              maxLength={40}
+              className="min-w-0 rounded-lg border border-white/15 bg-[#08121f] px-3 py-2 text-white"
+            />
+            <button type="submit" disabled={!hasFilters || !viewName.trim()} className="rounded-lg bg-cyan-300 px-3 py-2 font-semibold text-slate-950 disabled:opacity-40">
+              Save current filters
+            </button>
+          </form>
+          {savedViews.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <select aria-label="Saved incident view" value={selectedViewName} onChange={event => setSelectedViewName(event.target.value)} className="max-w-full rounded-lg border border-white/15 bg-[#08121f] px-3 py-2 text-white">
+                <option value="">Select a view</option>
+                {savedViews.map(view => <option key={view.name} value={view.name}>{view.name}</option>)}
+              </select>
+              <button type="button" disabled={!selectedViewName} onClick={applyView} className="rounded-lg border border-white/15 px-3 py-2 text-white hover:bg-white/5 disabled:opacity-40">Apply</button>
+              <button type="button" disabled={!selectedViewName} onClick={removeView} className="rounded-lg px-3 py-2 text-rose-300 hover:bg-rose-300/10 disabled:opacity-40">Remove</button>
+            </div>
+          )}
+          <p role="status" className="text-cyan-200">{viewMessage}</p>
+        </div>
+      </details>
 
       {/* Incident Management Table */}
       <div className="bg-[#0A101D] rounded-3xl border border-white/[0.08] shadow-xl overflow-hidden">
@@ -383,7 +532,7 @@ export const IncidentsPage: React.FC = () => {
           <>
             {/* Mobile Card View (block md:hidden) */}
             <div className="md:hidden divide-y divide-white/10">
-              {filteredIncidents.map(inc => {
+              {visibleIncidents.map(inc => {
                 const isCritical = inc.severity === 'Critical' && inc.status !== 'Resolved';
                 return (
                   <div
@@ -546,7 +695,7 @@ export const IncidentsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 text-xs">
-                  {filteredIncidents.map(inc => {
+                  {visibleIncidents.map(inc => {
                     const isCritical = inc.severity === 'Critical' && inc.status !== 'Resolved';
                     return (
                       <tr
@@ -730,6 +879,19 @@ export const IncidentsPage: React.FC = () => {
           </>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <nav aria-label="Incident pagination" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0e1826] px-4 py-3">
+          <p className="text-sm tabular-nums text-slate-300">
+            {pageStart + 1}–{pageStart + visibleIncidents.length} of {filteredIncidents.length} results
+          </p>
+          <div className="flex items-center gap-2">
+            <button type="button" aria-label="Previous page" onClick={() => goToPage(currentPage - 1)} disabled={currentPage === 1} className="rounded-lg border border-white/15 p-2 hover:bg-white/5 disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+            <span className="px-1 text-xs tabular-nums text-slate-300">Page {currentPage} of {totalPages}</span>
+            <button type="button" aria-label="Next page" onClick={() => goToPage(currentPage + 1)} disabled={currentPage === totalPages} className="rounded-lg border border-white/15 p-2 hover:bg-white/5 disabled:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+          </div>
+        </nav>
+      )}
 
       {/* Delete Confirmation Modal */}
       {incidentToDelete && (

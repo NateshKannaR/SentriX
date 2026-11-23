@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminSidebar } from './AdminSidebar';
 import { EmergencyAlertDrawer } from './EmergencyAlertDrawer';
@@ -582,25 +582,27 @@ export const AdminLayout: React.FC = () => {
 
         {/* Router Outlet Viewport */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#060B14]">
-          <Outlet
-            context={{
-              incidents,
-              onOpenIncident: handleOpenIncident,
-              onOpenDuplicate: handleOpenDuplicate,
-              onSimulate: handleSimulate,
-              onSimulateFire: handleSimulateFire,
-              onReset: handleReset,
-              onOpenDrone: (inc?: Incident) => {
-                setDroneTargetIncident(inc || incidents[0] || null);
-                setIsDroneOpen(true);
-              },
-              onOpenPlaybook: (inc?: Incident) => {
-                setPlaybookIncident(inc || incidents[0] || null);
-                setIsPlaybookOpen(true);
-              },
-              onOpenHospitals: () => setIsHospitalDrawerOpen(true),
-            }}
-          />
+          <Suspense fallback={<div role="status" className="p-6 text-sm text-slate-300">Loading workspace…</div>}>
+            <Outlet
+              context={{
+                incidents,
+                onOpenIncident: handleOpenIncident,
+                onOpenDuplicate: handleOpenDuplicate,
+                onSimulate: handleSimulate,
+                onSimulateFire: handleSimulateFire,
+                onReset: handleReset,
+                onOpenDrone: (inc?: Incident) => {
+                  setDroneTargetIncident(inc || incidents[0] || null);
+                  setIsDroneOpen(true);
+                },
+                onOpenPlaybook: (inc?: Incident) => {
+                  setPlaybookIncident(inc || incidents[0] || null);
+                  setIsPlaybookOpen(true);
+                },
+                onOpenHospitals: () => setIsHospitalDrawerOpen(true),
+              }}
+            />
+          </Suspense>
         </main>
       </div>
 
