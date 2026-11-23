@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
 import { incidentService } from '../services/incidentService';
@@ -10,6 +10,7 @@ import { PriorityGauge } from '../components/common/PriorityGauge';
 import { soundFx } from '../utils/soundEffects';
 import {
   ShieldAlert,
+  Search,
   Radio,
   LayoutDashboard,
   Flame,
@@ -39,7 +40,9 @@ import { useLanguage } from '../context/LanguageContext';
 import { speechRecognition, nlpClassifyEmergency } from '../utils/speechAI';
 
 export const LandingPage: React.FC = () => {
-  const { t, currentLanguage } = useLanguage();
+  const { currentLanguage } = useLanguage();
+  const navigate = useNavigate();
+  const [trackingCode, setTrackingCode] = useState('');
   const [metrics, setMetrics] = useState<DashboardMetrics>(() => incidentService.getDashboardMetrics());
 
   // Interactive Live Playground on the Hero
@@ -159,518 +162,469 @@ export const LandingPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#071426] text-slate-100 font-sans selection:bg-[#16C7E8]/30">
       <Header />
 
-      {/* Hero Section with Tactical HUD & Live AI Triage Playground */}
-      <section className="relative overflow-hidden pt-12 pb-24 border-b border-[#16C7E8]/20 hud-grid">
-        {/* Ambient Gradient Orbs */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-gradient-to-tr from-[#16C7E8]/10 via-transparent to-sentinel-red/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#16C7E8]/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Top Pill */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#0B1E38]/80 border border-[#16C7E8]/30 backdrop-blur-xl mb-6 shadow-lg shadow-[#16C7E8]/10 animate-fadeIn">
-            <span className="w-2.5 h-2.5 rounded-full bg-sentinel-red animate-ping" />
-            <span className="font-mono text-xs uppercase tracking-wider text-sentinel-cyan font-bold">
-              CODE CLASH 2026 OFFICIAL PLATFORM
-            </span>
-            <span className="text-slate-500 text-xs">•</span>
-            <span className="text-emerald-400 text-xs font-mono font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> DISPATCH GRID ONLINE
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            {/* Left Hero Content */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="space-y-2">
-                <span className="font-mono text-xs font-extrabold tracking-widest uppercase text-sentinel-cyan flex items-center gap-2">
-                  <Terminal className="w-4 h-4" /> Next-Gen Emergency Intelligence
-                </span>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
-                  When Every Second Matters,{' '}
-                  <span className="bg-gradient-to-r from-sentinel-cyan via-teal-300 to-blue-400 bg-clip-text text-transparent">
-                    Intelligence Matters.
-                  </span>
-                </h1>
-              </div>
-
-              <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed font-normal">
-                <strong className="text-white font-bold">SentriX</strong> transforms chaotic field reports
-                into actionable, prioritized dispatch intelligence. Features explainable AI severity scoring,
-                real-time geospatial mapping, automated duplicate suppression, and unified commander operations.
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
-                <Link
-                  to="/report"
-                  onClick={() => soundFx.playAlert()}
-                  className="px-6 py-4 rounded-2xl text-base font-black bg-gradient-to-r from-sentinel-red to-rose-600 hover:from-red-600 hover:to-rose-700 text-white shadow-xl shadow-sentinel-red/35 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] border border-red-400/40 glow-red"
-                >
-                  <Radio className="w-5 h-5 animate-pulse" />
-                  <span>REPORT AN EMERGENCY</span>
-                </Link>
-
-                <Link
-                  to="/admin/dashboard"
-                  onClick={() => soundFx.playClick()}
-                  className="px-6 py-4 rounded-2xl text-base font-black bg-[#0B1E38] hover:bg-[#10284B] text-white border border-[#16C7E8]/40 hover:border-[#16C7E8] shadow-xl shadow-black/40 flex items-center justify-center gap-3 transition-all hover:scale-[1.02] hover:glow-cyan"
-                >
-                  <LayoutDashboard className="w-5 h-5 text-sentinel-cyan" />
-                  <span>ADMIN COMMAND CENTER</span>
-                  <ArrowRight className="w-4 h-4 text-sentinel-cyan" />
-                </Link>
-              </div>
-
-              {/* Live Metric Ticker under buttons */}
-              <div className="pt-6 border-t border-white/10 grid grid-cols-3 gap-2 sm:gap-4">
-                <div className="space-y-0.5">
-                  <span className="font-mono text-xl sm:text-2xl font-black text-white">{metrics.total}</span>
-                  <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 uppercase truncate">Incidents</p>
-                </div>
-                <div className="space-y-0.5">
-                  <span className="font-mono text-xl sm:text-2xl font-black text-red-400">{metrics.critical}</span>
-                  <p className="text-[10px] sm:text-[11px] font-mono text-red-300 uppercase truncate">Critical</p>
-                </div>
-                <div className="space-y-0.5">
-                  <span className="font-mono text-xl sm:text-2xl font-black text-sentinel-cyan">{metrics.avgPriorityScore}</span>
-                  <p className="text-[10px] sm:text-[11px] font-mono text-slate-400 uppercase truncate">Avg Priority</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right: Interactive Live AI Triage Playground */}
-            <div className="lg:col-span-5">
-              <div className="relative rounded-2xl sm:rounded-3xl bg-[#0B1E38]/90 border border-[#16C7E8]/30 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl space-y-4 sm:space-y-5 overflow-hidden">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
-                  <div className="flex items-center gap-2 sm:gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/20 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center shrink-0">
-                      <Cpu className="w-4 h-4 animate-spin-slow" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
-                        Severity Engine Simulator
-                      </h3>
-                      <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono">Live rule-based decision support</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 shrink-0">
-                    INTERACTIVE
-                  </span>
-                </div>
-
-                {/* Playground Controls */}
-                <div className="space-y-3 text-xs">
-                  <div>
-                    <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">
-                      1. Test Emergency Category
-                    </label>
-                    <select
-                      value={playgroundCategory}
-                      onChange={e => setPlaygroundCategory(e.target.value as EmergencyCategory)}
-                      className="w-full bg-[#071426] border border-white/15 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sentinel-cyan font-semibold"
-                    >
-                      <option value="Fire Emergency">Fire Emergency (High Base Risk)</option>
-                      <option value="Building Collapse">Building Collapse (Entrapment Risk)</option>
-                      <option value="Road Accident">Road Accident (Expressway Hazard)</option>
-                      <option value="Medical Emergency">Medical Emergency (Acute Window)</option>
-                      <option value="Flood">Flood (Rising Water Hazard)</option>
-                      <option value="Other Emergencies">Other Emergencies</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] uppercase font-mono font-bold text-slate-400">
-                        2. Casualties Reported: <span className="text-white font-bold">{playgroundCasualties}</span>
-                      </label>
-                      <span className="text-[10px] text-slate-500 font-mono">Slide to test</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="20"
-                      value={playgroundCasualties}
-                      onChange={e => setPlaygroundCasualties(parseInt(e.target.value))}
-                      className="w-full accent-sentinel-cyan cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-[10px] uppercase font-mono font-bold text-slate-400">
-                        3. Incident Keywords & Context
-                      </label>
-                      <button
-                        type="button"
-                        onClick={handleTogglePlaygroundVoice}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all shadow-sm ${
-                          isVoiceListening
-                            ? 'bg-red-500 text-white animate-pulse shadow-red-500/50'
-                            : 'bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/30'
-                        }`}
-                        title="Dictate an emergency scenario using speech recognition"
-                      >
-                        {isVoiceListening ? (
-                          <>
-                            <MicOff className="w-3 h-3 animate-spin" />
-                            <span>Stop Voice Triage</span>
-                          </>
-                        ) : (
-                          <>
-                            <Mic className="w-3 h-3 text-sentinel-cyan" />
-                            <span>🎙️ Voice Dictate</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={playgroundText}
-                      onChange={e => setPlaygroundText(e.target.value)}
-                      placeholder="e.g. Trapped under building debris with severe trauma..."
-                      className="w-full bg-[#071426] border border-white/15 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sentinel-cyan placeholder-slate-500"
-                    />
-                    {isVoiceListening && (
-                      <p className="mt-1 text-[10px] text-sentinel-cyan font-mono animate-pulse flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
-                        Listening in {currentLanguage.name}... Speak scenario (e.g. &quot;Huge fire with 8 people trapped&quot;)
-                      </p>
-                    )}
-                    {voiceSpeechError && (
-                      <p className="mt-1 text-[10px] text-red-400 font-mono">{voiceSpeechError}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Live Output Box */}
-                <div className="p-4 rounded-2xl bg-[#071426] border border-[#16C7E8]/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                      Evaluated Triage Outcome
-                    </span>
-                    <SeverityBadge severity={livePlaygroundScore.recommendedSeverity} size="sm" />
-                  </div>
-
-                  <PriorityGauge score={livePlaygroundScore.priorityScore} size="sm" />
-
-                  <div className="text-[11px] text-slate-300 font-mono space-y-1 pt-1 border-t border-white/10">
-                    <span className="text-sentinel-cyan font-bold block">Engine Match Reasons:</span>
-                    {livePlaygroundScore.severityReasoning.slice(0, 2).map((r, i) => (
-                      <p key={i} className="text-slate-400 text-[10px] truncate">• {r}</p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Mandatory Emergency Categories Bento Grid */}
-      <section className="py-20 bg-[#071426] border-b border-white/10 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-[#16C7E8]/10 px-3.5 py-1 rounded-full border border-[#16C7E8]/30">
-              Mandatory Challenge Verticals
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              One Unified Platform. All 6 Incident Categories.
-            </h2>
-            <p className="text-sm text-slate-400 max-w-xl mx-auto">
-              Every disaster category features tailored assessment parameters, priority rules, and dedicated tactical dispatch paths.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((cat, idx) => {
-              const Icon = cat.icon;
-              const countForCat = metrics.byCategory.find(c => c.category === cat.name)?.count || 0;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-3xl bg-[#0B1E38]/80 border border-white/10 p-7 hover:border-sentinel-cyan/60 hover:bg-[#10284B] transition-all group flex flex-col justify-between shadow-xl relative overflow-hidden"
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div
-                        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}
-                      >
-                        <Icon className="w-7 h-7" />
-                      </div>
-                      <span className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold border ${cat.badgeColor}`}>
-                        {cat.tag}
-                      </span>
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-bold text-white group-hover:text-sentinel-cyan transition-colors">
-                        {cat.name}
-                      </h3>
-                      <p className="text-xs text-slate-400 leading-relaxed mt-2">{cat.desc}</p>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
-                    <span className="text-xs font-mono font-bold text-slate-400">
-                      Active Cases: <strong className="text-white">{countForCat}</strong>
-                    </span>
-                    <Link
-                      to={`/report?category=${encodeURIComponent(cat.name)}`}
-                      onClick={() => soundFx.playClick()}
-                      className="text-xs font-bold text-sentinel-cyan hover:text-white flex items-center gap-1 group-hover:translate-x-1 transition-all"
-                    >
-                      Report This <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Operational Workflow Architecture */}
-      <section className="py-20 bg-[#040C17] border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-white/5 px-3.5 py-1 rounded-full border border-white/10">
-              Operational Loop
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Rapid Response Engineering
-            </h2>
-            <p className="text-sm text-slate-400">
-              Three synchronized phases from citizen panic button to stabilized emergency scene.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 rounded-3xl bg-[#0B1E38]/70 border border-white/10 space-y-4 relative">
-              <div className="w-12 h-12 rounded-2xl bg-sentinel-navy border border-[#16C7E8]/30 text-sentinel-cyan font-mono font-black text-lg flex items-center justify-center">
-                01
-              </div>
-              <h3 className="text-lg font-bold text-white">Citizen Field Intake</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Friction-free intake with live map pin-dropping, structured casualty counts, and optional photo upload without cumbersome logins.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-sentinel-red flex items-center gap-1 font-bold">
-                <Radio className="w-3.5 h-3.5 animate-pulse" /> Fast Response Entry
-              </div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-[#0B1E38]/90 border-2 border-[#16C7E8]/50 space-y-4 shadow-2xl relative glow-cyan">
-              <div className="w-12 h-12 rounded-2xl bg-sentinel-cyan text-sentinel-navy font-mono font-black text-lg flex items-center justify-center">
-                02
-              </div>
-              <h3 className="text-lg font-bold text-white">Smart Severity & Duplicate Shield</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Rule-based intelligence evaluates life-critical threat indicators, calculates a transparent 0-100 Priority Score, and correlates spatial duplicates to prevent double dispatch.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-sentinel-cyan flex items-center gap-1 font-bold">
-                <Sparkles className="w-3.5 h-3.5" /> Explainable Decision Support
-              </div>
-            </div>
-
-            <div className="p-8 rounded-3xl bg-[#0B1E38]/70 border border-white/10 space-y-4 relative">
-              <div className="w-12 h-12 rounded-2xl bg-sentinel-navy border border-[#16C7E8]/30 text-sentinel-cyan font-mono font-black text-lg flex items-center justify-center">
-                03
-              </div>
-              <h3 className="text-lg font-bold text-white">Command Center & Field Units</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Incident commanders manage the priority queue on interactive Leaflet maps, deploy specialized rescue battalions, and maintain an immutable chronological audit trail.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-emerald-400 flex items-center gap-1 font-bold">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Closed-Loop Resolution
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Emergency Superpowers Section */}
-      <section className="py-20 bg-[#071426] border-b border-white/10 relative overflow-hidden">
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-sentinel-cyan/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-sentinel-cyan/10 px-3.5 py-1 rounded-full border border-sentinel-cyan/30">
-              Emergency Superpowers
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
-              Advanced Mission-Critical Capabilities
-            </h2>
-            <p className="text-sm text-slate-400">
-              Beyond basic reporting: SentriX equips citizens, dispatchers, and rescue teams with cutting-edge resilient technologies.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* 1. Live GPS Telemetry */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-sentinel-cyan/30 hover:border-sentinel-cyan transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-sentinel-cyan/15 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center">
-                <Navigation className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Live GPS Telemetry
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                  ACTIVE
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                1-tap satellite GPS coordinate lock with automatic OpenStreetMap reverse geocoding and real-time distance calculations to nearest emergency units.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-sentinel-cyan">
-                • Precision ±5m Geo-Locating • Distance Matrix
-              </div>
-            </div>
-
-            {/* 2. Voice AI Assistant */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/40 text-purple-400 flex items-center justify-center">
-                <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                AURA Tactical Voice AI
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/40 font-bold">
-                  SPEECH API
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Hands-free emergency reporting via cross-browser Web Speech API. Natural language processing parses categories and casualty numbers from spoken panic descriptions.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-purple-400">
-                • Spoken Dictation • Interactive Commander Dialog
-              </div>
-            </div>
-
-            {/* 3. Multi-Language i18n */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/40 text-blue-400 flex items-center justify-center">
-                <Languages className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Multilingual i18n
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 font-bold">
-                  5 LOCALES
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Instant UI and voice recognition switching across English, Hindi (हिन्दी), Tamil (தமிழ்), Telugu (తెలుగు), and Spanish (Español).
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-blue-400">
-                • Native Locales • Reactive Language Switcher
-              </div>
-            </div>
-
-            {/* 4. Direct WhatsApp Emergency SOS (+91 7806869597) */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
-                <Radio className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                WhatsApp Emergency SOS
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                  DIRECT: +91 7806869597
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Direct 1-tap WhatsApp emergency distress dispatch to verified response helpline <span className="text-emerald-400 font-mono font-bold">+91 7806869597</span> with live satellite GPS pin, reverse-geocoded landmark, and battery telemetry.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-emerald-400">
-                • Direct WhatsApp: 7806869597 • Live GPS Telemetry
-              </div>
-            </div>
-
-            {/* 5. Optical & Acoustic Strobe */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-amber-500/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center">
-                <Zap className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Rescue Distress Strobe
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold">
-                  MORSE AUDIO
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                5.5Hz alternating high-intensity screen strobe paired with an 1800Hz Web Audio Morse code S-O-S pattern (··· --- ···) to signal rescue drones and dogs.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-amber-400">
-                • Optical Screen Beacon • Web Audio Morse Code
-              </div>
-            </div>
-
-            {/* 6. Safe Muster Zones */}
-            <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
-                <ShieldAlert className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </div>
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                Safe Zones & Hospitals
-                <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
-                  EVACUATION
-                </span>
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Geo-registered shelters, Level-1 trauma centers, and disaster muster points with real-time bed capacity and live distance routing on Leaflet maps.
-              </p>
-              <div className="pt-2 text-[11px] font-mono text-emerald-400">
-                • Bed Capacity Telemetry • Live Distance Routing
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Verified Statistics & Telemetry Bar */}
-      <section className="py-16 bg-[#071426] border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
+      <main>
+        <section className="relative overflow-hidden border-b border-white/10 bg-[#081322]">
+          <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(22,199,232,0.15),transparent_58%)]" />
+          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1.2fr_1fr] lg:gap-16 lg:px-8">
             <div>
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan">
-                Live Data-Driven Telemetry
-              </span>
-              <h2 className="text-2xl font-bold text-white mt-1">
-                Active Operational Metrics (MongoDB / Storage)
-              </h2>
+              <p className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.19em] text-cyan-300">
+                <ShieldAlert className="h-4 w-4" aria-hidden="true" /> Emergency response portal
+              </p>
+              <h1 className="max-w-xl text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl">
+                Report an emergency. <span className="text-cyan-300">Follow the response.</span>
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-slate-300 sm:text-lg">
+                Send an incident report with its location, then use your incident code to check its status.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+                <Link to="/report" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-red-600 px-5 font-semibold text-white hover:bg-red-500">
+                  <Radio className="h-5 w-5" aria-hidden="true" /> Report an emergency
+                </Link>
+                <Link to="/citizen" className="inline-flex min-h-12 items-center gap-2 text-sm font-semibold text-slate-200 hover:text-cyan-300">
+                  Citizen tools <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
             </div>
-            <Link
-              to="/admin/dashboard"
-              onClick={() => soundFx.playClick()}
-              className="px-5 py-2.5 rounded-xl bg-[#0B1E38] hover:bg-[#10284B] text-white text-xs font-bold border border-[#16C7E8]/40 hover:border-[#16C7E8] transition-colors flex items-center gap-2"
+
+            <form
+              className="rounded-3xl border border-cyan-400/20 bg-[#102038] p-5 shadow-2xl shadow-black/25 sm:p-8"
+              onSubmit={event => {
+                event.preventDefault();
+                const code = trackingCode.trim().toUpperCase();
+                if (code) navigate({ pathname: '/track', search: new URLSearchParams({ code }).toString() });
+              }}
             >
-              <span>Launch Command Center</span>
-              <ChevronRight className="w-4 h-4 text-sentinel-cyan" />
+              <Search className="mb-5 h-6 w-6 text-cyan-300" aria-hidden="true" />
+              <h2 className="text-2xl font-bold text-white">Track an incident</h2>
+              <p className="mt-2 text-sm text-slate-300" id="home-track-help">Use the code shown after you submitted your report.</p>
+              <label htmlFor="home-track-code" className="mt-6 block text-sm font-medium">Incident code</label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <input
+                  id="home-track-code"
+                  aria-describedby="home-track-help"
+                  value={trackingCode}
+                  onChange={event => setTrackingCode(event.target.value)}
+                  required
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="STX-2026-1001"
+                  className="min-w-0 flex-1 rounded-xl border border-white/15 bg-[#081322] px-3 py-3 font-mono text-sm uppercase text-white placeholder:text-slate-500"
+                />
+                <button type="submit" disabled={!trackingCode.trim()} className="rounded-xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 hover:bg-cyan-200 disabled:opacity-50">
+                  Track
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <section className="border-b border-white/10 bg-[#0a182a]">
+          <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 md:grid-cols-[1fr_auto] md:items-center lg:px-8">
+            <dl className="grid grid-cols-3 gap-3">
+              <div><dt className="text-xs text-slate-400">Incidents</dt><dd className="mt-1 text-xl font-bold tabular-nums">{metrics.total}</dd></div>
+              <div><dt className="text-xs text-slate-400">Critical incidents</dt><dd className="mt-1 text-xl font-bold tabular-nums text-red-300">{metrics.critical}</dd></div>
+              <div><dt className="text-xs text-slate-400">Average priority</dt><dd className="mt-1 text-xl font-bold tabular-nums text-cyan-300">{metrics.avgPriorityScore}</dd></div>
+            </dl>
+            <Link to="/admin/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold hover:bg-white/5">
+              <LayoutDashboard className="h-4 w-4 text-cyan-300" aria-hidden="true" /> Command center
+              <ArrowRight className="ml-auto h-4 w-4" aria-hidden="true" />
             </Link>
           </div>
+        </section>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-8">
-            <div className="p-5 rounded-2xl bg-[#0B1E38]/60 border border-white/10 space-y-1">
-              <span className="font-mono text-3xl sm:text-4xl font-black text-white">{metrics.total}</span>
-              <p className="text-xs text-slate-400 font-medium">Total Registered Incidents</p>
-              <span className="text-[10px] text-emerald-400 font-mono">● Real-time Persistent Store</span>
+        <section className="border-b border-white/10 py-12 sm:py-16">
+          <div className="mx-auto grid max-w-7xl items-start gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_1.2fr] lg:px-8">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-white">Try the triage simulator</h2>
+              <p className="mt-3 max-w-md leading-relaxed text-slate-300">Change the scenario to see how the severity and priority score respond. The simulator runs without submitting an incident.</p>
+            </div>
+              {/* Right: Interactive Live AI Triage Playground */}
+              <div className="min-w-0">
+                <div className="relative rounded-2xl sm:rounded-3xl bg-[#0B1E38]/90 border border-[#16C7E8]/30 p-4 sm:p-6 shadow-2xl backdrop-blur-2xl space-y-4 sm:space-y-5 overflow-hidden">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-sentinel-cyan/20 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center shrink-0">
+                        <Cpu className="w-4 h-4 animate-spin-slow" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-xs sm:text-sm text-white flex items-center gap-1.5">
+                          Severity Engine Simulator
+                        </h3>
+                        <p className="text-[10px] sm:text-[11px] text-slate-400 font-mono">Live rule-based decision support</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 shrink-0">
+                      INTERACTIVE
+                    </span>
+                  </div>
+
+                  {/* Playground Controls */}
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label htmlFor="triage-category" className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">
+                        1. Test Emergency Category
+                      </label>
+                      <select
+                        id="triage-category"
+                        value={playgroundCategory}
+                        onChange={e => setPlaygroundCategory(e.target.value as EmergencyCategory)}
+                        className="w-full bg-[#071426] border border-white/15 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sentinel-cyan font-semibold"
+                      >
+                        <option value="Fire Emergency">Fire Emergency (High Base Risk)</option>
+                        <option value="Building Collapse">Building Collapse (Entrapment Risk)</option>
+                        <option value="Road Accident">Road Accident (Expressway Hazard)</option>
+                        <option value="Medical Emergency">Medical Emergency (Acute Window)</option>
+                        <option value="Flood">Flood (Rising Water Hazard)</option>
+                        <option value="Other Emergencies">Other Emergencies</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label htmlFor="triage-casualties" className="text-[10px] uppercase font-mono font-bold text-slate-400">
+                          2. Casualties Reported: <span className="text-white font-bold">{playgroundCasualties}</span>
+                        </label>
+                        <span className="text-[10px] text-slate-500 font-mono">Slide to test</span>
+                      </div>
+                      <input
+                        id="triage-casualties"
+                        type="range"
+                        min="0"
+                        max="20"
+                        value={playgroundCasualties}
+                        onChange={e => setPlaygroundCasualties(parseInt(e.target.value))}
+                        className="w-full accent-sentinel-cyan cursor-pointer"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label htmlFor="triage-description" className="text-[10px] uppercase font-mono font-bold text-slate-400">
+                          3. Incident Keywords & Context
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleTogglePlaygroundVoice}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all shadow-sm ${
+                            isVoiceListening
+                              ? 'bg-red-500 text-white animate-pulse shadow-red-500/50'
+                              : 'bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/30'
+                          }`}
+                          title="Dictate an emergency scenario using speech recognition"
+                        >
+                          {isVoiceListening ? (
+                            <>
+                              <MicOff className="w-3 h-3 animate-spin" />
+                              <span>Stop Voice Triage</span>
+                            </>
+                          ) : (
+                            <>
+                              <Mic className="w-3 h-3 text-sentinel-cyan" />
+                              <span>🎙️ Voice Dictate</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <input
+                        id="triage-description"
+                        type="text"
+                        value={playgroundText}
+                        onChange={e => setPlaygroundText(e.target.value)}
+                        placeholder="e.g. Trapped under building debris with severe trauma..."
+                        className="w-full bg-[#071426] border border-white/15 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sentinel-cyan placeholder-slate-500"
+                      />
+                      {isVoiceListening && (
+                        <p className="mt-1 text-[10px] text-sentinel-cyan font-mono animate-pulse flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-ping" />
+                          Listening in {currentLanguage.name}... Speak scenario (e.g. &quot;Huge fire with 8 people trapped&quot;)
+                        </p>
+                      )}
+                      {voiceSpeechError && (
+                        <p className="mt-1 text-[10px] text-red-400 font-mono">{voiceSpeechError}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Live Output Box */}
+                  <div className="p-4 rounded-2xl bg-[#071426] border border-[#16C7E8]/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                        Evaluated Triage Outcome
+                      </span>
+                      <SeverityBadge severity={livePlaygroundScore.recommendedSeverity} size="sm" />
+                    </div>
+
+                    <PriorityGauge score={livePlaygroundScore.priorityScore} size="sm" />
+
+                    <div className="text-[11px] text-slate-300 font-mono space-y-1 pt-1 border-t border-white/10">
+                      <span className="text-sentinel-cyan font-bold block">Engine Match Reasons:</span>
+                      {livePlaygroundScore.severityReasoning.slice(0, 2).map((r, i) => (
+                        <p key={i} className="text-slate-400 text-[10px] truncate">• {r}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </section>
+
+        {/* Mandatory Emergency Categories Bento Grid */}
+        <section className="py-20 bg-[#071426] border-b border-white/10 relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-[#16C7E8]/10 px-3.5 py-1 rounded-full border border-[#16C7E8]/30">
+                Mandatory Challenge Verticals
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                One Unified Platform. All 6 Incident Categories.
+              </h2>
+              <p className="text-sm text-slate-400 max-w-xl mx-auto">
+                Every disaster category features tailored assessment parameters, priority rules, and dedicated tactical dispatch paths.
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#0B1E38]/60 border border-red-500/30 space-y-1">
-              <span className="font-mono text-3xl sm:text-4xl font-black text-red-400">{metrics.critical}</span>
-              <p className="text-xs text-slate-400 font-medium">Critical Priority Emergencies</p>
-              <span className="text-[10px] text-red-400 font-mono">Immediate Interventions</span>
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {categories.map((cat, idx) => {
+                const Icon = cat.icon;
+                const countForCat = metrics.byCategory.find(c => c.category === cat.name)?.count || 0;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-3xl bg-[#0B1E38]/80 border border-white/10 p-7 hover:border-sentinel-cyan/60 hover:bg-[#10284B] transition-all group flex flex-col justify-between shadow-xl relative overflow-hidden"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div
+                          className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${cat.color} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform`}
+                        >
+                          <Icon className="w-7 h-7" />
+                        </div>
+                        <span className={`text-[10px] font-mono px-2.5 py-1 rounded-full font-bold border ${cat.badgeColor}`}>
+                          {cat.tag}
+                        </span>
+                      </div>
 
-            <div className="p-5 rounded-2xl bg-[#0B1E38]/60 border border-white/10 space-y-1">
-              <span className="font-mono text-3xl sm:text-4xl font-black text-sentinel-cyan">{metrics.totalCasualties}</span>
-              <p className="text-xs text-slate-400 font-medium">Total Casualties Monitored</p>
-              <span className="text-[10px] text-sentinel-cyan font-mono">Zero Neglected Patients</span>
-            </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white group-hover:text-sentinel-cyan transition-colors">
+                          {cat.name}
+                        </h3>
+                        <p className="text-xs text-slate-400 leading-relaxed mt-2">{cat.desc}</p>
+                      </div>
+                    </div>
 
-            <div className="p-5 rounded-2xl bg-[#0B1E38]/60 border border-white/10 space-y-1">
-              <span className="font-mono text-3xl sm:text-4xl font-black text-emerald-400">99.8%</span>
-              <p className="text-xs text-slate-400 font-medium">Dispatch Reliability SLA</p>
-              <span className="text-[10px] text-emerald-400 font-mono">Mission Control Uptime</span>
+                    <div className="pt-6 mt-6 border-t border-white/10 flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-slate-400">
+                        Active Cases: <strong className="text-white">{countForCat}</strong>
+                      </span>
+                      <Link
+                        to={`/report?category=${encodeURIComponent(cat.name)}`}
+                        onClick={() => soundFx.playClick()}
+                        className="text-xs font-bold text-sentinel-cyan hover:text-white flex items-center gap-1 group-hover:translate-x-1 transition-all"
+                      >
+                        Report This <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        {/* Operational Workflow Architecture */}
+        <section className="py-20 bg-[#040C17] border-b border-white/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-white/5 px-3.5 py-1 rounded-full border border-white/10">
+                Operational Loop
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                Rapid Response Engineering
+              </h2>
+              <p className="text-sm text-slate-400">
+                Three synchronized phases from citizen panic button to stabilized emergency scene.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="p-8 rounded-3xl bg-[#0B1E38]/70 border border-white/10 space-y-4 relative">
+                <div className="w-12 h-12 rounded-2xl bg-sentinel-navy border border-[#16C7E8]/30 text-sentinel-cyan font-mono font-black text-lg flex items-center justify-center">
+                  01
+                </div>
+                <h3 className="text-lg font-bold text-white">Citizen Field Intake</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Friction-free intake with live map pin-dropping, structured casualty counts, and optional photo upload without cumbersome logins.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-sentinel-red flex items-center gap-1 font-bold">
+                  <Radio className="w-3.5 h-3.5 animate-pulse" /> Fast Response Entry
+                </div>
+              </div>
+
+              <div className="p-8 rounded-3xl bg-[#0B1E38]/90 border-2 border-[#16C7E8]/50 space-y-4 shadow-2xl relative glow-cyan">
+                <div className="w-12 h-12 rounded-2xl bg-sentinel-cyan text-sentinel-navy font-mono font-black text-lg flex items-center justify-center">
+                  02
+                </div>
+                <h3 className="text-lg font-bold text-white">Smart Severity & Duplicate Shield</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Rule-based intelligence evaluates life-critical threat indicators, calculates a transparent 0-100 Priority Score, and correlates spatial duplicates to prevent double dispatch.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-sentinel-cyan flex items-center gap-1 font-bold">
+                  <Sparkles className="w-3.5 h-3.5" /> Explainable Decision Support
+                </div>
+              </div>
+
+              <div className="p-8 rounded-3xl bg-[#0B1E38]/70 border border-white/10 space-y-4 relative">
+                <div className="w-12 h-12 rounded-2xl bg-sentinel-navy border border-[#16C7E8]/30 text-sentinel-cyan font-mono font-black text-lg flex items-center justify-center">
+                  03
+                </div>
+                <h3 className="text-lg font-bold text-white">Command Center & Field Units</h3>
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Incident commanders manage the priority queue on interactive Leaflet maps, deploy specialized rescue battalions, and maintain an immutable chronological audit trail.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-emerald-400 flex items-center gap-1 font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Closed-Loop Resolution
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Emergency Superpowers Section */}
+        <section className="py-20 bg-[#071426] border-b border-white/10 relative overflow-hidden">
+          <div className="absolute top-0 right-1/4 w-96 h-96 bg-sentinel-cyan/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-sentinel-cyan bg-sentinel-cyan/10 px-3.5 py-1 rounded-full border border-sentinel-cyan/30">
+                Emergency Superpowers
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+                Advanced Mission-Critical Capabilities
+              </h2>
+              <p className="text-sm text-slate-400">
+                Beyond basic reporting: SentriX equips citizens, dispatchers, and rescue teams with cutting-edge resilient technologies.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* 1. Live GPS Telemetry */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-sentinel-cyan/30 hover:border-sentinel-cyan transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-sentinel-cyan/15 border border-sentinel-cyan/40 text-sentinel-cyan flex items-center justify-center">
+                  <Navigation className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Live GPS Telemetry
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                    ACTIVE
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  1-tap satellite GPS coordinate lock with automatic OpenStreetMap reverse geocoding and real-time distance calculations to nearest emergency units.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-sentinel-cyan">
+                  • Precision ±5m Geo-Locating • Distance Matrix
+                </div>
+              </div>
+
+              {/* 2. Voice AI Assistant */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/40 text-purple-400 flex items-center justify-center">
+                  <Mic className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  AURA Tactical Voice AI
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/40 font-bold">
+                    SPEECH API
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Hands-free emergency reporting via cross-browser Web Speech API. Natural language processing parses categories and casualty numbers from spoken panic descriptions.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-purple-400">
+                  • Spoken Dictation • Interactive Commander Dialog
+                </div>
+              </div>
+
+              {/* 3. Multi-Language i18n */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-sentinel-cyan/60 transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/40 text-blue-400 flex items-center justify-center">
+                  <Languages className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Multilingual i18n
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/40 font-bold">
+                    5 LOCALES
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Instant UI and voice recognition switching across English, Hindi (हिन्दी), Tamil (தமிழ்), Telugu (తెలుగు), and Spanish (Español).
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-blue-400">
+                  • Native Locales • Reactive Language Switcher
+                </div>
+              </div>
+
+              {/* 4. Direct WhatsApp Emergency SOS (+91 7806869597) */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
+                  <Radio className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  WhatsApp Emergency SOS
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                    DIRECT: +91 7806869597
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Direct 1-tap WhatsApp emergency distress dispatch to verified response helpline <span className="text-emerald-400 font-mono font-bold">+91 7806869597</span> with live satellite GPS pin, reverse-geocoded landmark, and battery telemetry.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-emerald-400">
+                  • Direct WhatsApp: 7806869597 • Live GPS Telemetry
+                </div>
+              </div>
+
+              {/* 5. Optical & Acoustic Strobe */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-amber-500/60 transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center">
+                  <Zap className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Rescue Distress Strobe
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 font-bold">
+                    MORSE AUDIO
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  5.5Hz alternating high-intensity screen strobe paired with an 1800Hz Web Audio Morse code S-O-S pattern (··· --- ···) to signal rescue drones and dogs.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-amber-400">
+                  • Optical Screen Beacon • Web Audio Morse Code
+                </div>
+              </div>
+
+              {/* 6. Safe Muster Zones */}
+              <div className="p-6 rounded-3xl bg-[#0B1E38]/80 border border-white/10 hover:border-emerald-500/60 transition-all group space-y-3 shadow-xl">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center">
+                  <ShieldAlert className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                </div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  Safe Zones & Hospitals
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold">
+                    EVACUATION
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Geo-registered shelters, Level-1 trauma centers, and disaster muster points with real-time bed capacity and live distance routing on Leaflet maps.
+                </p>
+                <div className="pt-2 text-[11px] font-mono text-emerald-400">
+                  • Bed Capacity Telemetry • Live Distance Routing
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
       <Footer />
     </div>
   );

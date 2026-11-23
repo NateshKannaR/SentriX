@@ -259,8 +259,8 @@ export const AdminLayout: React.FC = () => {
         <CivilDefenseBanner />
 
         {/* Top Tactical Command HUD Bar */}
-        <header className="h-16 bg-[#080E1A]/95 border-b border-white/[0.08] flex items-center justify-between px-3 sm:px-6 shrink-0 z-20 backdrop-blur-xl shadow-xl">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <header className="h-16 bg-[#080E1A]/95 border-b border-white/[0.08] flex items-center justify-between gap-2 px-3 sm:px-6 shrink-0 z-20 backdrop-blur-xl shadow-xl">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button
               onClick={() => setMobileSidebarOpen(true)}
               className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 min-w-[38px] min-h-[38px] flex items-center justify-center"
@@ -270,12 +270,16 @@ export const AdminLayout: React.FC = () => {
             </button>
 
             {/* Global Search */}
-            <div className="relative w-36 xs:w-48 sm:w-64 md:w-80">
+            <div className="relative min-w-0 w-36 sm:w-56 xl:w-72">
               <div className="relative">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   value={searchQuery}
+                  aria-label={t('admin.header.search', 'Search code, title, location')}
+                  onKeyDown={event => {
+                    if (event.key === 'Escape') setSearchQuery('');
+                  }}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder={t('admin.header.search', 'Search code, title, location...')}
                   className="w-full text-xs rounded-xl bg-[#060B14] border border-white/10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 pl-9 pr-3 py-2 text-white placeholder-slate-400 focus:outline-none transition-all"
@@ -291,10 +295,11 @@ export const AdminLayout: React.FC = () => {
                     </div>
                   ) : (
                     searchResults.map(inc => (
-                      <div
+                      <button
+                        type="button"
                         key={inc.id}
                         onClick={() => handleOpenIncident(inc)}
-                        className="p-3 hover:bg-white/10 cursor-pointer border-b border-white/5 flex items-center justify-between gap-2"
+                        className="flex w-full items-center justify-between gap-2 border-b border-white/5 p-3 text-left hover:bg-white/10 focus-visible:outline-offset-[-2px]"
                       >
                         <div className="truncate">
                           <span className="font-mono text-xs font-bold text-cyan-400 mr-2">
@@ -308,7 +313,7 @@ export const AdminLayout: React.FC = () => {
                         <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-white/10 text-slate-300 shrink-0">
                           {inc.severity}
                         </span>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>
@@ -323,7 +328,7 @@ export const AdminLayout: React.FC = () => {
           </div>
 
           {/* Right Header Tactical Controls */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2.5">
             {/* Tactical Language Dropdown */}
             <div className="relative">
               <button
@@ -482,7 +487,7 @@ export const AdminLayout: React.FC = () => {
 
             {/* Admin Profile */}
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 flex items-center justify-center font-mono font-black text-xs">
+              <div className="hidden sm:flex w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 items-center justify-center font-mono font-black text-xs">
                 CMD
               </div>
               <div className="hidden xl:block text-left">

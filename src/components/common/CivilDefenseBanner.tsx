@@ -24,12 +24,12 @@ export const CivilDefenseBanner: React.FC = () => {
       <div className="flex items-center gap-2.5 overflow-hidden">
         <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping shrink-0" />
         <span className="px-2 py-0.5 rounded bg-black/30 text-white font-black text-[10px] shrink-0 border border-white/20">
-          CIVIL DEFENSE ADVISORY
+          DEMO ADVISORY
         </span>
         <div className="flex items-center gap-2 truncate">
           <AlertTriangle className="w-4 h-4 text-amber-200 shrink-0" />
           <span className="font-bold truncate">
-            MONSOON FLASH FLOOD & STRUCTURAL WARNING: Ground rescue units deployed across low-lying metro sectors. Citizens urged to use Emergency Intake portal.
+            Sample scenario for a monsoon flash flood and structural warning.
           </span>
         </div>
       </div>
