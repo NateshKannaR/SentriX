@@ -752,7 +752,7 @@ class IncidentService {
     };
   }
 
-  public exportIncidentsCSV(): string {
+  public exportIncidentsCSV(incidents: readonly Incident[] = this.incidents): string {
     const headers = [
       'Incident Code',
       'Title',
@@ -769,19 +769,24 @@ class IncidentService {
       'Is Demo',
     ];
 
-    const rows = this.incidents.map(inc => [
-      `"${inc.incidentCode}"`,
-      `"${inc.title.replace(/"/g, '""')}"`,
-      `"${inc.category}"`,
-      `"${inc.severity}"`,
-      `"${inc.recommendedSeverity}"`,
+    const textCell = (value: string) => {
+      // Prefix spreadsheet formulas before escaping the CSV field.
+      const safeValue = /^[\t\r\n]|^\s*[=+@-]/.test(value) ? `'${value}` : value;
+      return `"${safeValue.replace(/"/g, '""')}"`;
+    };
+    const rows = incidents.map(inc => [
+      textCell(inc.incidentCode),
+      textCell(inc.title),
+      textCell(inc.category),
+      textCell(inc.severity),
+      textCell(inc.recommendedSeverity),
       inc.priorityScore,
-      `"${inc.status}"`,
+      textCell(inc.status),
       inc.peopleAffected,
-      `"${inc.location.replace(/"/g, '""')}"`,
-      inc.latitude && inc.longitude ? `"${inc.latitude}, ${inc.longitude}"` : '""',
-      `"${inc.assignedUnit || 'Unassigned'}"`,
-      `"${inc.createdAt}"`,
+      textCell(inc.location),
+      inc.latitude != null && inc.longitude != null ? `"${inc.latitude}, ${inc.longitude}"` : '""',
+      textCell(inc.assignedUnit || 'Unassigned'),
+      textCell(inc.createdAt),
       inc.isDemo ? 'Yes' : 'No',
     ]);
 

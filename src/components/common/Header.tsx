@@ -50,41 +50,22 @@ export const Header: React.FC = () => {
       {/* Civil Defense Emergency Marquee Banner */}
       <CivilDefenseBanner />
 
-      <header className="sticky top-0 z-40 bg-[#071426]/90 backdrop-blur-xl border-b border-[#16C7E8]/20 text-white shadow-2xl">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b1420]/95 text-white backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-3">
-            {/* Logo & Brand with Tactical Halo */}
             <Link
               to="/"
               onClick={() => soundEffects.playClick()}
-              className="flex items-center gap-3.5 group cursor-pointer"
+              className="flex shrink-0 items-center gap-2.5 text-xl font-semibold tracking-tight text-white"
             >
-              <div className="relative flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-sentinel-red via-rose-700 to-[#071426] p-0.5 shadow-lg shadow-sentinel-red/25 group-hover:scale-105 transition-all shrink-0">
-                <div className="w-full h-full bg-[#071426] rounded-[14px] flex items-center justify-center relative overflow-hidden">
-                  <ShieldAlert className="w-6 h-6 text-sentinel-red group-hover:text-white transition-colors" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-sentinel-red/20 to-transparent pointer-events-none" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-sentinel-cyan rounded-full animate-ping" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-sentinel-cyan rounded-full shadow-[0_0_8px_#16C7E8]" />
-              </div>
-
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-black text-2xl tracking-wider text-white">Sentri</span>
-                  <span className="bg-gradient-to-r from-sentinel-cyan via-teal-300 to-blue-400 bg-clip-text text-transparent font-black text-2xl tracking-tight">
-                    X
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400 font-mono tracking-tight flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                  <span className="hidden sm:inline">{t('header.tagline', 'Every Second Matters. Every Life Counts.')}</span>
-                  <span className="inline sm:hidden text-[10px] text-slate-400">Every Second Matters</span>
-                </p>
-              </div>
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-300/20 bg-cyan-300/10 text-cyan-200">
+                <ShieldAlert className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <span>Sentri<span className="text-cyan-300">X</span></span>
             </Link>
 
             {/* Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1.5 bg-[#0B1E38]/60 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+            <nav aria-label="Main navigation" className="hidden items-center gap-1 whitespace-nowrap lg:flex">
               <Link
                 to="/"
                 aria-current={isActive('/') ? 'page' : undefined}
@@ -128,13 +109,15 @@ export const Header: React.FC = () => {
             </nav>
 
             {/* Tactical Superpowers Bar */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden shrink-0 items-center gap-2 whitespace-nowrap lg:flex">
               {/* Tactical Language Dropdown */}
               <div className="relative">
                 <button
                   onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
                   className="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-slate-200 flex items-center gap-1.5 transition-colors"
-                  title="Switch Language"
+                  title="Switch language"
+                  aria-label="Switch language"
+                  aria-expanded={isLangDropdownOpen}
                 >
                   <Globe className="w-3.5 h-3.5 text-sentinel-cyan" />
                   <span className="font-bold">{currentLanguageOption.flag}</span>
@@ -169,31 +152,31 @@ export const Header: React.FC = () => {
               {/* Voice AI Trigger */}
               <button
                 onClick={() => setIsVoiceOpen(true)}
-                className="px-2.5 py-2 rounded-xl bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 glow-cyan"
-                title="Launch AURA Voice Assistant"
+                className="px-2.5 py-2 rounded-xl bg-sentinel-cyan/15 hover:bg-sentinel-cyan/25 text-sentinel-cyan border border-sentinel-cyan/40 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95"
+                title="Voice assistant"
+                aria-label="Voice assistant"
               >
-                <Mic className="w-4 h-4 text-sentinel-cyan animate-pulse" />
-                <span className="hidden xl:inline">{t('nav.voiceAssistant', 'Voice AI')}</span>
+                <Mic className="w-4 h-4 text-sentinel-cyan" />
               </button>
 
               {/* WhatsApp Emergency SOS Beacon Trigger */}
               <button
                 onClick={() => setIsSosOpen(true)}
-                className="px-2.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95 glow-emerald"
-                title="Direct WhatsApp Emergency SOS (+91 7806869597)"
+                className="px-2.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95"
+                title="WhatsApp SOS"
+                aria-label="WhatsApp SOS"
               >
-                <LifeBuoy className="w-4 h-4 text-emerald-400 animate-pulse" />
-                <span className="hidden xl:inline">WhatsApp SOS</span>
+                <LifeBuoy className="w-4 h-4 text-emerald-400" />
               </button>
 
               {/* Rescue Strobe Trigger */}
               <button
                 onClick={() => setIsStrobeOpen(true)}
                 className="px-2.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-mono font-bold flex items-center gap-1.5 transition-all active:scale-95"
-                title="Rescue Optical Strobe"
+                title="Rescue strobe"
+                aria-label="Rescue strobe"
               >
                 <Eye className="w-4 h-4 text-amber-400" />
-                <span className="hidden xl:inline">{t('nav.rescueStrobe', 'Strobe')}</span>
               </button>
 
               {/* Audio Toggle */}
@@ -214,10 +197,10 @@ export const Header: React.FC = () => {
                 to="/citizen"
                 onClick={() => soundEffects.playClick()}
                 className="px-3 py-2 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 transition-all flex items-center gap-1.5"
-                title="Citizen Emergency Portal"
+                title="Citizen tools"
+                aria-label="Citizen tools"
               >
                 <User className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden lg:inline">Citizen Portal</span>
               </Link>
 
               {/* Admin Command Center */}
@@ -227,7 +210,7 @@ export const Header: React.FC = () => {
                 className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-[#0B1E38] hover:bg-[#10284B] text-slate-200 hover:text-white border border-[#16C7E8]/40 hover:border-[#16C7E8] transition-all flex items-center gap-2 shadow-lg shadow-black/40 hover:glow-cyan"
               >
                 <LayoutDashboard className="w-4 h-4 text-sentinel-cyan" />
-                <span className="hidden md:inline">{t('nav.admin', 'COMMAND CENTER')}</span>
+                <span>Command center</span>
               </Link>
             </div>
 

@@ -20,10 +20,9 @@ export const CivilDefenseBanner: React.FC = () => {
   if (!isVisible) return null;
 
   return (
-    <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white border-b border-red-400/40 px-4 py-2 flex items-center justify-between text-xs font-mono shadow-lg relative z-40 selection:bg-black selection:text-white">
+    <div className="bg-[#241d15] text-amber-100 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs font-mono relative z-40 selection:bg-black selection:text-white">
       <div className="flex items-center gap-2.5 overflow-hidden">
-        <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping shrink-0" />
-        <span className="px-2 py-0.5 rounded bg-black/30 text-white font-black text-[10px] shrink-0 border border-white/20">
+        <span className="px-2 py-0.5 rounded bg-black/30 text-amber-200 font-semibold text-[10px] shrink-0 border border-amber-400/20">
           DEMO ADVISORY
         </span>
         <div className="flex items-center gap-2 truncate">
