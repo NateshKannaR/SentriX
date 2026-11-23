@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   ShieldAlert,
@@ -10,7 +10,6 @@ import {
   X,
   Volume2,
   VolumeX,
-  Clock,
   Mic,
   Zap,
   Globe,
@@ -32,19 +31,11 @@ export const Header: React.FC = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(!soundEffects.isMuted());
-  const [currentTime, setCurrentTime] = useState(new Date().toUTCString().slice(17, 25));
 
   const [isVoiceOpen, setIsVoiceOpen] = useState(false);
   const [isSosOpen, setIsSosOpen] = useState(false);
   const [isStrobeOpen, setIsStrobeOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date().toUTCString().slice(17, 25));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const handleAudioToggle = () => {
     const muted = soundEffects.toggleMute();
@@ -60,30 +51,8 @@ export const Header: React.FC = () => {
       <CivilDefenseBanner />
 
       <header className="sticky top-0 z-40 bg-[#071426]/90 backdrop-blur-xl border-b border-[#16C7E8]/20 text-white shadow-2xl">
-        {/* Top Telemetry Micro-Bar */}
-        <div className="hidden lg:flex items-center justify-between px-6 py-1 bg-[#040C17] border-b border-white/5 text-[10px] font-mono text-slate-400">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              {t('header.telemetryActive', 'TELEMETRY: ACTIVE (LATENCY 12ms)')}
-            </span>
-            <span className="text-slate-600">|</span>
-            <span className="flex items-center gap-1 text-[#16C7E8]">
-              <Clock className="w-3 h-3" /> UTC {currentTime}Z
-            </span>
-            <span className="text-slate-600">|</span>
-            <span className="text-slate-400">{t('header.defcon', 'DEFCON LEVEL 2: HIGH READINESS')}</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-slate-400">ENCRYPTION: AES-256 GCM</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-[#16C7E8] font-bold">{t('header.hackathonTag', 'CODE CLASH 2026 EDITION')}</span>
-          </div>
-        </div>
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-16 gap-3">
             {/* Logo & Brand with Tactical Halo */}
             <Link
               to="/"
@@ -105,9 +74,6 @@ export const Header: React.FC = () => {
                   <span className="bg-gradient-to-r from-sentinel-cyan via-teal-300 to-blue-400 bg-clip-text text-transparent font-black text-2xl tracking-tight">
                     X
                   </span>
-                  <span className="hidden sm:inline-block text-[9px] uppercase font-mono px-2 py-0.5 rounded-full bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30 tracking-widest font-bold">
-                    MIL-SPEC
-                  </span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-mono tracking-tight flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
@@ -121,6 +87,7 @@ export const Header: React.FC = () => {
             <nav className="hidden lg:flex items-center gap-1.5 bg-[#0B1E38]/60 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
               <Link
                 to="/"
+                aria-current={isActive('/') ? 'page' : undefined}
                 onClick={() => soundEffects.playClick()}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                   isActive('/')
@@ -133,6 +100,7 @@ export const Header: React.FC = () => {
 
               <Link
                 to="/report"
+                aria-current={isActive('/report') ? 'page' : undefined}
                 onClick={() => soundEffects.playClick()}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   isActive('/report')
@@ -146,6 +114,7 @@ export const Header: React.FC = () => {
 
               <Link
                 to="/track"
+                aria-current={isActive('/track') ? 'page' : undefined}
                 onClick={() => soundEffects.playClick()}
                 className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                   isActive('/track')
@@ -159,7 +128,7 @@ export const Header: React.FC = () => {
             </nav>
 
             {/* Tactical Superpowers Bar */}
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               {/* Tactical Language Dropdown */}
               <div className="relative">
                 <button
@@ -263,7 +232,7 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Mobile controls */}
-            <div className="flex sm:hidden items-center gap-1.5">
+            <div className="flex lg:hidden items-center gap-1.5">
               <button
                 onClick={() => setIsVoiceOpen(true)}
                 className="p-2 rounded-xl bg-sentinel-cyan/15 text-sentinel-cyan border border-sentinel-cyan/30"
@@ -283,7 +252,9 @@ export const Header: React.FC = () => {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-xl text-slate-300 hover:text-white bg-white/5 border border-white/10 min-w-[38px] min-h-[38px] flex items-center justify-center"
-                aria-label="Toggle mobile menu"
+                aria-label="Toggle navigation menu"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="public-navigation"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5 text-sentinel-cyan" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -293,19 +264,7 @@ export const Header: React.FC = () => {
 
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
-          <div className="sm:hidden border-t border-[#16C7E8]/20 bg-[#071426]/98 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-3 animate-fadeIn shadow-2xl">
-            {/* Mobile Telemetry Strip */}
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#040C17] border border-white/10 text-[10px] font-mono text-slate-400">
-              <span className="flex items-center gap-1 text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                ONLINE
-              </span>
-              <span className="text-[#16C7E8] flex items-center gap-1 font-bold">
-                <Clock className="w-3 h-3" /> UTC {currentTime}Z
-              </span>
-              <span className="text-amber-400">DEFCON 2</span>
-            </div>
-
+          <div id="public-navigation" className="lg:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-[#16C7E8]/20 bg-[#071426]/98 backdrop-blur-2xl px-4 pt-3 pb-6 space-y-3 animate-fadeIn shadow-2xl">
             {/* Mobile Language Selector */}
             <div className="p-2 rounded-xl bg-sentinel-darkSurface border border-white/10 flex items-center justify-between">
               <span className="text-xs font-mono text-slate-400 flex items-center gap-1.5">
@@ -335,6 +294,7 @@ export const Header: React.FC = () => {
             <div className="space-y-1">
               <Link
                 to="/"
+                aria-current={isActive('/') ? 'page' : undefined}
                 onClick={() => {
                   soundEffects.playClick();
                   setMobileMenuOpen(false);
@@ -349,6 +309,7 @@ export const Header: React.FC = () => {
               </Link>
               <Link
                 to="/report"
+                aria-current={isActive('/report') ? 'page' : undefined}
                 onClick={() => {
                   soundEffects.playAlert();
                   setMobileMenuOpen(false);
@@ -369,6 +330,7 @@ export const Header: React.FC = () => {
               </Link>
               <Link
                 to="/track"
+                aria-current={isActive('/track') ? 'page' : undefined}
                 onClick={() => {
                   soundEffects.playClick();
                   setMobileMenuOpen(false);

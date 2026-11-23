@@ -8,7 +8,7 @@ import { SeverityBadge } from '../components/common/SeverityBadge';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { CategoryBadge } from '../components/common/CategoryBadge';
 import { soundEffects } from '../utils/soundEffects';
-import { getLiveLocation, calculateDistanceKm, LiveLocationResult } from '../utils/geolocation';
+import { calculateDistanceKm } from '../utils/geolocation';
 import { useLanguage } from '../context/LanguageContext';
 import {
   Search,
@@ -31,14 +31,15 @@ import {
 
 export const TrackIncidentPage: React.FC = () => {
   const { t } = useLanguage();
-  const [searchParams] = useSearchParams();
-  const initialCode = searchParams.get('code') || '';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCode = searchParams.get('code')?.trim().toUpperCase() ?? '';
 
-  const [code, setCode] = useState(initialCode);
+  const [draft, setDraft] = useState({ activeCode, value: activeCode });
+  const code = draft.activeCode === activeCode ? draft.value : activeCode;
   const [incident, setIncident] = useState<Incident | null>(null);
   const [activities, setActivities] = useState<IncidentActivity[]>([]);
-  const [searched, setSearched] = useState(false);
-  const [userLocation, setUserLocation] = useState<LiveLocationResult | null>(null);
+  const [userLocation, setUserLocation] = useState<GeolocationCoordinates | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'unavailable'>('idle');
   const [updateNote, setUpdateNote] = useState('');
   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState('');
@@ -67,34 +68,47 @@ export const TrackIncidentPage: React.FC = () => {
     }, 400);
   };
 
-  const performSearch = (targetCode: string) => {
-    if (!targetCode.trim()) return;
-    soundEffects.playBeep();
-    const found = incidentService.getIncidentByCode(targetCode);
-    setIncident(found || null);
-    if (found) {
-      setActivities(incidentService.getActivities(found.id));
-    } else {
-      setActivities([]);
-    }
-    setSearched(true);
-  };
-
   useEffect(() => {
-    if (initialCode) {
-      performSearch(initialCode);
-    }
-    // Acquire user location for distance calculation
-    getLiveLocation().then(loc => setUserLocation(loc));
-  }, [initialCode]);
+    const refresh = () => {
+      const found = activeCode ? incidentService.getIncidentByCode(activeCode) : undefined;
+      setIncident(found ?? null);
+      setActivities(found ? incidentService.getActivities(found.id) : []);
+    };
+    refresh();
+    return incidentService.subscribe(refresh);
+  }, [activeCode]);
+
+  const performSearch = (targetCode: string) => {
+    const normalizedCode = targetCode.trim().toUpperCase();
+    if (!normalizedCode) return;
+    setDraft({ activeCode: normalizedCode, value: normalizedCode });
+    if (normalizedCode !== activeCode) setSearchParams({ code: normalizedCode });
+    soundEffects.playBeep();
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     performSearch(code);
   };
 
-  // Distance from user to incident
-  const distanceKm = userLocation && incident?.latitude && incident?.longitude
+  const checkDistance = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('unavailable');
+      return;
+    }
+    setLocationStatus('loading');
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setUserLocation(coords);
+        setLocationStatus('idle');
+      },
+      () => setLocationStatus('unavailable'),
+      { timeout: 10000 },
+    );
+  };
+
+  const hasCoordinates = incident?.latitude != null && incident.longitude != null;
+  const distanceKm = userLocation && incident?.latitude != null && incident.longitude != null
     ? calculateDistanceKm(userLocation.latitude, userLocation.longitude, incident.latitude, incident.longitude)
     : null;
 
@@ -119,19 +133,25 @@ export const TrackIncidentPage: React.FC = () => {
               {t('track.title', 'Track Real-Time Emergency Status')}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-              {t('track.subtitle', 'Enter your unique 8-character Incident Code to inspect real-time dispatch progress, assigned responder units, and GPS telemetry.')}
+              {'Enter the incident code from your report to see the response status and recent updates.'}
             </p>
           </div>
 
           {/* Search Box */}
-          <form onSubmit={handleSubmit} className="mb-8">
+          <form onSubmit={handleSubmit} autoComplete="off" className="mb-8">
             <div className="glass-panel p-2 rounded-2xl border border-sentinel-darkBorder flex flex-col sm:flex-row gap-2 shadow-2xl focus-within:border-sentinel-cyan/60 transition-colors">
               <div className="relative flex-1">
                 <Search className="w-5 h-5 text-sentinel-cyan/70 absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
+                  key={activeCode}
                   value={code}
-                  onChange={e => setCode(e.target.value)}
+                  aria-label="Incident code"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                  required
+                  onChange={e => setDraft({ activeCode, value: e.target.value })}
                   placeholder={t('track.placeholder', 'Enter Incident Code (e.g. STX-2026-1001)')}
                   className="w-full pl-12 pr-4 py-3 bg-transparent text-white font-mono text-sm uppercase placeholder:normal-case placeholder:font-sans placeholder:text-slate-500 focus:outline-none"
                 />
@@ -153,10 +173,7 @@ export const TrackIncidentPage: React.FC = () => {
                 <button
                   key={sample}
                   type="button"
-                  onClick={() => {
-                    setCode(sample);
-                    performSearch(sample);
-                  }}
+                  onClick={() => performSearch(sample)}
                   className="px-2.5 py-0.5 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700 hover:border-sentinel-cyan font-mono text-[11px] text-sentinel-cyan transition-colors"
                 >
                   {sample}
@@ -166,7 +183,7 @@ export const TrackIncidentPage: React.FC = () => {
           </form>
 
           {/* Incident Not Found */}
-          {searched && !incident && (
+          {activeCode && !incident && (
             <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-red-500/30 text-center space-y-4 shadow-xl">
               <div className="w-14 h-14 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
                 <AlertCircle className="w-7 h-7" />
@@ -174,7 +191,7 @@ export const TrackIncidentPage: React.FC = () => {
               <div className="space-y-1">
                 <h3 className="font-bold text-lg text-white">Incident Identifier Not Located</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  No registered emergency matches &quot;<span className="text-red-400 font-mono">{code}</span>&quot;. Ensure proper format or report a new situation.
+                  No registered emergency matches &quot;<span className="text-red-400 font-mono">{activeCode}</span>&quot;. Ensure proper format or report a new situation.
                 </p>
               </div>
               <div className="pt-2">
@@ -269,14 +286,18 @@ export const TrackIncidentPage: React.FC = () => {
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 block font-mono">Location Coordinates</span>
                     <span className="text-white font-semibold block mt-0.5">{incident.location}</span>
-                    {distanceKm !== null && (
-                      <span className="text-emerald-400 font-mono text-[11px] block mt-1">
-                        🛰️ {distanceKm} km from your live position
-                      </span>
+                    {hasCoordinates && (
+                      <div className="mt-1 space-y-1">
+                        {distanceKm !== null ? (
+                          <p className="text-emerald-300">{distanceKm} km from your location</p>
+                        ) : (
+                          <button type="button" onClick={checkDistance} disabled={locationStatus === 'loading'} className="text-cyan-300 underline underline-offset-2">
+                            {locationStatus === 'loading' ? 'Getting location…' : 'Check distance from me'}
+                          </button>
+                        )}
+                        {locationStatus === 'unavailable' && <p role="status" className="text-amber-300">Location unavailable. Check your browser permissions and try again.</p>}
+                      </div>
                     )}
-                    <span className="text-[10px] font-mono text-slate-500 mt-1 block">
-                      [{(incident.latitude ?? 12.9716).toFixed(4)}, {(incident.longitude ?? 77.5946).toFixed(4)}]
-                    </span>
                   </div>
                 </div>
 

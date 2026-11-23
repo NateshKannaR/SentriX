@@ -28,6 +28,14 @@
 
 ---
 
+## Project origin
+
+Natesh Kanna R built SentriX for the **COBOT-EX 2026 Inter-College Hackathon**, organized by the Crescent Club for Cobotics. The project addresses a challenge in emergency response coordination: turning incoming reports into a prioritized queue that responders can act on and citizens can track.
+
+**Team BenX placed 9th in the final round.**
+
+---
+
 ## 📑 Table of Contents
 1. [Executive Overview & Real-World Impact](#-executive-overview--real-world-impact)
 2. [OREHACK Evaluation Rubric Alignment (100% Scorecard)](#-orehack-evaluation-rubric-alignment-100-scorecard)

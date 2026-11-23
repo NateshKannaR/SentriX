@@ -49,16 +49,19 @@ export const IncidentsPage: React.FC = () => {
     onOpenDrone,
     onOpenPlaybook,
   } = useOutletContext<AdminContextType>();
-  const [searchParams] = useSearchParams();
-
-  const initialCategory = searchParams.get('category') || 'ALL';
-  const initialSeverity = searchParams.get('severity') || 'ALL';
-  const initialStatus = searchParams.get('status') || 'ALL';
-
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryFilter = searchParams.get('category') || 'ALL';
+  const severityFilter = searchParams.get('severity') || 'ALL';
+  const statusFilter = searchParams.get('status') || 'ALL';
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>(initialCategory);
-  const [severityFilter, setSeverityFilter] = useState<string>(initialSeverity);
-  const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
+
+  const setFilter = (name: 'category' | 'severity' | 'status', value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'ALL') next.delete(name);
+    else next.set(name, value);
+    setSearchParams(next);
+  };
+
   const [sortBy, setSortBy] = useState<'priority' | 'time' | 'casualties'>('priority');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
@@ -165,9 +168,10 @@ export const IncidentsPage: React.FC = () => {
             Quick Views:
           </span>
           <button
+            aria-pressed={severityFilter === 'Critical'}
             onClick={() => {
               soundFx.playClick();
-              setSeverityFilter('Critical');
+              setFilter('severity', severityFilter === 'Critical' ? 'ALL' : 'Critical');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               severityFilter === 'Critical'
@@ -178,9 +182,10 @@ export const IncidentsPage: React.FC = () => {
             🔥 {t('dash.critical', 'Critical')}
           </button>
           <button
+            aria-pressed={statusFilter === 'Assigned'}
             onClick={() => {
               soundFx.playClick();
-              setStatusFilter('Assigned');
+              setFilter('status', statusFilter === 'Assigned' ? 'ALL' : 'Assigned');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'Assigned'
@@ -191,9 +196,10 @@ export const IncidentsPage: React.FC = () => {
             🚛 {t('status.assigned', 'Assigned')}
           </button>
           <button
+            aria-pressed={statusFilter === 'In Progress'}
             onClick={() => {
               soundFx.playClick();
-              setStatusFilter('In Progress');
+              setFilter('status', statusFilter === 'In Progress' ? 'ALL' : 'In Progress');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'In Progress'
@@ -204,9 +210,10 @@ export const IncidentsPage: React.FC = () => {
             ⚡ {t('dash.inProgress', 'In Progress')}
           </button>
           <button
+            aria-pressed={statusFilter === 'Reported'}
             onClick={() => {
               soundFx.playClick();
-              setStatusFilter('Reported');
+              setFilter('status', statusFilter === 'Reported' ? 'ALL' : 'Reported');
             }}
             className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shrink-0 whitespace-nowrap ${
               statusFilter === 'Reported'
@@ -220,9 +227,9 @@ export const IncidentsPage: React.FC = () => {
             <button
               onClick={() => {
                 soundFx.playClick();
-                setCategoryFilter('ALL');
-                setSeverityFilter('ALL');
-                setStatusFilter('ALL');
+                const next = new URLSearchParams(searchParams);
+                ['category', 'severity', 'status'].forEach(name => next.delete(name));
+                setSearchParams(next);
                 setSearchQuery('');
               }}
               className="px-2.5 py-1.5 rounded-xl text-xs font-mono text-slate-400 hover:text-red-400 bg-white/5 border border-white/10 shrink-0 whitespace-nowrap"
@@ -239,6 +246,7 @@ export const IncidentsPage: React.FC = () => {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              aria-label="Search incidents"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('admin.header.search', 'Search code, title, street...')}
@@ -249,8 +257,9 @@ export const IncidentsPage: React.FC = () => {
           {/* Category Filter */}
           <div>
             <select
+              aria-label="Incident category"
               value={categoryFilter}
-              onChange={e => setCategoryFilter(e.target.value)}
+              onChange={e => setFilter('category', e.target.value)}
               className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Categories</option>
@@ -266,8 +275,9 @@ export const IncidentsPage: React.FC = () => {
           {/* Severity Filter */}
           <div>
             <select
+              aria-label="Incident severity"
               value={severityFilter}
-              onChange={e => setSeverityFilter(e.target.value)}
+              onChange={e => setFilter('severity', e.target.value)}
               className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Severities</option>
@@ -281,12 +291,14 @@ export const IncidentsPage: React.FC = () => {
           {/* Status Filter */}
           <div>
             <select
+              aria-label="Incident status"
               value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
+              onChange={e => setFilter('status', e.target.value)}
               className="w-full text-xs rounded-xl border border-white/10 bg-[#060B14] text-white px-3 py-2 focus:outline-none focus:border-cyan-400 font-semibold"
             >
               <option value="ALL">All Statuses</option>
               <option value="Reported">{t('status.reported', 'Reported')}</option>
+              <option value="Assigned">{t('status.assigned', 'Assigned')}</option>
               <option value="Pending">{t('status.pending', 'Pending')}</option>
               <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
               <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
@@ -457,7 +469,8 @@ export const IncidentsPage: React.FC = () => {
                       >
                         <option value="Reported">{t('status.reported', 'Reported')}</option>
                         <option value="Assigned">Assigned</option>
-                        <option value="Pending">{t('status.pending', 'Pending')}</option>
+                        <option value="Assigned">{t('status.assigned', 'Assigned')}</option>
+              <option value="Pending">{t('status.pending', 'Pending')}</option>
                         <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
                         <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
                       </select>
@@ -646,7 +659,8 @@ export const IncidentsPage: React.FC = () => {
                           >
                             <option value="Reported">{t('status.reported', 'Reported')}</option>
                             <option value="Assigned">Assigned</option>
-                            <option value="Pending">{t('status.pending', 'Pending')}</option>
+                            <option value="Assigned">{t('status.assigned', 'Assigned')}</option>
+              <option value="Pending">{t('status.pending', 'Pending')}</option>
                             <option value="In Progress">{t('status.inProgress', 'In Progress')}</option>
                             <option value="Resolved">{t('status.resolved', 'Resolved')}</option>
                           </select>
