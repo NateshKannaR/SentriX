@@ -8,14 +8,12 @@ import { soundEffects } from '../../utils/soundEffects';
 import { useLanguage } from '../../context/LanguageContext';
 import {
   Copy,
-  AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Clock,
   MapPin,
   Users,
   ShieldCheck,
-  Cpu,
   Layers,
   Sparkles,
   GitMerge,
@@ -38,56 +36,39 @@ export const DuplicatesPage: React.FC = () => {
   const resolvedDuplicates = incidents.filter(i => Boolean(i.duplicateOf));
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="ops-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+      <div className="ops-page-heading">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="ops-heading-title">
               {t('admin.nav.duplicates', 'Duplicate Guard')}
             </h1>
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-bold flex items-center gap-1 shrink-0">
-              <Cpu className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-              AI SPECTRAL ENGINE
-            </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Multidimensional correlation correlating citizen reports by spatial proximity, NLP tokens, and time decay to prevent double dispatch.
+            Compare potentially related reports before confirming a duplicate.
           </p>
         </div>
       </div>
 
-      {/* Info Banner */}
-      <div className="p-4 rounded-2xl bg-[#0A101D] border border-amber-500/30 flex items-start gap-3 shadow-lg">
-        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 shrink-0 mt-0.5">
-          <AlertTriangle className="w-5 h-5 text-amber-400" />
-        </div>
-        <div className="text-xs text-slate-300 space-y-1">
-          <p className="font-bold text-white flex items-center gap-2">
-            <span>Decision Support Policy: Human Commander in the Loop</span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-bold">
-              FAIL-SAFE ACTIVE
-            </span>
-          </p>
-          <p className="text-slate-400 leading-relaxed">
-            SentriX inspects reports across 4 dimensions: Category match, Haversine spatial radius (&lt;1.5km), NLP keyword overlap, and temporal clustering (&lt;8h). Reports are never dropped silently. Authorized command operators inspect side-by-side evidence before confirming or rejecting duplicates.
-          </p>
-        </div>
-      </div>
+      <details className="ops-panel p-4 text-sm text-slate-300">
+        <summary className="cursor-pointer font-semibold text-white">How reports are matched</summary>
+        <p className="mt-2 leading-relaxed">Matches consider incident category, distance, overlapping keywords, and report timing. Open a flagged pair to review the evidence before deciding.</p>
+      </details>
 
       {/* Active Alerts Grid */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-white flex items-center gap-2 font-mono">
-            <span>PENDING DUPLICATE REVIEWS</span>
+            <span>Pending reviews</span>
             <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-mono font-bold border border-amber-500/30">
-              {activeDuplicateAlerts.length} QUEUED
+              {activeDuplicateAlerts.length}
             </span>
           </h2>
         </div>
 
         {activeDuplicateAlerts.length === 0 ? (
-          <div className="p-12 text-center rounded-3xl bg-[#0A101D] border border-white/[0.08] space-y-3">
+          <div className="p-12 text-center ops-panel space-y-3">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/20">
               <ShieldCheck className="w-7 h-7" />
             </div>
@@ -178,7 +159,7 @@ export const DuplicatesPage: React.FC = () => {
             </span>
           </h2>
 
-          <div className="bg-[#0A101D] rounded-2xl border border-white/[0.08] divide-y divide-white/5 overflow-hidden">
+          <div className="ops-panel divide-y divide-white/5 overflow-hidden">
             {resolvedDuplicates.map(inc => (
               <div
                 key={inc.id}

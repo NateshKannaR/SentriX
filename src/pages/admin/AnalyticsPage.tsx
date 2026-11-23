@@ -28,7 +28,6 @@ import {
   Clock,
   Layers,
   Award,
-  Activity,
   Flame,
   CheckCircle2,
   Truck,
@@ -115,37 +114,33 @@ export const AnalyticsPage: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+    <div className="ops-page">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="ops-page-heading">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="ops-heading-title">
               {t('admin.nav.analytics', 'Intelligence Analytics')}
             </h1>
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-bold flex items-center gap-1">
-              <Activity className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              {t('dash.liveTelemetry', 'LIVE TELEMETRY')}
-            </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Empirical incident distribution, response team readiness, and multi-agency operational benchmarking.
+            Explore incident volume, severity, response times, and team workload.
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20 transition-all active:scale-95"
+          className="ops-action"
         >
           <Download className="w-4 h-4 text-white" />
-          <span>Export Analytics CSV</span>
+          <span>Export incident data</span>
         </button>
       </div>
 
       {/* 8 Mandatory Round 2 Challenge Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {/* 1. Total Emergencies */}
-        <div className="p-4 rounded-2xl bg-[#0A101D] border border-white/[0.08] shadow-lg">
+        <div className="p-4 ops-panel">
           <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
             1. Total Emergencies
           </span>
@@ -238,7 +233,7 @@ export const AnalyticsPage: React.FC = () => {
       {/* Visual Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Casualty Impact by Category */}
-        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+        <div className="ops-panel p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
@@ -272,7 +267,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Incident Distribution by Category (Donut Chart) */}
-        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+        <div className="ops-panel p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
@@ -325,7 +320,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Incident Lifecycle Pipeline Status */}
-        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+        <div className="ops-panel p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
@@ -362,7 +357,7 @@ export const AnalyticsPage: React.FC = () => {
         </div>
 
         {/* Response Team Fleet Workload by Category (Stacked Bar Chart) */}
-        <div className="bg-[#0A101D] p-5 sm:p-6 rounded-3xl border border-white/[0.08] shadow-xl space-y-4">
+        <div className="ops-panel p-5 sm:p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-white">
